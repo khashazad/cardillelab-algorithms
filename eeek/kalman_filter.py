@@ -59,15 +59,25 @@ def update(x_bar, P_bar, z, H, R, I):
 
 
 def kalman_filter(
-    collection, init_x, init_P, F, Q, H, R, num_params=3, convert_from_array=True
+    collection,
+    init_x,
+    init_P,
+    F,
+    Q,
+    H,
+    R,
+    measurement_band=None,
+    num_params=3,
+    convert_from_array=True,
 ):
     """Applies a Kalman Filter to the given image collection.
 
-    In case they need it, F, Q, H, and R are all given x, P, z, and t as named
-    inputs and are reevaluated at each step of the Kalman Filter loop. In case
-    they don't need some/all of those set **kwargs as a parameter. E.g., if H
-    relies only on t, define it as `def H(t, **kwargs): ...` and if Q does not
-    need any inputs, define it as `def Q(**kwargs): ...`
+    In case they need it, F, Q, H, and R are all given x, P, z, t, and curr
+    (the image from the current step of the iterate) as named inputs and are
+    reevaluated at each step of the Kalman Filter loop. In case they don't need
+    some/all of those set **kwargs as a parameter. E.g., if H relies only on t,
+    define it as `def H(t, **kwargs): ...` and if Q does not need any inputs,
+    define it as `def Q(**kwargs): ...`
 
     Args:
         collection: ee.ImageCollection, used as the measurements
@@ -77,6 +87,8 @@ def kalman_filter(
         Q: function: dict -> ee.Image, the process noise
         H: function: dict -> ee.Image, the measurement function
         R: function: dict -> ee.Image, the measurement noise
+        measurement_band: str, band name for the measurement, if None, the
+            first band is used.
         num_params: int, number of parameters in the state, used to create an
             identity matrix with the proper size.
 
@@ -90,6 +102,9 @@ def kalman_filter(
     """
     I = ee.Image(ee.Array.identity(num_params))
 
+    if measurement_band is None:
+        measurement_band = collection.first().bandNames().getString(0)
+
     def _iterator(curr, prev):
         """Kalman Filter Loop."""
         curr = ee.Image(curr).unmask(UNMASK_VALUE, sameFootprint=False)
@@ -99,7 +114,7 @@ def kalman_filter(
         x = last.select(STATE)
         P = last.select(COV)
 
-        z = curr.toArray().toArray(1).rename(MEASUREMENT)
+        z = curr.select(measurement_band).toArray().toArray(1).rename(MEASUREMENT)
         t = curr.date().difference(START_DATE, "year")
 
         kwargs = {"x": x, "P": P, "z": z, "t": t}
@@ -144,21 +159,3 @@ def kalman_filter(
         result = result.map(_dearrayify)
 
     return result
-
-
-def F_fn(**kwargs):
-    return ee.Image(ee.Array.identity(3))
-
-
-def Q_fn(**kwargs):
-    return ee.Image(ee.Array([[0.001, 0.0005, 0.00025]]).transpose().matrixToDig())
-
-
-def H_fn(t, **kwargs):
-    t = t.multiply(2 * math.pi)
-    H = ee.Image.cat(ee.Image.constant(1.0), t.cos(), t.sin()).toArray(0)
-    return H.arrayReshape(ee.Image(ee.Array([1, -1])), 2)
-
-
-def R_fn(**kwargs):
-    return ee.Image(ee.Array([[0.1234]]))
