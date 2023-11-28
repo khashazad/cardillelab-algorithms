@@ -58,7 +58,9 @@ def update(x_bar, P_bar, z, H, R, I):
     return x, P
 
 
-def kalman_filter(collection, init_x, init_P, F, Q, H, R, num_params=3):
+def kalman_filter(
+    collection, init_x, init_P, F, Q, H, R, num_params=3, convert_from_array=True
+):
     """Applies a Kalman Filter to the given image collection.
 
     In case they need it, F, Q, H, and R are all given x, P, z, and t as named
@@ -133,15 +135,15 @@ def kalman_filter(collection, init_x, init_P, F, Q, H, R, num_params=3):
         z = image.select(MEASUREMENT).arrayGet((0, 0))
         zprime = image.select(ZPRIME).arrayGet((0, 0))
         x = image.select(STATE).arrayProject([0]).arrayFlatten([parameter_names])
-        P = (
-            image.select(COV)
-            .matrixDiagonal()
-            .arrayProject([0])
-            .arrayFlatten([[param + "_cov" for param in parameter_names]])
+        P = image.select(COV).arrayFlatten(
+            [["cov_" + x for x in parameter_names], parameter_names]
         )
         return ee.Image.cat(z, zprime, x, P)
 
-    return result.map(_dearrayify)
+    if convert_from_array:
+        result = result.map(_dearrayify)
+
+    return result
 
 
 def F_fn(**kwargs):
