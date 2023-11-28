@@ -1,3 +1,7 @@
+"""
+Test our earth engine implementation against a well established local python
+implementation to ensure we implemented the kalman filter properly.
+"""
 import math
 import string
 import itertools
