@@ -1,8 +1,6 @@
-import math
 import string
 
 import ee
-import numpy as np
 
 # band names
 STATE = "x"
