@@ -70,12 +70,12 @@ def kalman_filter(
 ):
     """Applies a Kalman Filter to the given image collection.
 
-    In case they need it, F, Q, H, and R are all given x, P, z, t, and curr
-    (the image from the current step of the iterate) as named inputs and are
-    reevaluated at each step of the Kalman Filter loop. In case they don't need
-    some/all of those set **kwargs as a parameter. E.g., if H relies only on t,
-    define it as `def H(t, **kwargs): ...` and if Q does not need any inputs,
-    define it as `def Q(**kwargs): ...`
+    F, Q, H, and R are all called with **locals() as input at each step of the
+    Kalman Filter loop. This gives them access to all local variables at the
+    time they are called, in case they don't need some/all of those set
+    **kwargs as a parameter in their function definition. E.g., if H relies
+    only on t, define it as `def H(t, **kwargs): ...` and if Q does not need
+    any inputs, define it as `def Q(**kwargs): ...`
 
     Args:
         collection: ee.ImageCollection, used as the measurements
@@ -115,16 +115,14 @@ def kalman_filter(
         z = curr.select(measurement_band).toArray().toArray(1).rename(MEASUREMENT)
         t = curr.date().difference(START_DATE, "year")
 
-        kwargs = {"x": x, "P": P, "z": z, "t": t, "curr": curr}
-
-        x_bar, P_bar = predict(x, P, F(**kwargs), Q(**kwargs))
-        x, P = update(x_bar, P_bar, z, H(**kwargs), R(**kwargs), I)
+        x_bar, P_bar = predict(x, P, F(**locals()), Q(**locals()))
+        x, P = update(x_bar, P_bar, z, H(**locals()), R(**locals()), I)
 
         # TODO: better name for this? Jeff calls it predictedMeasurement.
         # That confused me because the Kalman Filter predicts the state and then
         # compares that against a measurement. This is the result of using the
         # updated state to better estimate the measurement.
-        zprime = H(**kwargs).matrixMultiply(x)
+        zprime = H(**locals()).matrixMultiply(x)
 
         return ee.List(prev).add(
             ee.Image.cat(
