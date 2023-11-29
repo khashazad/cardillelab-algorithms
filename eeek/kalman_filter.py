@@ -6,7 +6,6 @@ import ee
 STATE = "x"
 COV = "P"
 MEASUREMENT = "z"
-ZPRIME = "zprime"
 
 UNMASK_VALUE = 0
 
@@ -32,7 +31,7 @@ def predict(x, P, F, Q):
     return x_bar, P_bar
 
 
-def update(x_bar, P_bar, z, H, R, I):
+def update(x_bar, P_bar, z, H, R, num_params):
     """Performs the update step of the Kalman Filter loop.
 
     Args:
@@ -41,50 +40,67 @@ def update(x_bar, P_bar, z, H, R, I):
         z: ee array Image (1 x 1), the measurement
         H: ee array image (1 x n), the measurement function
         R: ee array Image (1 x 1), the measurement noise
-        I: ee array Image (n x n), the identity matrix of the proper size
+        num_params: int, the number of parameters in the state variable
 
     Returns:
         x (ee array image), P (ee array image): the updated state and state
         covariance
     """
+    identity = ee.Image(ee.Array.identity(num_params))
+
     y = z.subtract(H.matrixMultiply(x_bar))
     S = H.matrixMultiply(P_bar).matrixMultiply(H.matrixTranspose()).add(R)
     S_inv = S.matrixInverse()
     K = P_bar.matrixMultiply(H.matrixTranspose()).matrixMultiply(S_inv)
     x = x_bar.add(K.matrixMultiply(y))
-    P = (I.subtract(K.matrixMultiply(H))).matrixMultiply(P_bar)
+    P = (identity.subtract(K.matrixMultiply(H))).matrixMultiply(P_bar)
     return x, P
 
 
 def kalman_filter(
     collection,
-    init_x,
-    init_P,
+    init_image,
     F,
     Q,
     H,
     R,
+    preprocess_fn=lambda **kwargs: [],
+    postprocess_fn=lambda **kwargs: [],
     measurement_band=None,
     num_params=3,
     convert_from_array=True,
 ):
     """Applies a Kalman Filter to the given image collection.
 
-    F, Q, H, and R are all called with **locals() as input at each step of the
-    Kalman Filter loop. This gives them access to all local variables at the
-    time they are called, in case they don't need some/all of those set
-    **kwargs as a parameter in their function definition. E.g., if H relies
-    only on t, define it as `def H(t, **kwargs): ...` and if Q does not need
-    any inputs, define it as `def Q(**kwargs): ...`
+    F, Q, H, R, preprocess_fn, and postprocess_fn are all called with
+    **locals() as input at each step of the Kalman Filter loop. This gives them
+    access to all local variables at the time they are called, in case they
+    don't need some/all of those set **kwargs as a parameter in their function
+    definition. E.g., if H relies only on t, define it as `def H(t, **kwargs):
+    ...` and if Q does not need any inputs, define it as `def Q(**kwargs): ...`
 
     Args:
         collection: ee.ImageCollection, used as the measurements
-        init_x, ee.Image, guess of initial state
-        init_P, ee.Image, guess of initial state covariance
+        init_image, ee.Image, the initial state, must at least have one band
+            containing the guess of the initial state named "x" and one band
+            containing the guess of the initial state covariance named "P". The
+            user may add other bands to needed by preprocess_fn or
+            postprocess_fn in the first iterate step.
         F: function: dict -> ee.Image, the process model
         Q: function: dict -> ee.Image, the process noise
         H: function: dict -> ee.Image, the measurement function
         R: function: dict -> ee.Image, the measurement noise
+        preprocess_fn: function: dict -> list[ee.Image], arbitrary function to
+            apply at each step of the iterate any images returned by it will
+            be stored in the output of each iterate step, triggers before the
+            kalman filter predict/update, useful e.g., to run BULC
+            simultaneously. Defaults to do nothing.
+        postprocess_fn: function dict -> list[ee.Image], arbitrary function to
+            apply at each step of the iterate, any images returned by it will
+            be stored in the output of each iterate step, triggers AFTER the
+            kalman filter predict/update, useful e.g., to track the result of
+            evaluating the current state after each update. Default to do
+            nothing.
         measurement_band: str, band name for the measurement, if None, the
             first band is used.
         num_params: int, number of parameters in the state, used to create an
@@ -98,7 +114,6 @@ def kalman_filter(
         the state variable's value (named a, b, c, ...) and one containing the
         state variable's covariance (name a_cov, b_cov, c_cov, ...).
     """
-    I = ee.Image(ee.Array.identity(num_params))
 
     if measurement_band is None:
         measurement_band = collection.first().bandNames().getString(0)
@@ -115,28 +130,23 @@ def kalman_filter(
         z = curr.select(measurement_band).toArray().toArray(1).rename(MEASUREMENT)
         t = curr.date().difference(START_DATE, "year")
 
+        preprocess_results = preprocess_fn(**locals())
+
         x_bar, P_bar = predict(x, P, F(**locals()), Q(**locals()))
-        x, P = update(x_bar, P_bar, z, H(**locals()), R(**locals()), I)
+        x, P = update(x_bar, P_bar, z, H(**locals()), R(**locals()), num_params)
 
-        # TODO: better name for this? Jeff calls it predictedMeasurement.
-        # That confused me because the Kalman Filter predicts the state and then
-        # compares that against a measurement. This is the result of using the
-        # updated state to better estimate the measurement.
-        zprime = H(**locals()).matrixMultiply(x)
+        postprocess_results = postprocess_fn(**locals())
 
-        return ee.List(prev).add(
-            ee.Image.cat(
-                z.rename(MEASUREMENT),
-                x.rename(STATE),
-                P.rename(COV),
-                zprime.rename(ZPRIME),
-            )
-        )
+        outputs = [z.rename(MEASUREMENT), x.rename(STATE), P.rename(COV)]
+        outputs.extend(preprocess_results)
+        outputs.extend(postprocess_results)
 
-    init = ee.Image(init_x).rename(STATE).addBands(ee.Image(init_P).rename(COV))
+        return ee.List(prev).add(ee.Image.cat(*outputs))
 
     # slice off the initial image
-    result = ee.ImageCollection(ee.List(collection.iterate(_iterator, [init])).slice(1))
+    result = ee.ImageCollection(
+        ee.List(collection.iterate(_iterator, [init_image])).slice(1)
+    )
 
     # use first 'num_params' letters in the alphabet as parameter names
     parameter_names = list(string.ascii_lowercase)[:num_params]
@@ -144,12 +154,11 @@ def kalman_filter(
     def _dearrayify(image):
         """Convert array images into a more interpretable form."""
         z = image.select(MEASUREMENT).arrayGet((0, 0))
-        zprime = image.select(ZPRIME).arrayGet((0, 0))
         x = image.select(STATE).arrayProject([0]).arrayFlatten([parameter_names])
         P = image.select(COV).arrayFlatten(
             [["cov_" + x for x in parameter_names], parameter_names]
         )
-        return ee.Image.cat(z, zprime, x, P)
+        return ee.Image.cat(z, x, P)
 
     if convert_from_array:
         result = result.map(_dearrayify)

@@ -128,8 +128,10 @@ def create_initializations(num_params, num_measures, x, P, F, Q, R):
         return H.arrayReshape(ee.Image(ee.Array([1, -1])), 2)
 
     ee_init = {
-        "init_x": ee.Image(ee.Array(x.tolist())),
-        "init_P": ee.Image(ee.Array(P.tolist())),
+        "init_image": ee.Image.cat(
+            ee.Image(ee.Array(x.tolist())).rename("x"),
+            ee.Image(ee.Array(P.tolist())).rename("P"),
+        ),
         "F": lambda **kwargs: ee.Image(ee.Array(F.tolist())),
         "Q": lambda **kwargs: ee.Image(ee.Array(Q.tolist())),
         "R": lambda **kwargs: ee.Image(ee.Array(R.tolist())),

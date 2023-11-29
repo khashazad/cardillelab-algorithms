@@ -125,3 +125,18 @@ def sinusoidal(num_params):
         return image.arrayReshape(ee.Image(ee.Array([1, -1])), 2)
 
     return inner
+
+
+def track_updated_measurement(x, H, **kwargs):
+    """After updating the state recompute the measurement.
+
+    Can be used as the postprocessing function.
+
+    Args:
+        x: ee.Image, the updated state
+        H: function: dict -> ee.Image, the measurement function
+
+    Returns:
+        ee.Image
+    """
+    return H(**kwargs).matrixMultiply(x)
