@@ -1,70 +1,65 @@
 """
 Test various configurations of parameters are able to run successfully.
 """
-import math
+import itertools
 
+import numpy as np
 import ee
+import pytest
 from eeek.kalman_filter import kalman_filter
+from eeek import utils
 
 ee.Initialize(opt_url=ee.data.HIGH_VOLUME_API_BASE_URL)
 
 POINT = ee.Geometry.Point([-122.45, 37.78])
 S2 = ee.ImageCollection("COPERNICUS/S2_SR_HARMONIZED")
 CLOUD_SCORE_PLUS = ee.ImageCollection("GOOGLE/CLOUD_SCORE_PLUS/V1/S2_HARMONIZED")
-INIT_x = ee.Image(ee.Array([[0.04, 0.04, 0.03]]).transpose())
-INIT_P = ee.Image(ee.Array([[0.04, 0.04, 0.03]]).transpose().matrixToDiag())
+TEST_PARAMS = list(itertools.product((3, 5, 7), (1,)))
+
+RNG = np.random.default_rng()
 
 
-def F_fn(**kwargs):
-    return ee.Image(ee.Array.identity(3))
+def make_random_init(num_params, num_measures):
+    return {
+        "init_x": utils.constant_transposed(RNG.uniform(size=num_measures).tolist())(),
+        "init_P": utils.constant_diagonal(RNG.uniform(size=num_measures).tolist())(),
+        "F": utils.identity(num_measures),
+        "Q": utils.constant_diagonal(RNG.uniform(size=num_measures).tolist()),
+        "H": utils.sinusoidal(num_params),
+        "R": utils.constant_transposed(RNG.uniform(size=num_measures).tolist()),
+        "num_params": num_params,
+    }
 
 
-def Q_fn(**kwargs):
-    return ee.Image(ee.Array([[0.001, 0.0005, 0.0025]]).transpose().matrixToDiag())
+@pytest.mark.parametrize("num_params,num_measures", TEST_PARAMS)
+def test_single_band_collection(num_params, num_measures):
+    init = make_random_init(num_params, num_measures)
 
-
-def H_fn(t, **kwargs):
-    t = t.multiply(2 * math.pi)
-    H = ee.Image.cat(ee.Image.constant(1.0), t.cos(), t.sin()).toArray(0)
-    return H.arrayReshape(ee.Image(ee.Array([1, -1])), 2)
-
-
-def R_fn(**kwargs):
-    return ee.Image(ee.Array([[0.1234]]))
-
-
-def R_from_cloud_score_plus(curr, band="cs", **kwargs):
-    shape = ee.Image(ee.Array([1, 1]))
-    return curr.select(band).toArray().arrayReshape(shape, 2)
-
-
-INIT = {
-    "init_x": INIT_x,
-    "init_P": INIT_P,
-    "F": F_fn,
-    "Q": Q_fn,
-    "H": H_fn,
-    "R": R_fn,
-    "num_params": 3,
-}
-
-
-def test_single_band_collection():
     col = S2.filterBounds(POINT).select("B12").limit(20)
-    result = kalman_filter(col, **INIT)
+
+    result = kalman_filter(col, **init)
+
     assert result.size().getInfo() == 20
 
 
-def test_multi_band_collection():
+@pytest.mark.parametrize("num_params,num_measures", TEST_PARAMS)
+def test_multi_band_collection(num_params, num_measures):
+    init = make_random_init(num_params, num_measures)
+
     col = S2.filterBounds(POINT).limit(20)
-    result = kalman_filter(col, measurement_band="B12", **INIT)
+
+    result = kalman_filter(col, measurement_band="B12", **init)
+
     assert result.size().getInfo() == 20
 
 
-def test_cloud_score_plus_as_measurement_noise():
+@pytest.mark.parametrize("num_params,num_measures", TEST_PARAMS)
+def test_cloud_score_plus_as_measurement_noise(num_params, num_measures):
+    init = make_random_init(num_params, num_measures)
+    init["R"] = utils.from_band_transposed("cs", 3)
+
     col = S2.filterBounds(POINT).limit(20)
     col = col.linkCollection(CLOUD_SCORE_PLUS, ["cs"])
-    init = INIT.copy()
-    init["R"] = R_from_cloud_score_plus
-    result = kalman_filter(col, measurement_band="B12", **INIT)
+    result = kalman_filter(col, measurement_band="B12", **init)
+
     assert result.size().getInfo() == 20

@@ -115,7 +115,7 @@ def kalman_filter(
         z = curr.select(measurement_band).toArray().toArray(1).rename(MEASUREMENT)
         t = curr.date().difference(START_DATE, "year")
 
-        kwargs = {"x": x, "P": P, "z": z, "t": t}
+        kwargs = {"x": x, "P": P, "z": z, "t": t, "curr": curr}
 
         x_bar, P_bar = predict(x, P, F(**kwargs), Q(**kwargs))
         x, P = update(x_bar, P_bar, z, H(**kwargs), R(**kwargs), I)
