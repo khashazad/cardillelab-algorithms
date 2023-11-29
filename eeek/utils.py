@@ -2,6 +2,7 @@
 Defines standard functions for x, P, F, Q, H, and R.
 """
 import math
+import string
 
 import ee
 
@@ -140,3 +141,27 @@ def track_updated_measurement(x, H, **kwargs):
         ee.Image
     """
     return H(**kwargs).matrixMultiply(x)
+
+
+def unpack_arrays(image, num_params):
+    """ Unpack array image into separate bands.
+
+    Can be mapped across the output of kalman_filter.
+
+    Currently only unpacks x and P. Uses lower case letters as parameter names.
+
+    Args:
+        image: ee.Image
+        num_params: int, number of parameters in the state variable.
+
+    Returns:
+        ee.Image with bands for each state variable, and the covariance between
+        each pair of state variables.
+    """
+    param_names = list(string.ascii_lowercase)[:num_params]
+
+    x = image.select("x").arrayProject([0]).arrayFlatten([param_names])
+    P = image.select("P").arrayFlatten(
+        [["cov_" + x for x in param_names], param_names]
+    )
+    return ee.Image.cat(x, P)

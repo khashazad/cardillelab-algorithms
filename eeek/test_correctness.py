@@ -13,6 +13,7 @@ import ee
 from filterpy.kalman import ExtendedKalmanFilter as EKF
 
 from eeek.kalman_filter import kalman_filter
+from eeek import utils
 
 ee.Initialize(opt_url=ee.data.HIGH_VOLUME_API_BASE_URL)
 
@@ -214,7 +215,10 @@ def compare_at_point(index, point, output_list, max_images=30, **init_args):
         structured_to_unstructured(ee.data.computePixels(request))
     )
 
-    ee_result = kalman_filter(col, **ee_init, convert_from_array=True)
+    ee_result = kalman_filter(col, **ee_init)
+    ee_result = ee_result.map(
+        lambda im: utils.unpack_arrays(im, INITIALIZATIONS["num_params"])
+    )
 
     # get the ee kalman states as local data
     param_names = list(string.ascii_lowercase)[: init_args["num_params"]]

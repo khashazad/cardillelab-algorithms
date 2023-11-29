@@ -86,6 +86,4 @@ def test_bulc_as_noise(num_params, num_measures):
     col = S2.filterBounds(POINT).limit(20).select("B12")
     result = kalman_filter(col, **init)
 
-    print(result.getInfo())
-
-    # assert result.size().getInfo() == 20
+    assert result.size().getInfo() == 20

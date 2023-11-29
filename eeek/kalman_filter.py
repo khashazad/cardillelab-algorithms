@@ -68,7 +68,6 @@ def kalman_filter(
     postprocess_fn=lambda **kwargs: [],
     measurement_band=None,
     num_params=3,
-    convert_from_array=True,
 ):
     """Applies a Kalman Filter to the given image collection.
 
@@ -143,24 +142,7 @@ def kalman_filter(
 
         return ee.List(prev).add(ee.Image.cat(*outputs))
 
-    # slice off the initial image
-    result = ee.ImageCollection(
-        ee.List(collection.iterate(_iterator, [init_image])).slice(1)
-    )
+    result = ee.List(collection.iterate(_iterator, [init_image]))
 
-    # use first 'num_params' letters in the alphabet as parameter names
-    parameter_names = list(string.ascii_lowercase)[:num_params]
-
-    def _dearrayify(image):
-        """Convert array images into a more interpretable form."""
-        z = image.select(MEASUREMENT).arrayGet((0, 0))
-        x = image.select(STATE).arrayProject([0]).arrayFlatten([parameter_names])
-        P = image.select(COV).arrayFlatten(
-            [["cov_" + x for x in parameter_names], parameter_names]
-        )
-        return ee.Image.cat(z, x, P)
-
-    if convert_from_array:
-        result = result.map(_dearrayify)
-
-    return result
+    # slice to drop the initial image
+    return ee.ImageCollection(result.slice(1))
