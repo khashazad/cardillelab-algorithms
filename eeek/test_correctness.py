@@ -2,6 +2,7 @@
 Test our earth engine implementation against a well established local python
 implementation to ensure we implemented the kalman filter properly.
 """
+import io
 import math
 import string
 import itertools
@@ -10,6 +11,7 @@ from multiprocessing import Pool, Manager
 import numpy as np
 from numpy.lib.recfunctions import structured_to_unstructured
 import ee
+import pytest
 from filterpy.kalman import ExtendedKalmanFilter as EKF
 
 from eeek.kalman_filter import kalman_filter
@@ -17,16 +19,40 @@ from eeek import utils, constants
 
 ee.Initialize(opt_url=ee.data.HIGH_VOLUME_API_BASE_URL)
 
+TEST_PARAMS = itertools.product((50,), (3, 5, 7), (1,))
 
-INITIALIZATIONS = {
-    "F": np.eye(3),
-    "Q": np.diag([0.001, 0.0005, 0.00025]),
-    "R": np.array([[0.1234]]),
-    "x": np.array([[0.04, 0.04, 0.05]]).T,
-    "P": np.diag([0.04, 0.04, 0.05]),
-    "num_params": 3,
-    "num_measures": 1,
-}
+
+def make_random_init(num_params, num_measures, seed):
+    rng = np.random.default_rng(int(abs(seed)))
+
+    return {
+        "F": np.eye(num_params),
+        "Q": np.diag(rng.uniform(size=num_params)),
+        "R": rng.uniform(size=(num_measures, num_measures)),
+        "x": rng.uniform(size=(num_params, 1)),
+        "P": np.diag(rng.uniform(size=num_params)),
+        "num_params": num_params,
+        "num_measures": num_measures,
+    }
+
+
+def compute_pixels_wrapper(request):
+    """ Wraps ee.data.computePixels to allow loading larger npy files.
+
+    Expects request to have fileFormat == "NPY"
+
+    Args:
+        request: dict, passed to ee.data.computePixels
+
+    Returns:
+        np.ndarray
+    """
+    result = ee.data.computePixels(request)
+    return np.squeeze(
+        structured_to_unstructured(
+            np.load(io.BytesIO(result), allow_pickle=True)
+        )
+    )
 
 
 def get_utm_from_lonlat(lon, lat):
@@ -60,7 +86,7 @@ def build_request(point, scale=10):
     geom = ee.Geometry.Point(point)
     coords = ee.Feature(geom).geometry(1, proj).getInfo()["coordinates"]
     request = {
-        "fileFormat": "NUMPY_NDARRAY",
+        "fileFormat": "NPY",
         "grid": {
             "dimensions": {
                 "width": 1,
@@ -83,7 +109,7 @@ def build_request(point, scale=10):
 def create_initializations(num_params, num_measures, x, P, F, Q, R):
     """For given inputs create matching initializations for local and ee EKF.
 
-    Create the measurement functions as a + bcos(t) + csin(t) + ... based on
+    Create the measurement functions as: a + b*cos(t) + c*sin(t) + ... based on
     num_params and num_measures
 
     Args:
@@ -137,6 +163,7 @@ def create_initializations(num_params, num_measures, x, P, F, Q, R):
         "Q": lambda **kwargs: ee.Image(ee.Array(Q.tolist())),
         "R": lambda **kwargs: ee.Image(ee.Array(R.tolist())),
         "H": H_fn,
+        "num_params": num_params,
     }
 
     return local_init, ee_init
@@ -165,7 +192,7 @@ def run_local_kalman(inputs, times, ekf, Hj, Hx):
     return np.array(states), np.array(covariances)
 
 
-def compare_at_point(index, point, output_list, max_images=30, **init_args):
+def compare_at_point(index, point, output_list, max_images, num_params, num_measures):
     """Compares outputs of a local and ee kalman filter on the given point.
 
     Stores the comparison result at output_list[index]
@@ -183,6 +210,7 @@ def compare_at_point(index, point, output_list, max_images=30, **init_args):
     Returns:
         None
     """
+    init_args = make_random_init(num_params, num_measures, point[0])
     local_init, ee_init = create_initializations(**init_args)
 
     col = (
@@ -211,66 +239,40 @@ def compare_at_point(index, point, output_list, max_images=30, **init_args):
     # get the raw collection as local data
     request = build_request(point)
     request["expression"] = col.toBands()
-    kalman_input = np.squeeze(
-        structured_to_unstructured(ee.data.computePixels(request))
-    )
+    kalman_input = compute_pixels_wrapper(request)
+
+    param_names = list(string.ascii_lowercase)[:num_params]
 
     ee_result = kalman_filter(col, **ee_init)
     ee_result = ee_result.map(
-        lambda im: utils.unpack_arrays(im, INITIALIZATIONS["num_params"])
+        lambda im: utils.unpack_arrays(im, param_names)
     )
 
     # get the ee kalman states as local data
-    param_names = list(string.ascii_lowercase)[: init_args["num_params"]]
     request["expression"] = ee_result.select(param_names).toBands()
-    ee_states = np.squeeze(
-        structured_to_unstructured(ee.data.computePixels(request))
-    ).reshape((-1, init_args["num_params"], init_args["num_measures"]))
+    state_shape = (-1, num_params, num_measures)
+    ee_states = compute_pixels_wrapper(request).reshape(state_shape)
 
     # get the ee kalman state covariances as local data
     cov_names = [f"cov_{x}_{y}" for x in param_names for y in param_names]
     request["expression"] = ee_result.select(cov_names).toBands()
-    ee_covariances = np.squeeze(
-        structured_to_unstructured(ee.data.computePixels(request))
-    ).reshape((-1, init_args["num_params"], init_args["num_params"]))
+    cov_shape = (-1, num_params, num_params)
+    ee_covariances = compute_pixels_wrapper(request).reshape(cov_shape)
 
     # get the local kalman state and state covariances
     local_states, local_covariances = run_local_kalman(
         kalman_input, image_dates, **local_init
     )
 
-    output_list[index] = np.allclose(local_states, ee_states) and np.allclose(
-        local_covariances, ee_covariances
+    tol = 1e-8
+    output_list[index] = (
+        np.allclose(local_states, ee_states, rtol=tol, atol=tol) and
+        np.allclose(local_covariances, ee_covariances, rtol=tol, atol=tol)
     )
 
 
-def _multiprocessing_fn(args):
-    """Wrapper for compare_at_point to be passed to multiprocessing.Pool.map
-
-    Must be defined at the top level to be pickleable (which is necessary for
-    multiprocessing)
-
-    TODO: using pool.starmap possibly simplifies args
-
-    Args:
-        args: (int, ((int, int), managed list)), this gross input type is
-        necessary to allow this function to be defined at the top scope (and
-        therefore be pickleable) while still being able to pass in a managed
-        list from inside the scope of a context manager.
-
-    Returns:
-        None
-    """
-    kwargs = {
-        "index": args[0],
-        "point": args[1][0],
-        "output_list": args[1][1],
-        **INITIALIZATIONS,
-    }
-    compare_at_point(**kwargs)
-
-
-def test_correctness(N=100):
+@pytest.mark.parametrize("N,num_params,num_measures", TEST_PARAMS)
+def test_correctness(N, num_params, num_measures):
     # create a sample of N random points over North America
     roi = ee.Geometry.Rectangle([(-116, 33), (-82, 54)])
     samples = ee.Image.constant(1).sample(
@@ -282,13 +284,22 @@ def test_correctness(N=100):
     )
     points = samples.geometry().coordinates().getInfo()
 
+    # use the largest number of images while avoiding computePixels' band limit
+    max_images = 1024 // (num_params ** 2)
+
     with Manager() as manager:
         test_results = manager.list([None] * N)
         with Pool(40) as pool:
-            pool.map(
-                _multiprocessing_fn,
-                enumerate(zip(points, itertools.repeat(test_results))),
+            pool.starmap(
+                compare_at_point,
+                zip(
+                    range(len(points)),
+                    points,
+                    itertools.repeat(test_results),
+                    itertools.repeat(max_images),
+                    itertools.repeat(num_params),
+                    itertools.repeat(num_measures),
+                )
             )
 
-        print(test_results)
         assert np.sum(test_results) == N
