@@ -6,6 +6,8 @@ import string
 
 import ee
 
+from eeek import constants
+
 
 def identity(num_params):
     """Creates an array image of the identity matrix with size num_params.
@@ -144,7 +146,7 @@ def track_updated_measurement(x, H, **kwargs):
 
 
 def unpack_arrays(image, num_params):
-    """ Unpack array image into separate bands.
+    """Unpack array image into separate bands.
 
     Can be mapped across the output of kalman_filter.
 
@@ -160,8 +162,8 @@ def unpack_arrays(image, num_params):
     """
     param_names = list(string.ascii_lowercase)[:num_params]
 
-    x = image.select("x").arrayProject([0]).arrayFlatten([param_names])
-    P = image.select("P").arrayFlatten(
+    x = image.select(constants.STATE).arrayProject([0]).arrayFlatten([param_names])
+    P = image.select(constants.COV).arrayFlatten(
         [["cov_" + x for x in param_names], param_names]
     )
     return ee.Image.cat(x, P)

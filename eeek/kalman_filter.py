@@ -1,11 +1,6 @@
-import string
-
 import ee
 
-# band names
-STATE = "x"
-COV = "P"
-MEASUREMENT = "z"
+from eeek import constants
 
 UNMASK_VALUE = 0
 
@@ -123,10 +118,10 @@ def kalman_filter(
         prev = ee.List(prev)
 
         last = ee.Image(prev.get(-1))
-        x = last.select(STATE)
-        P = last.select(COV)
+        x = last.select(constants.STATE)
+        P = last.select(constants.COV)
 
-        z = curr.select(measurement_band).toArray().toArray(1).rename(MEASUREMENT)
+        z = curr.select(measurement_band).toArray().toArray(1)
         t = curr.date().difference(START_DATE, "year")
 
         preprocess_results = preprocess_fn(**locals())
@@ -136,7 +131,11 @@ def kalman_filter(
 
         postprocess_results = postprocess_fn(**locals())
 
-        outputs = [z.rename(MEASUREMENT), x.rename(STATE), P.rename(COV)]
+        outputs = [
+            z.rename(constants.MEASUREMENT),
+            x.rename(constants.STATE),
+            P.rename(constants.COV),
+        ]
         outputs.extend(preprocess_results)
         outputs.extend(postprocess_results)
 

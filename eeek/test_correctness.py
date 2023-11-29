@@ -13,7 +13,7 @@ import ee
 from filterpy.kalman import ExtendedKalmanFilter as EKF
 
 from eeek.kalman_filter import kalman_filter
-from eeek import utils
+from eeek import utils, constants
 
 ee.Initialize(opt_url=ee.data.HIGH_VOLUME_API_BASE_URL)
 
@@ -130,8 +130,8 @@ def create_initializations(num_params, num_measures, x, P, F, Q, R):
 
     ee_init = {
         "init_image": ee.Image.cat(
-            ee.Image(ee.Array(x.tolist())).rename("x"),
-            ee.Image(ee.Array(P.tolist())).rename("P"),
+            ee.Image(ee.Array(x.tolist())).rename(constants.STATE),
+            ee.Image(ee.Array(P.tolist())).rename(constants.COV),
         ),
         "F": lambda **kwargs: ee.Image(ee.Array(F.tolist())),
         "Q": lambda **kwargs: ee.Image(ee.Array(Q.tolist())),

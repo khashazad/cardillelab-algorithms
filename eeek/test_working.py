@@ -6,8 +6,9 @@ import itertools
 import numpy as np
 import ee
 import pytest
+
 from eeek.kalman_filter import kalman_filter
-from eeek import utils, bulc
+from eeek import utils, bulc, constants
 
 ee.Initialize(opt_url=ee.data.HIGH_VOLUME_API_BASE_URL)
 
@@ -22,13 +23,9 @@ RNG = np.random.default_rng()
 def make_random_init(num_params, num_measures):
     return {
         "init_image": ee.Image.cat(
-            utils.constant_transposed(RNG.uniform(size=num_params).tolist())().rename(
-                "x"
-            ),
-            utils.constant_diagonal(RNG.uniform(size=num_params).tolist())().rename(
-                "P"
-            ),
-        ),
+            utils.constant_transposed(RNG.uniform(size=num_params).tolist())(),
+            utils.constant_diagonal(RNG.uniform(size=num_params).tolist())(),
+        ).rename([constants.STATE, constants.COV]),
         "F": utils.identity(num_params),
         "Q": utils.constant_diagonal(RNG.uniform(size=num_params).tolist()),
         "H": utils.sinusoidal(num_params),
@@ -75,10 +72,17 @@ def test_cloud_score_plus_as_measurement_noise(num_params, num_measures):
 def test_bulc_as_noise(num_params, num_measures):
     init = make_random_init(num_params, num_measures)
     init["init_image"] = ee.Image.cat(
-        utils.constant_transposed(RNG.uniform(size=num_params).tolist())().rename("x"),
-        utils.constant_diagonal(RNG.uniform(size=num_params).tolist())().rename("P"),
-        ee.Image.constant(ee.List.repeat(0, num_measures)).rename("residual"),
-        ee.Image(ee.Array(ee.List.repeat(1 / 3, 3))).rename("change_prob"),
+        utils.constant_transposed(RNG.uniform(size=num_params).tolist())(),
+        utils.constant_diagonal(RNG.uniform(size=num_params).tolist())(),
+        ee.Image.constant(ee.List.repeat(0, num_measures)),
+        ee.Image(ee.Array(ee.List.repeat(1 / 3, 3))),
+    ).rename(
+        [
+            constants.STATE,
+            constants.COV,
+            constants.RESIDUAL,
+            constants.CHANGE_PROB,
+        ]
     )
     init["preprocess_fn"] = bulc.preprocess(0.1)
     init["Q"] = bulc.bulc_as_noise

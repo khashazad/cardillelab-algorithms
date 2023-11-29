@@ -3,11 +3,10 @@ import ee
 import numpy as np
 from scipy.integrate import quad
 
+from eeek import constants
+
 MIN_Z_SCORE = 0
 MAX_Z_SCORE = 5
-
-RESIDUAL_BAND = "residual"
-CHANGE_PROB_BAND = "change_prob"
 
 
 def bulcp_update(curr, last, leveler=0.1, num_classes=3):
@@ -76,8 +75,8 @@ def get_change_prob(im):
         ee.Image with three bands containing the probability that the band has
         increased, remained stable, or decreased.
     """
-    index_im = im.abs().multiply(100).round().clamp(MIN_Z_SCORE, MAX_Z_SCORE).toInt()
-    prob = Z_TABLE.arrayGet(index_im)
+    index_im = im.abs().multiply(100).round().clamp(MIN_Z_SCORE, MAX_Z_SCORE)
+    prob = Z_TABLE.arrayGet(index_im.toInt())
     unchanged_prob = ((prob.multiply(-1)).add(1)).multiply(2)
     changed_prob = (unchanged_prob.multiply(-1)).add(1)
 
@@ -103,19 +102,21 @@ def preprocess(bulc_leveler=0.1):
         prev = ee.List(prev)
 
         curr_residual = z.subtract(H(**kwargs).matrixMultiply(x)).arrayGet((0, 0))
-        prev_residuals = ee.ImageCollection(prev).select(RESIDUAL_BAND)
+        prev_residuals = ee.ImageCollection(prev).select(constants.RESIDUAL)
         mean_residuals = prev_residuals.reduce(ee.Reducer.mean())
         std_residuals = prev_residuals.reduce(ee.Reducer.stdDev())
 
         z_score = curr_residual.subtract(mean_residuals).divide(std_residuals)
         change_prob = get_change_prob(z_score)
         smoothed_change_prob = bulcp_update(
-            change_prob, ee.Image(prev.get(-1)).select(CHANGE_PROB_BAND), bulc_leveler
+            change_prob,
+            ee.Image(prev.get(-1)).select(constants.CHANGE_PROB),
+            bulc_leveler,
         )
 
         return [
-            curr_residual.rename(RESIDUAL_BAND),
-            smoothed_change_prob.rename(CHANGE_PROB_BAND),
+            curr_residual.rename(constants.RESIDUAL),
+            smoothed_change_prob.rename(constants.CHANGE_PROB),
         ]
 
     return inner
