@@ -123,8 +123,9 @@ def sinusoidal(num_params, linear_term=False):
         bands = [ee.Image.constant(1.0)]
         if linear_term:  # TODO: if linear term proves useful drop if statement
             bands.append(t)
-        for _ in range((num_params - 1) // 2):
-            bands.extend([t.multiply(2 * math.pi).cos(), t.multiply(2 * math.pi).sin()])
+        for i in range((num_params - 1) // 2):
+            freq = (i + 1) * 2 * math.pi
+            bands.extend([t.multiply(freq).cos(), t.multiply(freq).sin()])
         image = ee.Image.cat(*bands).toArray(0)
         return image.arrayReshape(ee.Image(ee.Array([1, -1])), 2)
 

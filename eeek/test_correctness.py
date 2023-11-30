@@ -136,9 +136,9 @@ def create_initializations(num_params, num_measures, linear_term, x, P, F, Q, R)
         H = [1]
         if linear_term:
             H.append(t)
-        t *= 2 * math.pi
-        for _ in range((num_params - 1) // 2):
-            H.extend([np.cos(t), np.sin(t)])
+        for i in range((num_params - 1) // 2):
+            freq = (i + 1) * 2 * math.pi
+            H.extend([np.cos(t * freq), np.sin(t *freq)])
         return np.array([H])
 
     def Hx(x, t):
