@@ -104,7 +104,7 @@ def from_band_diagonal(curr, band_name, n):
     return inner
 
 
-def sinusoidal(num_params):
+def sinusoidal(num_params, linear_term=False):
     """Creates sinusoid function of the form a + b*cos(2pi*t) + c*sin(2pi*t)...
 
     Function will have an intercept but no linear term. cos is always paired
@@ -121,6 +121,8 @@ def sinusoidal(num_params):
 
     def inner(t, **kwargs):
         bands = [ee.Image.constant(1.0)]
+        if linear_term:  # TODO: if linear term proves useful drop if statement
+            bands.append(t)
         for _ in range((num_params - 1) // 2):
             bands.extend([t.multiply(2 * math.pi).cos(), t.multiply(2 * math.pi).sin()])
         image = ee.Image.cat(*bands).toArray(0)

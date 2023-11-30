@@ -19,10 +19,10 @@ from eeek import utils, constants
 
 ee.Initialize(opt_url=ee.data.HIGH_VOLUME_API_BASE_URL)
 
-TEST_PARAMS = itertools.product((50,), (3, 5, 7), (1,))
+TEST_PARAMS = itertools.product((50,), (3, 5, 7), (1,), (True, False))
 
 
-def make_random_init(num_params, num_measures, seed):
+def make_random_init(num_params, num_measures, linear_term, seed):
     rng = np.random.default_rng(int(abs(seed)))
 
     return {
@@ -33,11 +33,12 @@ def make_random_init(num_params, num_measures, seed):
         "P": np.diag(rng.uniform(size=num_params)),
         "num_params": num_params,
         "num_measures": num_measures,
+        "linear_term": linear_term,
     }
 
 
 def compute_pixels_wrapper(request):
-    """ Wraps ee.data.computePixels to allow loading larger npy files.
+    """Wraps ee.data.computePixels to allow loading larger npy files.
 
     Expects request to have fileFormat == "NPY"
 
@@ -49,9 +50,7 @@ def compute_pixels_wrapper(request):
     """
     result = ee.data.computePixels(request)
     return np.squeeze(
-        structured_to_unstructured(
-            np.load(io.BytesIO(result), allow_pickle=True)
-        )
+        structured_to_unstructured(np.load(io.BytesIO(result), allow_pickle=True))
     )
 
 
@@ -106,7 +105,7 @@ def build_request(point, scale=10):
     return request
 
 
-def create_initializations(num_params, num_measures, x, P, F, Q, R):
+def create_initializations(num_params, num_measures, linear_term, x, P, F, Q, R):
     """For given inputs create matching initializations for local and ee EKF.
 
     Create the measurement functions as: a + b*cos(t) + c*sin(t) + ... based on
@@ -134,8 +133,10 @@ def create_initializations(num_params, num_measures, x, P, F, Q, R):
 
     # build H for local version
     def Hj(x, t):
-        t *= 2 * math.pi
         H = [1]
+        if linear_term:
+            H.append(t)
+        t *= 2 * math.pi
         for _ in range((num_params - 1) // 2):
             H.extend([np.cos(t), np.sin(t)])
         return np.array([H])
@@ -145,15 +146,6 @@ def create_initializations(num_params, num_measures, x, P, F, Q, R):
 
     local_init = {"ekf": ekf, "Hj": Hj, "Hx": Hx}
 
-    # build H for ee version
-    def H_fn(t, **kwargs):
-        t = t.multiply(2 * math.pi)
-        images = [ee.Image.constant(1.0)]
-        for _ in range((num_params - 1) // 2):
-            images.extend([t.cos(), t.sin()])
-        H = ee.Image.cat(*images).toArray(0)
-        return H.arrayReshape(ee.Image(ee.Array([1, -1])), 2)
-
     ee_init = {
         "init_image": ee.Image.cat(
             ee.Image(ee.Array(x.tolist())).rename(constants.STATE),
@@ -162,7 +154,7 @@ def create_initializations(num_params, num_measures, x, P, F, Q, R):
         "F": lambda **kwargs: ee.Image(ee.Array(F.tolist())),
         "Q": lambda **kwargs: ee.Image(ee.Array(Q.tolist())),
         "R": lambda **kwargs: ee.Image(ee.Array(R.tolist())),
-        "H": H_fn,
+        "H": utils.sinusoidal(num_params, linear_term),
         "num_params": num_params,
     }
 
@@ -192,7 +184,9 @@ def run_local_kalman(inputs, times, ekf, Hj, Hx):
     return np.array(states), np.array(covariances)
 
 
-def compare_at_point(index, point, output_list, max_images, num_params, num_measures):
+def compare_at_point(
+    index, point, output_list, max_images, num_params, num_measures, linear_term
+):
     """Compares outputs of a local and ee kalman filter on the given point.
 
     Stores the comparison result at output_list[index]
@@ -210,7 +204,10 @@ def compare_at_point(index, point, output_list, max_images, num_params, num_meas
     Returns:
         None
     """
-    init_args = make_random_init(num_params, num_measures, point[0])
+    if linear_term:
+        num_params += 1
+
+    init_args = make_random_init(num_params, num_measures, linear_term, point[0])
     local_init, ee_init = create_initializations(**init_args)
 
     col = (
@@ -241,12 +238,11 @@ def compare_at_point(index, point, output_list, max_images, num_params, num_meas
     request["expression"] = col.toBands()
     kalman_input = compute_pixels_wrapper(request)
 
+
     param_names = list(string.ascii_lowercase)[:num_params]
 
     ee_result = kalman_filter(col, **ee_init)
-    ee_result = ee_result.map(
-        lambda im: utils.unpack_arrays(im, param_names)
-    )
+    ee_result = ee_result.map(lambda im: utils.unpack_arrays(im, param_names))
 
     # get the ee kalman states as local data
     request["expression"] = ee_result.select(param_names).toBands()
@@ -265,14 +261,13 @@ def compare_at_point(index, point, output_list, max_images, num_params, num_meas
     )
 
     tol = 1e-8
-    output_list[index] = (
-        np.allclose(local_states, ee_states, rtol=tol, atol=tol) and
-        np.allclose(local_covariances, ee_covariances, rtol=tol, atol=tol)
-    )
+    output_list[index] = np.allclose(
+        local_states, ee_states, rtol=tol, atol=tol
+    ) and np.allclose(local_covariances, ee_covariances, rtol=tol, atol=tol)
 
 
-@pytest.mark.parametrize("N,num_params,num_measures", TEST_PARAMS)
-def test_correctness(N, num_params, num_measures):
+@pytest.mark.parametrize("N,num_params,num_measures,linear_term", TEST_PARAMS)
+def test_correctness(N, num_params, num_measures, linear_term):
     # create a sample of N random points over North America
     roi = ee.Geometry.Rectangle([(-116, 33), (-82, 54)])
     samples = ee.Image.constant(1).sample(
@@ -285,7 +280,7 @@ def test_correctness(N, num_params, num_measures):
     points = samples.geometry().coordinates().getInfo()
 
     # use the largest number of images while avoiding computePixels' band limit
-    max_images = 1024 // (num_params ** 2)
+    max_images = 1024 // ((num_params + int(linear_term)) ** 2)
 
     with Manager() as manager:
         test_results = manager.list([None] * N)
@@ -299,7 +294,8 @@ def test_correctness(N, num_params, num_measures):
                     itertools.repeat(max_images),
                     itertools.repeat(num_params),
                     itertools.repeat(num_measures),
-                )
+                    itertools.repeat(linear_term),
+                ),
             )
 
         assert np.sum(test_results) == N
