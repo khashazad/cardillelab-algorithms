@@ -138,7 +138,7 @@ def create_initializations(num_params, num_measures, linear_term, x, P, F, Q, R)
             H.append(t)
         for i in range((num_params - 1) // 2):
             freq = (i + 1) * 2 * math.pi
-            H.extend([np.cos(t * freq), np.sin(t *freq)])
+            H.extend([np.cos(t * freq), np.sin(t * freq)])
         return np.array([H])
 
     def Hx(x, t):
@@ -237,7 +237,6 @@ def compare_at_point(
     request = build_request(point)
     request["expression"] = col.toBands()
     kalman_input = compute_pixels_wrapper(request)
-
 
     param_names = list(string.ascii_lowercase)[:num_params]
 
