@@ -70,7 +70,7 @@ def test_multi_band_collection(num_params, num_measures):
 @pytest.mark.parametrize("num_params,num_measures", TEST_PARAMS)
 def test_cloud_score_plus_as_measurement_noise(num_params, num_measures):
     init = make_random_init(num_params, num_measures)
-    init["R"] = utils.from_band_transposed("cs", 3)
+    init["R"] = utils.from_band_transposed("cs", num_measures)
 
     col = S2.filterBounds(POINT).limit(20)
     col = col.linkCollection(CLOUD_SCORE_PLUS, ["cs"])
