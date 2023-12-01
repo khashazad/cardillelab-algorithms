@@ -13,11 +13,26 @@ from eeek import utils, bulc, constants
 ee.Initialize(opt_url=ee.data.HIGH_VOLUME_API_BASE_URL)
 
 POINT = ee.Geometry.Point([-122.45, 37.78])
+ROI = POINT.buffer(1024).bounds()
 S2 = ee.ImageCollection("COPERNICUS/S2_SR_HARMONIZED")
+SCALE = 10
 CLOUD_SCORE_PLUS = ee.ImageCollection("GOOGLE/CLOUD_SCORE_PLUS/V1/S2_HARMONIZED")
 TEST_PARAMS = list(itertools.product((3, 5, 7), (1,)))
 
 RNG = np.random.default_rng()
+
+
+def verify_success(kalman_result, N=10):
+    kalman_result_list = kalman_result.select(["x", "P"]).toList(kalman_result.size())
+    final = ee.Image(kalman_result_list.get(-1))
+
+    test = final.sample(
+        region=ROI,
+        scale=SCALE,
+        numPixels=N,
+    )
+
+    assert test.size().getInfo() == N
 
 
 def make_random_init(num_params, num_measures):
@@ -40,9 +55,7 @@ def test_single_band_collection(num_params, num_measures):
 
     col = S2.filterBounds(POINT).select("B12").limit(20)
 
-    result = kalman_filter(col, **init)
-
-    assert result.size().getInfo() == 20
+    verify_success(kalman_filter(col, **init))
 
 
 @pytest.mark.parametrize("num_params,num_measures", TEST_PARAMS)
@@ -51,9 +64,7 @@ def test_multi_band_collection(num_params, num_measures):
 
     col = S2.filterBounds(POINT).limit(20)
 
-    result = kalman_filter(col, measurement_band="B12", **init)
-
-    assert result.size().getInfo() == 20
+    verify_success(kalman_filter(col, measurement_band="B12", **init))
 
 
 @pytest.mark.parametrize("num_params,num_measures", TEST_PARAMS)
@@ -63,9 +74,8 @@ def test_cloud_score_plus_as_measurement_noise(num_params, num_measures):
 
     col = S2.filterBounds(POINT).limit(20)
     col = col.linkCollection(CLOUD_SCORE_PLUS, ["cs"])
-    result = kalman_filter(col, measurement_band="B12", **init)
 
-    assert result.size().getInfo() == 20
+    verify_success(kalman_filter(col, measurement_band="B12", **init))
 
 
 @pytest.mark.parametrize("num_params,num_measures", TEST_PARAMS)
@@ -88,6 +98,4 @@ def test_bulc_as_noise(num_params, num_measures):
     init["Q"] = bulc.bulc_as_noise
 
     col = S2.filterBounds(POINT).limit(20).select("B12")
-    result = kalman_filter(col, **init)
-
-    assert result.size().getInfo() == 20
+    verify_success(kalman_filter(col, **init))
