@@ -99,3 +99,12 @@ def test_bulc_as_noise(num_params, num_measures):
 
     col = S2.filterBounds(POINT).limit(20).select("B12")
     verify_success(kalman_filter(col, **init))
+
+
+@pytest.mark.parametrize("num_measures", [1])
+def test_ccdc_as_H(num_measures):
+    init = make_random_init(8, num_measures)
+    init["H"] = utils.ccdc
+
+    col = S2.filterBounds(POINT).limit(20).select("B12")
+    verify_success(kalman_filter(col, **init))

@@ -132,6 +132,37 @@ def sinusoidal(num_params, linear_term=False):
     return inner
 
 
+def ccdc(t, **kwargs):
+    """Creates a standard 8 parameter CCDC model.
+
+    Useful for H.
+
+    This is a more efficient implementation of sinusoidal(7, True)
+
+    See: developers.google.com/earth-engine/datasets/catalog/GOOGLE_GLOBAL_CCDC_V1
+    for model description.
+
+    Args:
+        None
+
+    Returns:
+        function () -> ee.Image
+    """
+
+    parameters = [
+        ee.Image.constant(1.0),
+        t,
+        t.multiply(2 * math.pi).cos(),
+        t.multiply(2 * math.pi).sin(),
+        t.multiply(4 * math.pi).cos(),
+        t.multiply(4 * math.pi).sin(),
+        t.multiply(6 * math.pi).cos(),
+        t.multiply(6 * math.pi).sin(),
+    ]
+    image = ee.Image.cat(*parameters).toArray(0)
+    return image.arrayReshape(ee.Image(ee.Array([1, -1])), 2).toFloat()
+
+
 def track_updated_measurement(x, H, **kwargs):
     """After updating the state recompute the measurement.
 
