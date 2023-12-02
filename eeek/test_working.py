@@ -84,7 +84,7 @@ def test_bulc_as_noise(num_params, num_measures):
     init["init_image"] = ee.Image.cat(
         utils.constant_transposed(RNG.uniform(size=num_params).tolist())(),
         utils.constant_diagonal(RNG.uniform(size=num_params).tolist())(),
-        ee.Image.constant(ee.List.repeat(0, num_measures)),
+        ee.Image.constant(ee.List.repeat(0, num_measures)).toFloat(),
         ee.Image(ee.Array(ee.List.repeat(1 / 3, 3))),
     ).rename(
         [

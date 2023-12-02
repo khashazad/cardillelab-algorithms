@@ -142,6 +142,6 @@ def bulc_as_noise(preprocess_results, num_params, **kwargs):
         .multiply(-1)
         .add(1)
         .arrayRepeat(0, num_params)
-        .arrayReshape(ee.Image(ee.Array([1, num_params])), 2)
+        .arrayReshape(ee.Image(ee.Array([num_params, 1])), 2)
         .matrixToDiag()
     )
