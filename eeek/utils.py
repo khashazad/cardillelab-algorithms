@@ -7,6 +7,23 @@ import ee
 
 from eeek import constants
 
+ee.Initialize(opt_url=ee.data.HIGH_VOLUME_API_BASE_URL)
+
+L9_SR = ee.ImageCollection("LANDSAT/LC09/C02/T1_L2")
+L8_SR = ee.ImageCollection("LANDSAT/LC08/C02/T1_L2")
+L7_SR = ee.ImageCollection("LANDSAT/LE07/C02/T1_L2")
+L5_SR = ee.ImageCollection("LANDSAT/LT05/C02/T1_L2")
+LANDSAT_SR = {9: L9_SR, 8: L8_SR, 7: L7_SR, 5: L5_SR}
+
+L9_TOA = ee.ImageCollection("LANDSAT/LC09/C02/T1_TOA")
+L8_TOA = ee.ImageCollection("LANDSAT/LC08/C02/T1_TOA")
+L7_TOA = ee.ImageCollection("LANDSAT/LE07/C02/T1_TOA")
+L5_TOA = ee.ImageCollection("LANDSAT/LT05/C02/T1_TOA")
+LANDSAT_TOA = {9: L9_TOA, 8: L8_TOA, 7: L7_TOA, 5: L5_TOA}
+
+S2_SR = ee.ImageCollection("COPERNICUS/S2_SR_HARMONIZED")
+S2_CLOUD_SCORE_PLUS = ee.ImageCollection("GOOGLE/CLOUD_SCORE_PLUS/V1/S2_HARMONIZED")
+
 
 def identity(num_params):
     """Creates an array image of the identity matrix with size num_params.
@@ -199,3 +216,90 @@ def unpack_arrays(image, param_names):
         [["cov_" + x for x in param_names], param_names]
     )
     return ee.Image.cat(x, P)
+
+
+def prep_landsat_collection(region, start_date, end_date, max_cloud_cover, sensors=8):
+    """Creates Landsat collection, applies scale factors, adds cloud score band.
+
+    The cloud score is calculated using ee.Algorithms.Landsat.simpleCloudScore
+    and is stored in a band named "cloud".
+
+    Args:
+        region: ee.Geometry, used in filterBounds
+        start_date: str, used in filterDate
+        end_date: str, used in filterDate
+        max_cloud_cover: int, used in filter.lte("CLOUD_COVER", ...)
+        sensors: int or list[int], which Landsat sensors to use
+
+    Returns:
+        ee.ImageCollection
+    """
+
+    if not isinstance(sensors, (list, tuple)):
+        sensors = [sensors]
+
+    for s in sensors:
+        if s not in LANDSAT_SR.keys():
+            raise NotImplementedError(
+                f"Only Landsat {list(LANDSAT_SR.keys())} supported, got {sensors}"
+            )
+
+    def _filter(col):
+        return (
+            col.filterBounds(region)
+            .filterDate(start_date, end_date)
+            .filter(ee.Filter.lte("CLOUD_COVER", max_cloud_cover))
+        )
+
+    def apply_scale_factors(image):
+        optical_bands = image.select("SR_B.").multiply(0.0000275).add(-0.2)
+        thermal_bands = image.select("ST_B.*").multiply(0.00341802).add(149.0)
+        return image.addBands(optical_bands, None, True).addBands(
+            thermal_bands, None, True
+        )
+
+    sr_col = ee.ImageCollection(
+        ee.FeatureCollection([LANDSAT_SR[k] for k in sensors]).flatten()
+    )
+    filtered_sr_col = _filter(sr_col).map(apply_scale_factors)
+
+    toa_col = ee.ImageCollection(
+        ee.FeatureCollection([LANDSAT_TOA[k] for k in sensors]).flatten()
+    )
+    filtered_toa_col = _filter(toa_col).map(ee.Algorithms.Landsat.simpleCloudScore)
+
+    col = filtered_sr_col.linkCollection(filtered_toa_col, ["cloud"])
+
+    return col.sort("system:time_start")
+
+
+def prep_sentinel_collection(region, start_date, end_date, max_cloud_cover):
+    """Creates Sentinel2 collection, adds cloud score band.
+
+    The cloud score is based on the Sentinel Cloud Score + and is stored in a
+    band named "cloud".
+
+    Args:
+        region: ee.Geometry, used in filterBounds
+        start_date: str, used in filterDate
+        end_date: str, used in filterDate
+        max_cloud_cover: int, used in filter.lte("CLOUDY_PIXEL_PERCENTAGE", ...)
+
+    Returns:
+        ee.ImageCollection
+    """
+
+    col = (
+        S2_SR.filterBounds(region)
+        .filterDate(start_date, end_date)
+        .filter(ee.Filter.lte("CLOUDY_PIXEL_PERCENTAGE", max_cloud_cover))
+    )
+
+    cloud_score_col = (
+        S2_CLOUD_SCORE_PLUS.filterBounds(region)
+        .filterDate(start_date, end_date)
+        .select("cs")
+        .map(lambda im: im.rename("cloud"))
+    )
+
+    return col.linkCollection(cloud_score_col, ["cloud"])

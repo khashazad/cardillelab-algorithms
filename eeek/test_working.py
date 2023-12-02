@@ -70,12 +70,23 @@ def test_multi_band_collection(num_params, num_measures):
 @pytest.mark.parametrize("num_params,num_measures", TEST_PARAMS)
 def test_cloud_score_plus_as_measurement_noise(num_params, num_measures):
     init = make_random_init(num_params, num_measures)
-    init["R"] = utils.from_band_transposed("cs", num_measures)
+    init["R"] = utils.from_band_transposed("cloud", num_measures)
 
-    col = S2.filterBounds(POINT).limit(20)
-    col = col.linkCollection(CLOUD_SCORE_PLUS, ["cs"])
+    col = utils.prep_sentinel_collection(POINT, "2020-01-01", "2021-01-01", 50)
 
     verify_success(kalman_filter(col, measurement_band="B12", **init))
+
+
+@pytest.mark.parametrize("sensors", [8, (9, 8), (7, 5)])
+def test_simple_cloud_score_as_measurement_noise(sensors):
+    num_params = 5
+    num_measures = 1
+    init = make_random_init(num_params, num_measures)
+    init["R"] = utils.from_band_transposed("cloud", num_measures)
+
+    col = utils.prep_landsat_collection(POINT, "2020-01-01", "2021-01-01", 50)
+
+    verify_success(kalman_filter(col, **init))
 
 
 @pytest.mark.parametrize("num_params,num_measures", TEST_PARAMS)
