@@ -6,6 +6,9 @@ Earth Engine at "users/parevalo_bu/gee-ccdc-tools"
 import ee
 
 
+HARMONIC_TAGS = ["INTP", "SLP", "COS", "SIN", "COS2", "SIN2", "COS3", "SIN3"]
+
+
 def filter_coefs(ccdc_results, date, band, coef, segment_names, behavior):
     if behavior not in ["normal", "after", "before"]:
         raise NotImplementedError(
@@ -62,8 +65,14 @@ def apply_norm(band_coefs, segment_start, segment_end):
 
 
 def get_multi_coefs(
-    ccdc_results, date, band_list, coef_list, cond, segment_names, behavior
+    ccdc_results, date, band_list, coef_list=None, cond=True, segment_names=None, behavior="after"
 ):
+    if coef_list is None:
+        coef_list = HARMONIC_TAGS
+        
+    if segment_names is None:
+        segment_names = build_segment_tag(10)  # default to 10 tags...?
+        
     def inner(coef):
         return get_coef(ccdc_results, date, band_list, coef, segment_names, behavior)
 
@@ -117,9 +126,8 @@ def build_start_end_break_prob(fit, n_segments, tag):
 
 def build_coefs(fit, n_segments, band_list):
     segment_tag = build_segment_tag(n_segments)
-    harmonic_tag = ["INTP", "SLP", "COS", "SIN", "COS2", "SIN2", "COS3", "SIN3"]
 
-    zeros = ee.Image(ee.Array([ee.List.repeat(0, len(harmonic_tag))])).arrayRepeat(
+    zeros = ee.Image(ee.Array([ee.List.repeat(0, len(HARMONIC_TAGS))])).arrayRepeat(
         0, n_segments
     )
 
@@ -131,7 +139,7 @@ def build_coefs(fit, n_segments, band_list):
             .arraySlice(0, 0, n_segments)
         )
         tags = segment_tag.map(lambda x: ee.String(x).cat("_").cat(band).cat("_coef"))
-        return coef_img.arrayFlatten([tags, harmonic_tag])
+        return coef_img.arrayFlatten([tags, HARMONIC_TAGS])
 
     return ee.Image([retrieve_coefs(b) for b in band_list])
 
