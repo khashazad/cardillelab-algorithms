@@ -162,3 +162,13 @@ def build_ccd_image(fit, n_segments, band_list):
     n_obs = build_start_end_break_prob(fit, n_segments, "numObs")
 
     return ee.Image.cat(coef, rmse, magnitude, t_start, t_end, t_break, probs, n_obs)
+
+
+def get_ccdc_coefs(
+    raw_ccdc_image, segs, bands, date, coef_tags, normalize=True, behavior="after"
+):
+    ccdc_image = build_ccd_image(raw_ccdc_image, len(segs), bands)
+    coefs = get_multi_coefs(
+        ccdc_image, date, bands, coef_tags, normalize, segs, behavior
+    )
+    return coefs
