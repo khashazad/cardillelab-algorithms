@@ -65,14 +65,20 @@ def apply_norm(band_coefs, segment_start, segment_end):
 
 
 def get_multi_coefs(
-    ccdc_results, date, band_list, coef_list=None, cond=True, segment_names=None, behavior="after"
+    ccdc_results,
+    date,
+    band_list,
+    coef_list=None,
+    cond=True,
+    segment_names=None,
+    behavior="after",
 ):
     if coef_list is None:
         coef_list = HARMONIC_TAGS
-        
+
     if segment_names is None:
         segment_names = build_segment_tag(10)  # default to 10 tags...?
-        
+
     def inner(coef):
         return get_coef(ccdc_results, date, band_list, coef, segment_names, behavior)
 
