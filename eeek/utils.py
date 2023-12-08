@@ -266,7 +266,11 @@ def prep_landsat_collection(region, start_date, end_date, max_cloud_cover, senso
     toa_col = ee.ImageCollection(
         ee.FeatureCollection([LANDSAT_TOA[k] for k in sensors]).flatten()
     )
-    filtered_toa_col = _filter(toa_col).map(ee.Algorithms.Landsat.simpleCloudScore)
+    filtered_toa_col = (
+        _filter(toa_col)
+        .map(ee.Algorithms.Landsat.simpleCloudScore)
+        .map(lambda im: ee.Image(im).divide(100))
+    )
 
     col = filtered_sr_col.linkCollection(filtered_toa_col, ["cloud"])
 
