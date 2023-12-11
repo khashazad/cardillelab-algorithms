@@ -79,7 +79,7 @@ def constant_transposed(constant):
     return inner
 
 
-def from_band_transposed(band_name, n):
+def from_band_transposed(band_name, n, scale=None):
     """Creates an array image with curr[band_name] stacked n times
 
     Useful to get R from a band e.g. cloud score plus.
@@ -87,36 +87,62 @@ def from_band_transposed(band_name, n):
     Args:
         band_name: str, band in curr to populate array with
         n: int, shape of resulting array will be (n, 1)
+        scale: list[number] used to scale the band values to allow different
+            parameters/measurements to have different noise values, e.g., to
+            prioritize updating one parameter over others.
 
     Returns:
         function: ee.Image, dict -> ee.Image
     """
+    if scale is None:
+        scale = [1.0] * n
+
+    if not isinstance(scale, (list, tuple)):
+        scale = [scale]
+
+    assert len(scale) == n
+
+    scale_im = constant_transposed(scale)()
 
     def inner(curr, **kwargs):
-        return curr.select(band_name).toArray().arrayRepeat(1, n).matrixTranspose()
+        output = curr.select(band_name).toArray().arrayRepeat(1, n).matrixTranspose()
+        return output.multiply(scale_im)
 
     return inner
 
 
-def from_band_diagonal(curr, band_name, n):
+def from_band_diagonal(band_name, n, scale=None):
     """Creates an array image with curr[band_name] repeated along the diagonal.
 
     Args:
         band_name: str, band in curr to populate array with
         n: int, shape of resulting array will be (n, n)
+        scale: list[number] used to scale the band values to allow different
+            parameters/measurements to have different noise values, e.g., to
+            prioritize updating one parameter over others.
 
     Returns:
         function: ee.Image, dict -> ee.Image
     """
+    if scale is None:
+        scale = [1.0] * n
+
+    if not isinstance(scale, (list, tuple)):
+        scale = [scale]
+
+    assert len(scale) == n
+
+    scale_im = constants_diagonal(scale)()
 
     def inner(curr, **kwargs):
-        return (
+        output = (
             curr.select(band_name)
             .toArray()
             .arrayRepeat(1, n)
             .matrixTranspose()
             .matrixToDiag()
         )
+        return output.multiply(scale_im)
 
     return inner
 

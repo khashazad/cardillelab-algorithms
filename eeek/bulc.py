@@ -3,7 +3,7 @@ import ee
 import numpy as np
 from scipy.integrate import quad
 
-from eeek import constants
+from eeek import constants, utils
 
 MIN_Z_SCORE = 0
 MAX_Z_SCORE = 5
@@ -122,26 +122,41 @@ def preprocess(bulc_leveler=0.1):
     return inner
 
 
-def bulc_as_noise(preprocess_results, num_params, **kwargs):
+def bulc_as_noise(n, scale=None):
     """Converts the output of preprocess into a noise matrix.
 
     Can be used as Q.
 
     Args:
-        preprocess_results: list[ee.Image], 2nd element should be the bulc
-            probabilities.
-        num_params: int
+        n: int, number of parameters
+        scale: list[number] used to scale the bulc value to allow different
+            parameters/measurements to have different noise values, e.g., to
+            prioritize updating one parameter over others.
 
     Returns:
         ee.Image
     """
-    smoothed_change_prob = preprocess_results[1]
+    if scale is None:
+        scale = [1.0] * n
 
-    return (
-        smoothed_change_prob.arrayGet([1])
-        .multiply(-1)
-        .add(1)
-        .arrayRepeat(0, num_params)
-        .arrayReshape(ee.Image(ee.Array([num_params, 1])), 2)
-        .matrixToDiag()
-    )
+    if not isinstance(scale, (list, tuple)):
+        scale = [scale]
+
+    assert len(scale) == n
+
+    scale_im = utils.constant_diagonal(scale)()
+
+    def inner(preprocess_results, num_params, **kwargs):
+        smoothed_change_prob = preprocess_results[1]
+
+        output = (
+            smoothed_change_prob.arrayGet([1])
+            .multiply(-1)
+            .add(1)
+            .arrayRepeat(0, num_params)
+            .arrayReshape(ee.Image(ee.Array([num_params, 1])), 2)
+            .matrixToDiag()
+        )
+        return output.multiply(scale_im)
+
+    return inner

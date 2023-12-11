@@ -77,6 +77,17 @@ def test_cloud_score_plus_as_measurement_noise(num_params, num_measures):
     verify_success(kalman_filter(col, measurement_band="B12", **init))
 
 
+def test_scaled_band_value():
+    num_params = 5
+    num_measures = 1
+    init = make_random_init(num_params, num_measures)
+    init["R"] = utils.from_band_transposed("cloud", num_measures, 0.1234)
+
+    col = utils.prep_sentinel_collection(POINT, "2020-01-01", "2021-01-01", 50)
+
+    verify_success(kalman_filter(col, measurement_band="B12", **init))
+
+
 @pytest.mark.parametrize("sensors", [8, (9, 8), (7, 5)])
 def test_simple_cloud_score_as_measurement_noise(sensors):
     num_params = 5
@@ -106,7 +117,32 @@ def test_bulc_as_noise(num_params, num_measures):
         ]
     )
     init["preprocess_fn"] = bulc.preprocess(0.1)
-    init["Q"] = bulc.bulc_as_noise
+    init["Q"] = bulc.bulc_as_noise(num_params)
+
+    col = S2.filterBounds(POINT).limit(20).select("B12")
+    verify_success(kalman_filter(col, **init))
+
+
+def test_scaled_bulc():
+    num_params = 5
+    num_measures = 1
+    init = make_random_init(num_params, num_measures)
+    init["init_image"] = ee.Image.cat(
+        utils.constant_transposed(RNG.uniform(size=num_params).tolist())(),
+        utils.constant_diagonal(RNG.uniform(size=num_params).tolist())(),
+        ee.Image.constant(ee.List.repeat(0, num_measures)).toFloat(),
+        ee.Image(ee.Array(ee.List.repeat(1 / 3, 3))),
+    ).rename(
+        [
+            constants.STATE,
+            constants.COV,
+            constants.RESIDUAL,
+            constants.CHANGE_PROB,
+        ]
+    )
+    init["preprocess_fn"] = bulc.preprocess(0.1)
+    scale = RNG.uniform(size=num_params).tolist()
+    init["Q"] = bulc.bulc_as_noise(num_params, scale)
 
     col = S2.filterBounds(POINT).limit(20).select("B12")
     verify_success(kalman_filter(col, **init))
