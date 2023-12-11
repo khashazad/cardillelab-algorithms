@@ -6,12 +6,12 @@ from IPython.display import display
 
 
 class CoefInspector(ipywidgets.VBox):
-    def __init__(self, host_map, output, coef_layers):
+    def __init__(self, host_map, output, coef_layers=None):
         self._host_map = host_map
         self._output = output
 
         self.coef_layers = coef_layers
-        if not isinstance(self.coef_layers, (tuple, list)):
+        if self.coef_layers is not None and not isinstance(self.coef_layers, (tuple, list)):
             self.coef_layers = [self.coef_layers]
 
         if not host_map:
@@ -67,7 +67,7 @@ class CoefInspector(ipywidgets.VBox):
         functions = {}
         pixel_vals = {}
         for layer_name, layer in layers.items():
-            if layer_name not in self.coef_layers:
+            if self.coef_layers is not None and layer_name not in self.coef_layers:
                 continue
             ee_object = layer["ee_object"]
             pixel = self._query_point(latlon, ee_object)
