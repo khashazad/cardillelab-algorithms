@@ -2,14 +2,12 @@
 Test our earth engine implementation against a well established local python
 implementation to ensure we implemented the kalman filter properly.
 """
-import io
 import math
 import string
 import itertools
 from multiprocessing import Pool, Manager
 
 import numpy as np
-from numpy.lib.recfunctions import structured_to_unstructured
 import ee
 import pytest
 from filterpy.kalman import ExtendedKalmanFilter as EKF
@@ -35,74 +33,6 @@ def make_random_init(num_params, num_measures, linear_term, seed):
         "num_measures": num_measures,
         "linear_term": linear_term,
     }
-
-
-def compute_pixels_wrapper(request):
-    """Wraps ee.data.computePixels to allow loading larger npy files.
-
-    Expects request to have fileFormat == "NPY"
-
-    Args:
-        request: dict, passed to ee.data.computePixels
-
-    Returns:
-        np.ndarray
-    """
-    result = ee.data.computePixels(request)
-    return np.squeeze(
-        structured_to_unstructured(np.load(io.BytesIO(result), allow_pickle=True))
-    )
-
-
-def get_utm_from_lonlat(lon, lat):
-    """Get the EPSG CRS Code for the UTM zone of a given lon, lat pait.
-
-    Based on: https://stackoverflow.com/a/9188972
-
-    Args:
-        lon: float
-        lat: float
-
-    Returns:
-        string
-    """
-    offset = 32601 if lat >= 0 else 32701
-    return "EPSG:" + str(offset + (math.floor((lon + 180) / 6) % 60))
-
-
-def build_request(point, scale=10):
-    """Create a 1x1 numpy ndarray computePixels request at the given point.
-
-    Args:
-        point: (float, float), lat lon coordinates
-        scale: int
-
-    Returns:
-        dict, passable to ee.data.computePixels, caller must set 'expression'
-    """
-    crs = get_utm_from_lonlat(*point)
-    proj = ee.Projection(crs)
-    geom = ee.Geometry.Point(point)
-    coords = ee.Feature(geom).geometry(1, proj).getInfo()["coordinates"]
-    request = {
-        "fileFormat": "NPY",
-        "grid": {
-            "dimensions": {
-                "width": 1,
-                "height": 1,
-            },
-            "affineTransform": {
-                "scaleX": scale,
-                "shearX": 0,
-                "translateX": coords[1],
-                "shearY": 0,
-                "scaleY": -scale,
-                "translateY": coords[1],
-            },
-            "crsCode": crs,
-        },
-    }
-    return request
 
 
 def create_initializations(num_params, num_measures, linear_term, x, P, F, Q, R):
@@ -234,9 +164,9 @@ def compare_at_point(
     )
 
     # get the raw collection as local data
-    request = build_request(point)
+    request = utils.build_request(point)
     request["expression"] = col.toBands()
-    kalman_input = compute_pixels_wrapper(request)
+    kalman_input = utils.compute_pixels_wrapper(request)
 
     param_names = list(string.ascii_lowercase)[:num_params]
 
@@ -246,13 +176,13 @@ def compare_at_point(
     # get the ee kalman states as local data
     request["expression"] = ee_result.select(param_names).toBands()
     state_shape = (-1, num_params, num_measures)
-    ee_states = compute_pixels_wrapper(request).reshape(state_shape)
+    ee_states = utils.compute_pixels_wrapper(request).reshape(state_shape)
 
     # get the ee kalman state covariances as local data
     cov_names = [f"cov_{x}_{y}" for x in param_names for y in param_names]
     request["expression"] = ee_result.select(cov_names).toBands()
     cov_shape = (-1, num_params, num_params)
-    ee_covariances = compute_pixels_wrapper(request).reshape(cov_shape)
+    ee_covariances = utils.compute_pixels_wrapper(request).reshape(cov_shape)
 
     # get the local kalman state and state covariances
     local_states, local_covariances = run_local_kalman(

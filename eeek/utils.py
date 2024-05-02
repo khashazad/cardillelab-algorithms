@@ -1,8 +1,11 @@
 """
 Defines standard functions for x, P, F, Q, H, and R.
 """
+import io
 import math
 
+import numpy as np
+from numpy.lib.recfunctions import structured_to_unstructured
 import ee
 
 from eeek import constants
@@ -244,11 +247,14 @@ def unpack_arrays(image, param_names):
     return ee.Image.cat(x, P)
 
 
-def prep_landsat_collection(region, start_date, end_date, max_cloud_cover, sensors=8):
+def prep_landsat_collection(region, start_date, end_date, max_cloud_cover=30, sensors=8):
     """Creates Landsat collection, applies scale factors, adds cloud score band.
 
     The cloud score is calculated using ee.Algorithms.Landsat.simpleCloudScore
-    and is stored in a band named "cloud".
+    and is stored in a band named "cloud". From the docs simpleCloudScore can
+    only be calculated from the TOA collections so we fetch both the SR and TOA
+    collections but return only the simpleCloudScore result from the TOA
+    collection.
 
     Args:
         region: ee.Geometry, used in filterBounds
@@ -333,3 +339,71 @@ def prep_sentinel_collection(region, start_date, end_date, max_cloud_cover):
     )
 
     return col.linkCollection(cloud_score_col, ["cloud"])
+
+
+def compute_pixels_wrapper(request):
+    """Wraps ee.data.computePixels to allow loading larger npy files.
+
+    Expects request to have fileFormat == "NPY"
+
+    Args:
+        request: dict, passed to ee.data.computePixels
+
+    Returns:
+        np.ndarray
+    """
+    result = ee.data.computePixels(request)
+    return np.squeeze(
+        structured_to_unstructured(np.load(io.BytesIO(result), allow_pickle=True))
+    )
+
+
+def get_utm_from_lonlat(lon, lat):
+    """Get the EPSG CRS Code for the UTM zone of a given lon, lat pait.
+
+    Based on: https://stackoverflow.com/a/9188972
+
+    Args:
+        lon: float
+        lat: float
+
+    Returns:
+        string
+    """
+    offset = 32601 if lat >= 0 else 32701
+    return "EPSG:" + str(offset + (math.floor((lon + 180) / 6) % 60))
+
+
+def build_request(point, scale=10):
+    """Create a 1x1 numpy ndarray computePixels request at the given point.
+
+    Args:
+        point: (float, float), lat lon coordinates
+        scale: int
+
+    Returns:
+        dict, passable to ee.data.computePixels, caller must set 'expression'
+    """
+    crs = get_utm_from_lonlat(*point)
+    proj = ee.Projection(crs)
+    geom = ee.Geometry.Point(point)
+    coords = ee.Feature(geom).geometry(1, proj).getInfo()["coordinates"]
+    request = {
+        "fileFormat": "NPY",  # TODO: switch to NUMPY_NDARRAY
+        "grid": {
+            "dimensions": {
+                "width": 1,
+                "height": 1,
+            },
+            "affineTransform": {
+                "scaleX": scale,
+                "shearX": 0,
+                "translateX": coords[1],
+                "shearY": 0,
+                "scaleY": -scale,
+                "translateY": coords[1],
+            },
+            "crsCode": crs,
+        },
+    }
+    return request
