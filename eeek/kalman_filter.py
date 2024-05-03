@@ -103,10 +103,12 @@ def kalman_filter(
     Returns:
         ee.ImageCollection, the result of applying a Kalman Filter to the input
         collection. Each image in the collection will have one band containing
-        the measurement (named z), one band containing the predicted measurement
-        (named zprime) and two bands per parameter in the state: one containing
-        the state variable's value (named a, b, c, ...) and one containing the
-        state variable's covariance (name a_cov, b_cov, c_cov, ...).
+        the measurement (named z), one band containing an array image of the
+        covariance (named P), one band containing an array image of the state
+        (named x), and any bands added by either preprocess_fn or
+        postprocess_fn. utils.unpack_arrays() can be mapped across this
+        ImageCollection to get the state and covariance in a more readable
+        form.
     """
 
     if measurement_band is None:
