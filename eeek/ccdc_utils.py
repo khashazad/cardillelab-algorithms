@@ -172,3 +172,49 @@ def get_ccdc_coefs(
         ccdc_image, date, bands, coef_tags, normalize, segs, behavior
     )
     return coefs
+
+
+def parse_ccdc_params(fname):
+    """Read ccdc_utils.get_ccdc_coefs params from a file.
+
+    File should have key,val pairs on each line. The keys "raw_ccdc_image",
+    "segs", "bands", "date", and "coef_tags" must be present. The keys
+    "normalize" and "behavior" are optional. Any other keys will be ignored.
+
+    Keys and vals should be separated by a single comma with no spaces.
+
+    E.g.,
+    raw_ccdc_image,/path/to/ee/asset/
+    segs,S1,S2,S3,S4,S5
+    bands,SWIR1
+    date,2019
+    coef_tags,None
+    normalize,False
+    behavior,after
+
+    Args:
+        fname: str, path to file containing ccdc parameters.
+
+    Returns:
+        dict, can be passed to utils.get_ccdc_coefs() using **
+    """
+    output_dict = {}
+    with open(fname, "r") as f:
+        for line in f.readlines():
+            line = line.split(",")
+            key = line[0]
+            val = line[1:]
+            val[-1] = val[-1].strip()  # remove white space
+            if key == "raw_ccdc_image":
+                output_dict[key] = ee.Image(val[0])
+            elif key == "segs" or key == "bands":
+                output_dict[key] = val
+            elif key == "date":
+                output_dict[key] = int(val[0])
+            elif key == "coef_tags":
+                output_dict[key] = None if val[0] == "None" else val
+            elif key == "normalize":
+                output_dict[key] = True if val[0] == "True" else False
+            elif key == "behavior":
+                output_dict[key] = val[0]
+    return output_dict
