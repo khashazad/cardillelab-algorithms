@@ -238,13 +238,14 @@ def unpack_arrays(image, param_names):
 
     Returns:
         ee.Image with bands for each state variable, and the covariance between
-        each pair of state variables.
+        each pair of state variables and all bands from the original input
+        image.
     """
     x = image.select(constants.STATE).arrayProject([0]).arrayFlatten([param_names])
     P = image.select(constants.COV).arrayFlatten(
         [["cov_" + x for x in param_names], param_names]
     )
-    return ee.Image.cat(x, P)
+    return image.addBands(ee.Image.cat(x, P))
 
 
 def prep_landsat_collection(region, start_date, end_date, max_cloud_cover=30, sensors=8):
