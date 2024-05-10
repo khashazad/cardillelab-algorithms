@@ -1,0 +1,10 @@
+earthengine-api
+numpy
+pandas
+scipy
+filterpy
+pytest
+black
+IPython
+pathos
+
