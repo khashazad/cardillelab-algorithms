@@ -1,123 +1,165 @@
 """Runs the Kalman Filter for PEST parameter estimation.
 
 The input file, containing the parameters that PEST is estimating, should
-contain a list of comma separated numbers separated on each line. The first
-line should contain the values for the Q matrix (the process noise), the second
-line should contain the values for the R matrix (the measurement noise), the
-third line should contain the values for the P matrix (the initial state
-covariance). If 'seed_ccdc' is NOT set, a fourth line should be given and
-contain the values of x (the initial state matrix).
+contain a list of comma separated numbers on each line. The first line should
+contain the values for the Q matrix (the process noise), the second line should
+contain the values for the R matrix (the measurement noise), the third line
+should contain the values for the P matrix (the initial state covariance). The
+fourth line should contain the values of x0 (the initial state matrix).
 
-The output file will contain a single number: the sum of the errors at all
-points specified in the points file. The error is derived from comparing the
-final kalman filter state to the final parameters of a CCDC run.
+Q, R, P, and x0 have a different shape depending on the number of parameters in
+the state variable. For a Kalman filter whose state variable has N parameters:
+Q has shape (N, N)
+R has shape (1, 1)
+P has shape (N, N)
+x0 has shape (N, 1)
+Set the flags `num_sinusoid_pairs`, `include_intercept`, `include_slope` to
+change the number of parameters in the state variable.
+
+The output file will be in CSV format with a single header row containing the
+following columns:
+    point: ID of the point (row number of the point in the given points file)
+    INTP: the intercept value for the current point at this time step
+    SLP: the slope value for the current point at this time step
+    COS0: the cosine coefficient ""
+    SIN0: the sine coefficient ""
+    COS2: ""
+    SIN2: ""
+    COS3: ""
+    SIN3: ""
+State values (INPT, SLP, etc.) will be recorded to 10 significant figures in
+scientific notation. Only the state values that are used in the given model are
+output. The model can be adjusted using the flags `include_intercept`,
+`include_slope`, and `num_sinusoid_pairs`.
 
 The points file should specify each location where you want to apply the Kalman
 filter. Each line of the points file should contain 2 numbers: the longitude of
 the point and the latitude of the point followed by two strings: the date to
 start running the Kalman filter and the date to stop running the kalman filter
-(in YYYY-MM-dd format).
-
-The target_ccdc file should contain the parameters for ccdc_utils.get_ccdc_coefs
-as key,value pairs, see ccdc_utils.parse_ccdc_params for a more complete
-explanation.
-
-If seed_ccdc is give, it should have the same format as target_ccdc, but for
-the CCDC image to seed the Kalman filter with.
-
-All points specified in the points file must overlap with the target CCDC image
-and the seed CCDC image (if one is given).
+(in YYYY-MM-dd format) all separated by a single ',' with no spaces.
 """
 import argparse
+import os
 
 import ee
 import numpy as np
+import pandas as pd
+from google.api_core import retry
+from pathos.pools import ProcessPool
 
-from eeek import kalman_filter, utils, ccdc_utils
+from eeek import kalman_filter, utils, ccdc_utils, constants
 
 ee.Initialize(opt_url=ee.data.HIGH_VOLUME_API_BASE_URL)
 
-NUM_PARAMS = 8  # CCDC has 8 parameters
 NUM_MEASURES = 1  # eeek only supports one band at a time
 
 
 def main(args):
+    param_names = []
+    if args.include_intercept:
+        param_names.append("INTP")
+    if args.include_slope:
+        param_names.append("SLP")
+    for i in range(args.num_sinusoid_pairs):
+        param_names.extend([f"COS{i}", f"SIN{i}"])
+    num_params = len(param_names)
+
     #################################################
     ########### Read in PEST parameters #############
     #################################################
     with open(args.input, "r") as f:
         lines = f.readlines()
+        assert len(lines) == 4, "PEST parameter file must specify Q, R, P, and x0"
 
-        Q, R, P = lines[:3]
-        Q = np.array([float(x) for x in Q.split(",")]).reshape(NUM_PARAMS, NUM_PARAMS)
+        Q, R, P, x0 = lines
+        Q = np.array([float(x) for x in Q.split(",")]).reshape(num_params, num_params)
         R = np.array([float(x) for x in R.split(",")]).reshape(
             NUM_MEASURES, NUM_MEASURES
         )
-        P = np.array([float(x) for x in P.split(",")]).reshape(NUM_PARAMS, NUM_PARAMS)
+        P = np.array([float(x) for x in P.split(",")]).reshape(num_params, num_params)
         P = ee.Image(ee.Array(P.tolist())).rename("P")
+        x0 = np.array([float(x) for x in x0.split(",")]).reshape(
+            num_params, NUM_MEASURES
+        )
+        x0 = ee.Image(ee.Array(x0.tolist())).rename("x")
 
-        if args.seed_ccdc is None:
-            assert (
-                len(lines) >= 4
-            ), "must give x0 in PEST input file when initial_x=='pest'"
-            x0 = lines[3]
-            x0 = np.array([float(x) for x in x0.split(",")]).reshape(
-                NUM_PARAMS, NUM_MEASURES
-            )
-            x0 = ee.Image(ee.Array(x0.tolist())).rename("x")
-        else:
-            ccdc_seed_args = ccdc_utils.parse_ccdc_params(args.seed_ccdc)
-            seed = ccdc_utils.get_ccdc_coefs(**ccdc_seed_args)
-            x0 = seed.toArray().toArray(1).rename("x")
+        H = utils.sinusoidal(
+            args.num_sinusoid_pairs,
+            include_slope=args.include_slope,
+            include_intercept=args.include_intercept,
+        )
 
-        init = {
+        kalman_init = {
             "init_image": ee.Image.cat([P, x0]),
-            "F": utils.identity(NUM_PARAMS),
+            "F": utils.identity(num_params),
             "Q": lambda **kwargs: ee.Image(ee.Array(Q.tolist())),
-            "H": utils.ccdc,
+            "H": H,
             "R": lambda **kwargs: ee.Image(ee.Array(R.tolist())),
-            "num_params": NUM_PARAMS,
+            "num_params": num_params,
         }
 
     #################################################
-    ############## Run Kalman filter ################
+    # Create parameters to run filter on each point #
     #################################################
-
-    error = ee.Number(0)
+    points = []
     with open(args.points, "r") as f:
-        for line in f.readlines():
+        for i, line in enumerate(f.readlines()):
             lon, lat, start, stop = line.split(",")
-            point = ee.Geometry.Point((float(lon), float(lat)))
-            col = utils.prep_landsat_collection(
-                point, start.strip(), stop.strip(), args.max_cloud_cover
-            )
-
-            kalman_result = kalman_filter.kalman_filter(col, **init)
-            kalman_result = kalman_result.map(
-                lambda im: utils.unpack_arrays(im, ccdc_utils.HARMONIC_TAGS)
-            )
-            final_kalman_result = ee.Image(
-                kalman_result.toList(1, kalman_result.size().subtract(1)).get(0)
-            ).select(ccdc_utils.HARMONIC_TAGS)
-
-            ccdc_target_args = ccdc_utils.parse_ccdc_params(args.target_ccdc)
-            target = ccdc_utils.get_ccdc_coefs(**ccdc_target_args)
-
-            comparison = final_kalman_result.spectralDistance(
-                target,
-                args.comparison_metric,
-            ).rename("error")
-
-            error = error.add(
-                comparison.sample(region=point, numPixels=1).first().getNumber("error")
-            )
+            points.append({
+                "index": i,
+                "longitude": float(lon),
+                "latitude": float(lat),
+                "start_date": start.strip(),
+                "stop_date": stop.strip(),
+            })
 
     #################################################
-    ############ Save results for PEST ##############
+    ##### Run Kalman filter across all points #######
     #################################################
+    @retry.Retry()
+    def process_point(kwargs):
+        index = kwargs["index"]
 
-    with open(args.output, "w") as f:
-        f.write(f"{error.getInfo()}\n")
+        # TODO: let caller manipulate this (different collection, different max
+        # cloud cover etc.)
+        coords = (float(kwargs["longitude"]), float(kwargs["latitude"]))
+        col = utils.prep_landsat_collection(
+            ee.Geometry.Point(coords), kwargs["start_date"], kwargs["stop_date"]
+        )
+
+        kalman_result = kalman_filter.kalman_filter(col, **kalman_init)
+        states = kalman_result.map(
+            lambda im: utils.unpack_arrays(im, param_names)
+        ).select(param_names).toBands()
+
+        request = utils.build_request(coords)
+        request["expression"] = states
+        data = utils.compute_pixels_wrapper(request).reshape(-1, num_params)
+
+        df = pd.DataFrame(data, columns=param_names)
+        df["point"] = [index] * df.shape[0]
+
+        # put point as the first column
+        df = df[["point"] + param_names]
+
+        basename, ext = os.path.splitext(args.output)
+        shard_path = basename + f"-{index:06d}" + ext
+        df.to_csv(shard_path, index=False)
+
+        return shard_path
+
+    with ProcessPool(nodes=40) as pool:
+        all_output_files = pool.map(process_point, points)
+
+    #################################################
+    ## Combine results from all runs to single csv ##
+    #################################################
+    all_results = pd.concat(map(pd.read_csv, all_output_files), ignore_index=True)
+    all_results.to_csv(args.output, index=False)
+
+    # delete intermediate files
+    for f in all_output_files:
+        os.remove(f)
 
 
 if __name__ == "__main__":
@@ -142,29 +184,19 @@ if __name__ == "__main__":
         help="file containing points to run kalman filter on",
     )
     parser.add_argument(
-        "--seed_ccdc",
-        help="CCDC parameter file to use as initial state",
+        "--include_intercept",
+        action='store_true',
+        help="if set the model will include a y intercept",
     )
     parser.add_argument(
-        "--target_ccdc",
-        required=True,
-        help="CCDC parameter file to compare final state against",
+        "--include_slope",
+        action='store_true',
+        help='if set the model will include a linear slope',
     )
     parser.add_argument(
-        "--max_cloud_cover",
-        default=30,
-        type=int,
-        help="filter images with cloud cover > max_cloud_cover",
-    )
-    parser.add_argument(
-        "--band_name",
-        default="SWIR1",
-        help="landsat band name to run kalman filter over",
-    )
-    parser.add_argument(
-        "--comparison_metric",
-        default="sam",
-        choices=["sam", "sid", "sed", "emd"],
-        help="spectral difference metric used to compare final state",
+        '--num_sinusoid_pairs',
+        choices=[1, 2, 3],
+        default=3,
+        help='the number of sin/cos pairs to include in the model',
     )
     main(parser.parse_args())

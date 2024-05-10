@@ -2,6 +2,8 @@ import ee
 
 from eeek import constants
 
+ee.Initialize(opt_url=ee.data.HIGH_VOLUME_API_BASE_URL)
+
 UNMASK_VALUE = 0
 
 # use 2pi * time since this date as input to sinusoids

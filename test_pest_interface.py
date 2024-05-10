@@ -4,18 +4,11 @@ Test that the pest interface runs successfully.
 from argparse import Namespace
 
 import numpy as np
+import pandas as pd
 
 from pest import main
 
 rng = np.random.default_rng()
-
-ccdc_params = "\n".join([
-    "raw_ccdc_image,users/parevalo_bu/ccdc_long",
-    "segs,S1,S2,S3,S4,S5,S6,S7,S8,S9,S10",
-    "bands,SWIR1",
-    "date,2022",
-    "coef_tags,None",
-])
 
 points = "\n".join([
     "-64.49037,-10.46841,2019-01-01,2023-01-01",
@@ -34,9 +27,6 @@ inputs = "\n".join([
 def test_pest_interface(tmpdir):
     directory = tmpdir.mkdir("pest")
 
-    ccdc_param_file = directory.join("ccdc_params")
-    ccdc_param_file.write(ccdc_params)
-
     points_file = directory.join("points")
     points_file.write(points)
 
@@ -49,17 +39,18 @@ def test_pest_interface(tmpdir):
         input=inputs_file,
         output=output_file,
         points=points_file,
-        target_ccdc=ccdc_param_file,
-        seed_ccdc=None,
-        max_cloud_cover=30,
-        band_name="SWIR1",
-        comparison_metric="sam",
+        include_intercept=True,
+        include_slope=True,
+        num_sinusoid_pairs=3,
     )
 
     main(args)
 
-    output = float(output_file.read())
+    result = pd.read_csv(output_file)
 
-    assert isinstance(output, float)
+    target_columns = [
+        "point", "INTP", "SLP", "COS0", "SIN0", "COS1", "SIN1", "COS2", "SIN2"
+    ]
 
-
+    # check that columns names are correct
+    assert np.all(list(result) == target_columns)

@@ -1,6 +1,7 @@
 """
 Defines standard functions for x, P, F, Q, H, and R.
 """
+
 import io
 import math
 
@@ -150,29 +151,71 @@ def from_band_diagonal(band_name, n, scale=None):
     return inner
 
 
-def sinusoidal(num_params, linear_term=False):
-    """Creates sinusoid function of the form a + b*cos(2pi*t) + c*sin(2pi*t)...
-
-    Function will have an intercept but no linear term. cos is always paired
-    with sin.
+def sinusoidal(num_sinusoid_pairs, include_slope=True, include_intercept=True):
+    """Creates sinusoid function of the form a+b*t+c*cos(2pi*t)+d*sin(2pi*t)...
 
     Useful for H.
 
     Args:
-        num_params: int, number of coefficients in the sinusoid function.
+        num_sinusoid_pairs: int, number of sine + cosine terms in the model.
+        include_slope: bool, if True include a linear slope term in the model.
+        include_intercept: bool, if True include a bias/intercept term in the
+            model.
 
     Returns:
-        function: ee.Image, dict -> ee.Image
+        function dict -> ee.Image
     """
 
+    # becuase this function gets called once when building the Kalman Filter
+    # but inner gets called at each update step of the Kalman Filter place all
+    # of the expensive python if statements and for loops outside of inner so
+    # that they are only executed once instead of at each time step
+    multiply = []
+    add = []
+    t_selectors = []
+    cosine_selectors = []
+    sine_selectors = []
+    num_params = 0
+    if include_intercept:
+        multiply.append(ee.Image.constant(0.0))
+        add.append(ee.Image.constant(1.0))
+        t_selectors.append(ee.Image.constant(1.0))
+        cosine_selectors.append(ee.Image.constant(0.0))
+        sine_selectors.append(ee.Image.constant(0.0))
+        num_params += 1
+
+    if include_slope:
+        multiply.append(ee.Image.constant(1.0))
+        add.append(ee.Image.constant(0.0))
+        t_selectors.append(ee.Image.constant(1.0))
+        cosine_selectors.append(ee.Image.constant(0.0))
+        sine_selectors.append(ee.Image.constant(0.0))
+        num_params += 1
+
+    for i in range(num_sinusoid_pairs):
+        freq = (i + 1) * 2 * math.pi
+        multiply.extend([ee.Image.constant(freq)] * 2)
+        add.extend([ee.Image.constant(0.0)] * 2)
+        t_selectors.extend([ee.Image.constant(0.0)] * 2)
+        cosine_selectors.extend([ee.Image.constant(1.0), ee.Image.constant(0.0)])
+        sine_selectors.extend([ee.Image.constant(0.0), ee.Image.constant(1.0)])
+        num_params += 2
+
+    multiply = ee.Image.cat(*multiply).float()
+    add = ee.Image.cat(*add).float()
+    cosine_selectors = ee.Image.cat(*cosine_selectors).float()
+    sine_selectors = ee.Image.cat(*sine_selectors).float()
+    t_selectors = ee.Image.cat(*t_selectors).float()
+
     def inner(t, **kwargs):
-        bands = [ee.Image.constant(1.0)]
-        if linear_term:  # TODO: if linear term proves useful drop if statement
-            bands.append(t)
-        for i in range((num_params - 1) // 2):
-            freq = (i + 1) * 2 * math.pi
-            bands.extend([t.multiply(freq).cos(), t.multiply(freq).sin()])
-        image = ee.Image.cat(*bands).toArray(0)
+        t = ee.Image.constant(ee.List.repeat(t, num_params)).float()
+        t = t.multiply(multiply).add(add)
+
+        sine_terms = t.sin().multiply(sine_selectors)
+        cosine_terms = t.cos().multiply(cosine_selectors)
+
+        image = t.multiply(t_selectors).add(sine_terms).add(cosine_terms)
+        image = image.toArray(0)
         return image.arrayReshape(ee.Image(ee.Array([1, -1])), 2)
 
     return inner
@@ -183,16 +226,18 @@ def ccdc(t, **kwargs):
 
     Useful for H.
 
-    This is a more efficient implementation of sinusoidal(7, True)
+    This is a simpler implementation of sinusoidal(3, True, True) which is the
+    default CCDC model.
 
     See: developers.google.com/earth-engine/datasets/catalog/GOOGLE_GLOBAL_CCDC_V1
     for model description.
 
     Args:
-        None
+        t: ee.Number, number of years since START_DATE
+        **kwargs: ignored, but passed to keep method signatures consistent
 
     Returns:
-        function () -> ee.Image
+        ee.Image
     """
 
     parameters = [
@@ -248,7 +293,9 @@ def unpack_arrays(image, param_names):
     return image.addBands(ee.Image.cat(x, P))
 
 
-def prep_landsat_collection(region, start_date, end_date, max_cloud_cover=30, sensors=8):
+def prep_landsat_collection(
+    region, start_date, end_date, max_cloud_cover=30, sensors=8
+):
     """Creates Landsat collection, applies scale factors, adds cloud score band.
 
     The cloud score is calculated using ee.Algorithms.Landsat.simpleCloudScore

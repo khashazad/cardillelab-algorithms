@@ -1,4 +1,5 @@
 """ Simple version of BULC to track process/measurement noise inside an EKF """
+
 import ee
 import numpy as np
 from scipy.integrate import quad
@@ -7,6 +8,8 @@ from eeek import constants, utils
 
 MIN_Z_SCORE = 0
 MAX_Z_SCORE = 5
+
+ee.Initialize(opt_url=ee.data.HIGH_VOLUME_API_BASE_URL)
 
 
 def bulcp_update(curr, last, leveler=0.1, num_classes=3):

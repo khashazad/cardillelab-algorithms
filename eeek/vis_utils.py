@@ -4,6 +4,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from IPython.display import display
 
+ee.Initialize(opt_url=ee.data.HIGH_VOLUME_API_BASE_URL)
+
 
 class CoefInspector(ipywidgets.VBox):
     def __init__(self, host_map, output, coef_layers=None):
@@ -11,7 +13,9 @@ class CoefInspector(ipywidgets.VBox):
         self._output = output
 
         self.coef_layers = coef_layers
-        if self.coef_layers is not None and not isinstance(self.coef_layers, (tuple, list)):
+        if self.coef_layers is not None and not isinstance(
+            self.coef_layers, (tuple, list)
+        ):
             self.coef_layers = [self.coef_layers]
 
         if not host_map:

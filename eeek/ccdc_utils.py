@@ -3,7 +3,10 @@
 Orginial JavaScript version, written by Paulo Arevalo, can be found on Google
 Earth Engine at "users/parevalo_bu/gee-ccdc-tools"
 """
+
 import ee
+
+ee.Initialize(opt_url=ee.data.HIGH_VOLUME_API_BASE_URL)
 
 
 HARMONIC_TAGS = ["INTP", "SLP", "COS", "SIN", "COS2", "SIN2", "COS3", "SIN3"]
