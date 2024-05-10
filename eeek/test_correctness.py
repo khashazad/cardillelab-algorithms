@@ -190,9 +190,9 @@ def compare_at_point(
     )
 
     tol = 1e-8
-    output_list[index] = np.allclose(
-        local_states, ee_states, rtol=tol, atol=tol
-    ) and np.allclose(local_covariances, ee_covariances, rtol=tol, atol=tol)
+    states_match = np.allclose(local_states, ee_states, rtol=tol, atol=tol)
+    cov_match = np.allclose(local_covariances, ee_covariances, rtol=tol, atol=tol)
+    output_list[index] = states_match and cov_match
 
 
 @pytest.mark.parametrize("N,num_params,num_measures,linear_term", TEST_PARAMS)
