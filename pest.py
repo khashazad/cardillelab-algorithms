@@ -38,6 +38,7 @@ the point and the latitude of the point followed by two strings: the date to
 start running the Kalman filter and the date to stop running the kalman filter
 (in YYYY-MM-dd format) all separated by a single ',' with no spaces.
 """
+
 import argparse
 import os
 
@@ -48,6 +49,7 @@ from google.api_core import retry
 from pathos.pools import ProcessPool
 
 from eeek import kalman_filter, utils, ccdc_utils, constants
+from eeek.image_collections import COLLECTIONS
 
 ee.Initialize(opt_url=ee.data.HIGH_VOLUME_API_BASE_URL)
 
@@ -105,13 +107,15 @@ def main(args):
     with open(args.points, "r") as f:
         for i, line in enumerate(f.readlines()):
             lon, lat, start, stop = line.split(",")
-            points.append({
-                "index": i,
-                "longitude": float(lon),
-                "latitude": float(lat),
-                "start_date": start.strip(),
-                "stop_date": stop.strip(),
-            })
+            points.append(
+                {
+                    "index": i,
+                    "longitude": float(lon),
+                    "latitude": float(lat),
+                    "start_date": start.strip(),
+                    "stop_date": stop.strip(),
+                }
+            )
 
     #################################################
     ##### Run Kalman filter across all points #######
@@ -120,17 +124,19 @@ def main(args):
     def process_point(kwargs):
         index = kwargs["index"]
 
-        # TODO: let caller manipulate this (different collection, different max
-        # cloud cover etc.)
         coords = (float(kwargs["longitude"]), float(kwargs["latitude"]))
-        col = utils.prep_landsat_collection(
-            ee.Geometry.Point(coords), kwargs["start_date"], kwargs["stop_date"]
+        col = (
+            COLLECTIONS[args.collection]
+            .filterBounds(ee.Geometry.Point(coords))
+            .filterDate(kwargs["start_date"], kwargs["stop_date"])
         )
 
         kalman_result = kalman_filter.kalman_filter(col, **kalman_init)
-        states = kalman_result.map(
-            lambda im: utils.unpack_arrays(im, param_names)
-        ).select(param_names).toBands()
+        states = (
+            kalman_result.map(lambda im: utils.unpack_arrays(im, param_names))
+            .select(param_names)
+            .toBands()
+        )
 
         request = utils.build_request(coords)
         request["expression"] = states
@@ -184,19 +190,25 @@ if __name__ == "__main__":
         help="file containing points to run kalman filter on",
     )
     parser.add_argument(
+        "--collection",
+        default="L8",
+        help="name of image collection defined in image_collections.py",
+    )
+    parser.add_argument(
         "--include_intercept",
-        action='store_true',
+        action="store_true",
         help="if set the model will include a y intercept",
     )
     parser.add_argument(
         "--include_slope",
-        action='store_true',
-        help='if set the model will include a linear slope',
+        action="store_true",
+        help="if set the model will include a linear slope",
     )
     parser.add_argument(
-        '--num_sinusoid_pairs',
+        "--num_sinusoid_pairs",
         choices=[1, 2, 3],
+        type=int,
         default=3,
-        help='the number of sin/cos pairs to include in the model',
+        help="the number of sin/cos pairs to include in the model",
     )
     main(parser.parse_args())

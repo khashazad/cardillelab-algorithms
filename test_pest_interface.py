@@ -42,6 +42,7 @@ def test_pest_interface(tmpdir):
         include_intercept=True,
         include_slope=True,
         num_sinusoid_pairs=3,
+        collection="L8",
     )
 
     main(args)
