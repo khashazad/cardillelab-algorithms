@@ -4,11 +4,11 @@ Use this to change the specific parameters of the image collection that is used
 as input to PEST.
 
 Collections defined in this file should NOT have filterBounds or filterDate
-applied them. Those filters will be applied inside pest.py to allow each point
-defined in the pest points file to have a different date range and be in a
-different location. eeek will run the kalman filter over the first band
-of each image in the input image collection so you should always select the
-band you want to use when defining the collection.
+applied them. Those filters will be applied inside pest_eeek.py to allow each
+point defined in the pest points file to have a different date range and be in
+a different location. eeek will run the kalman filter over the first band of
+each image in the input image collection so you should always select the band
+you want to use when defining the collection.
 
 Ensure that each image collection you define in this file is set as a value in
 the COLLECTIONS dictionary. 
