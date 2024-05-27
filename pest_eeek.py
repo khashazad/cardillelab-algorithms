@@ -16,6 +16,13 @@ x0 has shape (N, 1)
 Set the flags `num_sinusoid_pairs`, `include_intercept`, `include_slope` to
 change the number of parameters in the state variable.
 
+For variables that have more than one dimension they should be written row first
+in the input file. e.g. 1, 2, 3, 4, 5, 6, 7, 8, 9 will be converted to the
+following matrix:
+    1, 2, 3
+    4, 5, 6
+    7, 8, 9
+
 The output file will be in CSV format with a single header row containing the
 following columns:
     point: ID of the point (row number of the point in the given points file)
