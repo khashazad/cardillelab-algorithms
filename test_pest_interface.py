@@ -6,7 +6,7 @@ from argparse import Namespace
 import numpy as np
 import pandas as pd
 
-from pest import main
+from pest_eeek import main
 
 rng = np.random.default_rng()
 
