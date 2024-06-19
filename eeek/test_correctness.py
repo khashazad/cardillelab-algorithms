@@ -18,7 +18,7 @@ from eeek import utils, constants
 
 ee.Initialize(opt_url=ee.data.HIGH_VOLUME_API_BASE_URL)
 
-TEST_PARAMS = itertools.product((50,), (1, 2, 3, 4), (True, False), (True, False))
+TEST_PARAMS = itertools.product((100,), (0, 1, 2, 3, 4), (True, False), (True, False))
 NUM_MEASURES = 1  # this the max eeek currently supports
 
 
@@ -222,9 +222,8 @@ def compare_at_point(
         kalman_input, image_dates, **local_init
     )
 
-    # TODO: why did the absolute tolerance have to be turned down?
-    state_comparison = np.allclose(local_states, ee_states, atol=1e-4)
-    cov_comparison = np.allclose(local_covariances, ee_covariances, atol=1e-4)
+    state_comparison = np.allclose(local_states, ee_states)
+    cov_comparison = np.allclose(local_covariances, ee_covariances)
     output_list[index] = state_comparison and cov_comparison
 
 
@@ -247,6 +246,9 @@ def test_correctness(N, num_sinusoid_pairs, include_slope, include_intercept):
     Raises:
         AssertionError if local and ee result do not match.
     """
+    if num_sinusoid_pairs == 0 and not include_slope and not include_intercept:
+        pytest.skip("creates a model with 0 paramters")
+
     # create a sample of N random points over ~North America
     roi = ee.Geometry.Rectangle([(-116, 33), (-82, 54)])
     samples = ee.Image.constant(1).sample(

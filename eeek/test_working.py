@@ -10,7 +10,7 @@ import numpy as np
 import pytest
 
 from eeek.kalman_filter import kalman_filter
-from eeek import utils, bulc, constants
+from eeek import utils, bulc, constants, ccdc_utils
 
 ee.Initialize(opt_url=ee.data.HIGH_VOLUME_API_BASE_URL)
 
@@ -191,6 +191,45 @@ def test_ccdc_as_H():
     verify_success(kalman_filter(col, **init))
 
 
+def test_ccdc_vs_sinusoidal():
+    init1 = make_random_init(3, True, True, 1)
+    init2 = init1.copy()
+
+    init1["H"] = utils.ccdc
+    init2["H"] = utils.sinusoidal(3, True, True)
+
+    col = S2.filterBounds(POINT).limit(20).select("B12")
+    verify_success(result1 := kalman_filter(col, **init1))
+    verify_success(result2 := kalman_filter(col, **init2))
+
+    result1 = result1.map(lambda im: utils.unpack_arrays(im,
+        ccdc_utils.HARMONIC_TAGS))
+    result2 = result2.map(lambda im: utils.unpack_arrays(im,
+        ccdc_utils.HARMONIC_TAGS))
+
+    bands = result1.first().bandNames()
+    bands = bands.remove("x").remove("z").remove("P")
+
+    result1 = result1.select(bands).toBands()
+    result2 = result2.select(bands).toBands()
+
+    result1 = result1.sample(
+        region=POINT,
+        scale=10,
+        numPixels=1,
+    ).first().getInfo()["properties"]
+    result1 = np.array(list(result1.values()))
+
+    result2 = result2.sample(
+        region=POINT,
+        scale=10,
+        numPixels=1,
+    ).first().getInfo()["properties"]
+    result2 = np.array(list(result2.values()))
+
+    assert np.allclose(result1, result2)
+
+
 def test_sinusoidal():
     """Ensure sinusoidal creates the same coefs as hardcoded versions."""
     t = ee.Number(1.234)
@@ -256,4 +295,20 @@ def test_sinusoidal():
     ]
     image = _make_image(params)
     compare_image = utils.sinusoidal(3, include_slope=True, include_intercept=False)(t)
+    assert _make_comparison(image, compare_image)
+
+    # compare 1 sinusoid pair, no slope, intercept
+    params = [
+        ee.Image.constant(1.0),
+        t.multiply(2 * math.pi).cos(),
+        t.multiply(2 * math.pi).sin(),
+    ]
+    image = _make_image(params)
+    compare_image = utils.sinusoidal(1, include_slope=False, include_intercept=True)(t)
+    assert _make_comparison(image, compare_image)
+
+
+    # compare against ccdc
+    image = utils.ccdc(t)
+    compare_image = utils.sinusoidal(3, True, True)(t)
     assert _make_comparison(image, compare_image)

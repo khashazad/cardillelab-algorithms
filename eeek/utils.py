@@ -177,38 +177,38 @@ def sinusoidal(num_sinusoid_pairs, include_slope=True, include_intercept=True):
     sine_selectors = []
     num_params = 0
     if include_intercept:
-        multiply.append(ee.Image.constant(0.0))
-        add.append(ee.Image.constant(1.0))
-        t_selectors.append(ee.Image.constant(1.0))
-        cosine_selectors.append(ee.Image.constant(0.0))
-        sine_selectors.append(ee.Image.constant(0.0))
+        multiply.append(ee.Image.constant(0))
+        add.append(ee.Image.constant(1))
+        t_selectors.append(ee.Image.constant(1))
+        cosine_selectors.append(ee.Image.constant(0))
+        sine_selectors.append(ee.Image.constant(0))
         num_params += 1
 
     if include_slope:
-        multiply.append(ee.Image.constant(1.0))
-        add.append(ee.Image.constant(0.0))
-        t_selectors.append(ee.Image.constant(1.0))
-        cosine_selectors.append(ee.Image.constant(0.0))
-        sine_selectors.append(ee.Image.constant(0.0))
+        multiply.append(ee.Image.constant(1))
+        add.append(ee.Image.constant(0))
+        t_selectors.append(ee.Image.constant(1))
+        cosine_selectors.append(ee.Image.constant(0))
+        sine_selectors.append(ee.Image.constant(0))
         num_params += 1
 
     for i in range(num_sinusoid_pairs):
         freq = (i + 1) * 2 * math.pi
         multiply.extend([ee.Image.constant(freq)] * 2)
-        add.extend([ee.Image.constant(0.0)] * 2)
-        t_selectors.extend([ee.Image.constant(0.0)] * 2)
-        cosine_selectors.extend([ee.Image.constant(1.0), ee.Image.constant(0.0)])
-        sine_selectors.extend([ee.Image.constant(0.0), ee.Image.constant(1.0)])
+        add.extend([ee.Image.constant(0)] * 2)
+        t_selectors.extend([ee.Image.constant(0)] * 2)
+        cosine_selectors.extend([ee.Image.constant(1), ee.Image.constant(0)])
+        sine_selectors.extend([ee.Image.constant(0), ee.Image.constant(1)])
         num_params += 2
 
-    multiply = ee.Image.cat(*multiply).float()
-    add = ee.Image.cat(*add).float()
-    cosine_selectors = ee.Image.cat(*cosine_selectors).float()
-    sine_selectors = ee.Image.cat(*sine_selectors).float()
-    t_selectors = ee.Image.cat(*t_selectors).float()
+    multiply = ee.Image.cat(*multiply)
+    add = ee.Image.cat(*add)
+    cosine_selectors = ee.Image.cat(*cosine_selectors)
+    sine_selectors = ee.Image.cat(*sine_selectors)
+    t_selectors = ee.Image.cat(*t_selectors)
 
     def inner(t, **kwargs):
-        t = ee.Image.constant(ee.List.repeat(t, num_params)).float()
+        t = ee.Image.constant(ee.List.repeat(t, num_params))
         t = t.multiply(multiply).add(add)
 
         sine_terms = t.sin().multiply(sine_selectors)
@@ -241,7 +241,7 @@ def ccdc(t, **kwargs):
     """
 
     parameters = [
-        ee.Image.constant(1.0),
+        ee.Image.constant(1),
         t,
         t.multiply(2 * math.pi).cos(),
         t.multiply(2 * math.pi).sin(),
@@ -251,7 +251,7 @@ def ccdc(t, **kwargs):
         t.multiply(6 * math.pi).sin(),
     ]
     image = ee.Image.cat(*parameters).toArray(0)
-    return image.arrayReshape(ee.Image(ee.Array([1, -1])), 2).toFloat()
+    return image.arrayReshape(ee.Image(ee.Array([1, -1])), 2)
 
 
 def track_updated_measurement(x, H, **kwargs):
