@@ -286,11 +286,14 @@ def unpack_arrays(image, param_names):
         each pair of state variables and all bands from the original input
         image.
     """
+    z = image.select(constants.MEASUREMENT).arrayProject([0]).arrayFlatten(
+        [[constants.MEASUREMENT]]
+    )
     x = image.select(constants.STATE).arrayProject([0]).arrayFlatten([param_names])
     P = image.select(constants.COV).arrayFlatten(
         [["cov_" + x for x in param_names], param_names]
     )
-    return image.addBands(ee.Image.cat(x, P))
+    return image.addBands(ee.Image.cat(z, x, P), overwrite=True)
 
 
 def prep_landsat_collection(
