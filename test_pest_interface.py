@@ -43,6 +43,7 @@ def test_pest_interface(tmpdir):
         include_slope=True,
         num_sinusoid_pairs=3,
         collection="L8",
+        store_measurement=True,
     )
 
     main(args)
@@ -50,7 +51,7 @@ def test_pest_interface(tmpdir):
     result = pd.read_csv(output_file)
 
     target_columns = [
-        "point", "INTP", "SLP", "COS0", "SIN0", "COS1", "SIN1", "COS2", "SIN2"
+        "point", "INTP", "SLP", "COS0", "SIN0", "COS1", "SIN1", "COS2", "SIN2", "z"
     ]
 
     # check that columns names are correct

@@ -73,6 +73,11 @@ def main(args):
         param_names.extend([f"COS{i}", f"SIN{i}"])
     num_params = len(param_names)
 
+    request_band_names = param_names.copy()
+    if args.store_measurement:
+        request_band_names.append("z")
+    num_request_bands = len(request_band_names)
+
     #################################################
     ########### Read in PEST parameters #############
     #################################################
@@ -141,19 +146,19 @@ def main(args):
         kalman_result = kalman_filter.kalman_filter(col, **kalman_init)
         states = (
             kalman_result.map(lambda im: utils.unpack_arrays(im, param_names))
-            .select(param_names)
+            .select(request_band_names)
             .toBands()
         )
 
         request = utils.build_request(coords)
         request["expression"] = states
-        data = utils.compute_pixels_wrapper(request).reshape(-1, num_params)
+        data = utils.compute_pixels_wrapper(request).reshape(-1, num_request_bands)
 
-        df = pd.DataFrame(data, columns=param_names)
+        df = pd.DataFrame(data, columns=request_band_names)
         df["point"] = [index] * df.shape[0]
 
         # put point as the first column
-        df = df[["point"] + param_names]
+        df = df[["point"] + request_band_names]
 
         basename, ext = os.path.splitext(args.output)
         shard_path = basename + f"-{index:06d}" + ext
@@ -217,5 +222,10 @@ if __name__ == "__main__":
         type=int,
         default=3,
         help="the number of sin/cos pairs to include in the model",
+    )
+    parser.add_argument(
+        "--store_measurement",
+        action="store_true",
+        help="if set the measurements at each time step will be saved",
     )
     main(parser.parse_args())
