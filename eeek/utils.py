@@ -449,7 +449,7 @@ def build_request(point, scale=10):
             "affineTransform": {
                 "scaleX": scale,
                 "shearX": 0,
-                "translateX": coords[1],
+                "translateX": coords[0],
                 "shearY": 0,
                 "scaleY": -scale,
                 "translateY": coords[1],
