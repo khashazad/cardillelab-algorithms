@@ -54,6 +54,7 @@ import numpy as np
 import pandas as pd
 from google.api_core import retry
 from pathos.pools import ProcessPool
+from pprint import pprint
 
 from eeek import kalman_filter, utils, ccdc_utils, constants
 from eeek.image_collections import COLLECTIONS
@@ -143,6 +144,9 @@ def main(args):
             .filterDate(kwargs["start_date"], kwargs["stop_date"])
         )
 
+        # pprint(COLLECTIONS[args.collection].getInfo())
+        print(col.size().getInfo())
+
         kalman_result = kalman_filter.kalman_filter(col, **kalman_init)
         states = (
             kalman_result.map(lambda im: utils.unpack_arrays(im, param_names))
@@ -153,6 +157,8 @@ def main(args):
         request = utils.build_request(coords)
         request["expression"] = states
         data = utils.compute_pixels_wrapper(request).reshape(-1, num_request_bands)
+
+
 
         df = pd.DataFrame(data, columns=request_band_names)
         df["point"] = [index] * df.shape[0]
@@ -166,14 +172,21 @@ def main(args):
 
         return shard_path
 
-    with ProcessPool(nodes=40) as pool:
-        all_output_files = pool.map(process_point, points)
+    # with ProcessPool(nodes=40) as pool:
+    #     all_output_files = pool.map(process_point, points)
+
+    result = process_point(points[0])
+    all_output_files = [result]
 
     #################################################
     ## Combine results from all runs to single csv ##
     #################################################
     all_results = pd.concat(map(pd.read_csv, all_output_files), ignore_index=True)
     all_results.to_csv(args.output, index=False)
+
+    # last_row = all_results.iloc[-1]
+    # new_df = pd.DataFrame([last_row])
+    # new_df.to_csv(args.output, index=False)
 
     # delete intermediate files
     for f in all_output_files:

@@ -115,6 +115,7 @@ def kalman_filter(
 
     if measurement_band is None:
         measurement_band = collection.first().bandNames().getString(0)
+        # print(f"Using {measurement_band.getInfo()} as measurement band.")
 
     def _iterator(curr, prev):
         """Kalman Filter Loop."""
@@ -145,6 +146,7 @@ def kalman_filter(
 
         return ee.List(prev).add(ee.Image.cat(*outputs))
 
+    
     result = ee.List(collection.iterate(_iterator, [init_image]))
 
     # slice to drop the initial image

@@ -1,0 +1,4 @@
+ Observation           Group         Measured          Modelled        Sensitivity
+ intp                  obsgroup      0.1837746         0.2012761         2.6956621E-02
+ cos                   obsgroup     -4.6876497E-02     5.9454564E-02     7.8300090E-03
+ sin                   obsgroup     -7.7854190E-02    -2.2885899E-02     6.5636256E-03
