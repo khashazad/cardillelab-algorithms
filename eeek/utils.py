@@ -440,7 +440,7 @@ def build_request(point, scale=10):
     geom = ee.Geometry.Point(point)
     coords = ee.Feature(geom).geometry(1, proj).getInfo()["coordinates"]
     request = {
-        "fileFormat": "NPY",  # TODO: switch to NUMPY_NDARRAY
+        "fileFormat": "NPY",
         "grid": {
             "dimensions": {
                 "width": 1,
