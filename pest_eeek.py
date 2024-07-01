@@ -172,11 +172,11 @@ def main(args):
 
         return shard_path
 
-    # with ProcessPool(nodes=40) as pool:
-    #     all_output_files = pool.map(process_point, points)
+    with ProcessPool(nodes=40) as pool:
+        all_output_files = pool.map(process_point, points)
 
-    result = process_point(points[0])
-    all_output_files = [result]
+    # result = process_point(points[0])
+    # all_output_files = [result]
 
     #################################################
     ## Combine results from all runs to single csv ##
