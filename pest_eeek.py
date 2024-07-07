@@ -147,6 +147,7 @@ def main(args):
         # pprint(COLLECTIONS[args.collection].getInfo())
         print(col.size().getInfo())
 
+        kalman_init["point_coords"] = coords
         kalman_result = kalman_filter.kalman_filter(col, **kalman_init)
         states = (
             kalman_result.map(lambda im: utils.unpack_arrays(im, param_names))

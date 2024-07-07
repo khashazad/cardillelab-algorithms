@@ -1,10 +1,12 @@
 import ee
+import ee.geometry
+from pprint import pprint
 
 from eeek import constants
 
 ee.Initialize(opt_url=ee.data.HIGH_VOLUME_API_BASE_URL)
 
-UNMASK_VALUE = 0
+UNMASK_VALUE = -999
 
 # use 2pi * time since this date as input to sinusoids
 START_DATE = "2016-01-01"
@@ -65,6 +67,7 @@ def kalman_filter(
     postprocess_fn=lambda **kwargs: [],
     measurement_band=None,
     num_params=3,
+    point_coords=None,
 ):
     """Applies a Kalman Filter to the given image collection.
 
@@ -115,26 +118,31 @@ def kalman_filter(
 
     if measurement_band is None:
         measurement_band = collection.first().bandNames().getString(0)
-        # print(f"Using {measurement_band.getInfo()} as measurement band.")
+        print(f"Using {measurement_band.getInfo()} as measurement band.")
 
     def _iterator(curr, prev):
         """Kalman Filter Loop."""
-        curr = ee.Image(curr).unmask(UNMASK_VALUE, sameFootprint=False)
+        curr = (ee.Image(curr)
+                # .unmask(UNMASK_VALUE, sameFootprint=False)
+                )
         prev = ee.List(prev)
 
         last = ee.Image(prev.get(-1))
-        x = last.select(constants.STATE)
-        P = last.select(constants.COV)
+        x_prev = last.select(constants.STATE)
+        P_prev = last.select(constants.COV)
 
         z = curr.select(measurement_band).toArray().toArray(1)
         t = curr.date().difference(START_DATE, "year")
 
         preprocess_results = preprocess_fn(**locals())
 
-        x_bar, P_bar = predict(x, P, F(**locals()), Q(**locals()))
+        x_bar, P_bar = predict(x_prev, P_prev, F(**locals()), Q(**locals()))
         x, P = update(x_bar, P_bar, z, H(**locals()), R(**locals()), num_params)
 
         postprocess_results = postprocess_fn(**locals())
+
+        x = x_prev.where(curr.select(measurement_band).gt(-999), x)
+        P = P_prev.where(curr.select(measurement_band).gt(-999), P)
 
         outputs = [
             z.rename(constants.MEASUREMENT),
@@ -145,7 +153,6 @@ def kalman_filter(
         outputs.extend(postprocess_results)
 
         return ee.List(prev).add(ee.Image.cat(*outputs))
-
     
     result = ee.List(collection.iterate(_iterator, [init_image]))
 

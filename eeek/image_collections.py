@@ -73,10 +73,45 @@ L8_GATHER_COLLECTIONS = afn_gather_collections_and_reduce({
     "verbose": False
 })
 
+L8_L9_GC = afn_gather_collections_and_reduce({
+    "L8dictionary": {
+        "years_list": [2023],
+        "first_doy": 150,
+        "last_doy": 250,
+        "cloud_cover_threshold": 20
+    },
+    "L9dictionary": {
+        "years_list": [2023],
+        "first_doy": 150,
+        "last_doy": 250,
+        "cloud_cover_threshold": 20
+    },
+    "default_study_area": (
+        ee.Geometry.Polygon([(-126.04, 49.59),(-126.04, 40.76),(-118.93, 40.76),(-118.93, 49.59)])
+    ),
+    "band_name_reduction": "swir",
+    "which_reduction": "SWIR",
+    "day_step_size": 4,
+    "verbose": False,
+    "dataset_selection": {
+        "L5": False,
+        "L7": False,
+        "L8": True,
+        "L9": True,
+        "MO": False,
+        "S2": False,
+        "S1": False,
+        "DW": False
+    },
+    "first_expectation_year": 2023,
+    "verbose": False
+})
+
 COLLECTIONS = {
     "L8": L8,
     "EXPORTED_LANDSAT8_FROM_JS": EXPORTED_LANDSAT8_FROM_JS,
-    "L8_GC": L8_GATHER_COLLECTIONS
+    "L8_GC": L8_GATHER_COLLECTIONS,
+    "L8_L9_GC": L8_L9_GC
 }
 
 if __name__ == "__main__":
