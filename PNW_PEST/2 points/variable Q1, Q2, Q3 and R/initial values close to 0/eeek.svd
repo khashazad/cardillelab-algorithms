@@ -1,0 +1,569 @@
+ RECORD OF SVD CALCULATIONS: CASE eeek
+
+
+ ------------------------------------------------------------------------------
+ OPTIMISATION ITERATION NO.        :    1
+
+
+ CURRENT VALUE OF MARQUARDT LAMBDA =    1.000E-08 ----->
+
+ SINGULAR VALUES:-
+   2333379.       688565.0       328237.3       112122.2    
+
+
+ MATRIX OF EIGENVECTORS:-
+ -0.1236629      0.6854321     -0.6323156      0.3392157    
+ -0.4806675      0.3284797      1.3965575E-02 -0.8129359    
+ -0.6746467     -0.5864224     -0.4207404      0.1547195    
+ -0.5463680      0.2799869      0.6503534      0.4473587    
+
+ Number of singular values used in solution = 3
+
+
+ ------------------------------------------------------------------------------
+ OPTIMISATION ITERATION NO.        :    2
+
+
+ CURRENT VALUE OF MARQUARDT LAMBDA =    1.000E-08 ----->
+
+ SINGULAR VALUES:-
+   1402757.       381659.7       107960.9       73589.07    
+
+
+ MATRIX OF EIGENVECTORS:-
+ -1.5401646E-02 -0.5045632     -0.8370362     -0.2110669    
+  0.2718176     -0.1543911      0.3141123     -0.8964441    
+  0.6771869      0.6279596     -0.3817671     -3.6586515E-02
+  0.6835904     -0.5720543      0.2344309      0.3879435    
+
+ Number of singular values used in solution = 3
+
+ Param "q9" frozen: gradient and update vectors out of bounds
+
+
+ CURRENT VALUE OF MARQUARDT LAMBDA =    1.000E-08 ----->
+
+ SINGULAR VALUES:-
+   909727.3       172809.8       73816.16    
+
+
+ MATRIX OF EIGENVECTORS:-
+ -9.1053794E-02  0.9830677     -0.1590192    
+ -0.3551947     -0.1812399     -0.9170544    
+ -0.9303472     -2.7018502E-02  0.3656830    
+
+ Number of singular values used in solution = 3
+
+
+ ------------------------------------------------------------------------------
+ OPTIMISATION ITERATION NO.        :    3
+
+
+ CURRENT VALUE OF MARQUARDT LAMBDA =    1.000E-08 ----->
+
+ SINGULAR VALUES:-
+   767532.0       209294.5       64749.74       50880.64    
+
+
+ MATRIX OF EIGENVECTORS:-
+ -0.1529781     -0.5124214     -0.7221461     -0.4387790    
+  0.2498034     -0.3144471      0.5938295     -0.6971999    
+  0.8039183      0.4327273     -0.3517497     -0.2067235    
+  0.5176014     -0.6717846      4.6299745E-02  0.5278737    
+
+ Number of singular values used in solution = 3
+
+ Param "q5" frozen: gradient and update vectors out of bounds
+
+ Param "q9" frozen: gradient and update vectors out of bounds
+
+
+ CURRENT VALUE OF MARQUARDT LAMBDA =    1.000E-08 ----->
+
+ SINGULAR VALUES:-
+   314436.9       116444.0    
+
+
+ MATRIX OF EIGENVECTORS:-
+ -1.3524382E-02  0.9999085    
+  0.9999085      1.3524382E-02
+
+ Number of singular values used in solution = 2
+
+
+ ------------------------------------------------------------------------------
+ OPTIMISATION ITERATION NO.        :    4
+
+
+ CURRENT VALUE OF MARQUARDT LAMBDA =    1.000E-08 ----->
+
+ SINGULAR VALUES:-
+   148416.5       36756.45       19676.27       5583.347    
+
+
+ MATRIX OF EIGENVECTORS:-
+ -0.3681069      9.0734844E-02 -0.5607119      0.7361159    
+  0.1256385      0.7633727      0.5187321      0.3638600    
+  0.8759602     -0.2614708     -0.1024842      0.3922037    
+  0.2853174      0.5836628     -0.6371940     -0.4146269    
+
+ Number of singular values used in solution = 3
+
+ Param "q5" frozen: gradient and update vectors out of bounds
+
+ Param "q9" frozen: gradient and update vectors out of bounds
+
+
+ CURRENT VALUE OF MARQUARDT LAMBDA =    1.000E-08 ----->
+
+ SINGULAR VALUES:-
+   40132.72       23044.61    
+
+
+ MATRIX OF EIGENVECTORS:-
+ -0.6205551      0.7841628    
+  0.7841628      0.6205551    
+
+ Number of singular values used in solution = 2
+
+
+ ------------------------------------------------------------------------------
+ OPTIMISATION ITERATION NO.        :    5
+
+
+ CURRENT VALUE OF MARQUARDT LAMBDA =    1.000E-08 ----->
+
+ SINGULAR VALUES:-
+   139126.9       33437.41       17757.65       5209.524    
+
+
+ MATRIX OF EIGENVECTORS:-
+ -0.3807488      2.2649930E-02 -0.5702268      0.7275704    
+  0.1231279      0.8268309      0.4124990      0.3619871    
+  0.8773549     -0.2570444     -9.2776897E-02  0.3944223    
+  0.2647984      0.4997657     -0.7043283     -0.4289961    
+
+ Number of singular values used in solution = 3
+
+ Param "q5" frozen: gradient and update vectors out of bounds
+
+ Param "q9" frozen: gradient and update vectors out of bounds
+
+
+ CURRENT VALUE OF MARQUARDT LAMBDA =    1.000E-08 ----->
+
+ SINGULAR VALUES:-
+   36449.93       20142.95    
+
+
+ MATRIX OF EIGENVECTORS:-
+ -0.7251602      0.6885802    
+  0.6885802      0.7251602    
+
+ Number of singular values used in solution = 2
+
+
+ ------------------------------------------------------------------------------
+ OPTIMISATION ITERATION NO.        :    6
+
+
+ CURRENT VALUE OF MARQUARDT LAMBDA =    1.000E-08 ----->
+
+ SINGULAR VALUES:-
+   103011.0       26047.55       9163.191       3576.365    
+
+
+ MATRIX OF EIGENVECTORS:-
+ -0.4179134      0.1736167     -0.5634929     -0.6911450    
+  0.1253932     -0.9292191      4.3672918E-02 -0.3448493    
+  0.8771666      0.2604476     -8.7191236E-02 -0.3938826    
+  0.2005087     -0.1964079     -0.8203451      0.4982511    
+
+ Number of singular values used in solution = 3
+
+ Param "q5" frozen: gradient and update vectors out of bounds
+
+
+ CURRENT VALUE OF MARQUARDT LAMBDA =    1.000E-08 ----->
+
+ SINGULAR VALUES:-
+   101766.6       9225.835       6252.522    
+
+
+ MATRIX OF EIGENVECTORS:-
+ -0.4149005      0.4850498      0.7697950    
+  0.8884559      3.3517130E-02  0.4577366    
+  0.1962237      0.8738440     -0.4448516    
+
+ Number of singular values used in solution = 3
+
+
+ ------------------------------------------------------------------------------
+ OPTIMISATION ITERATION NO.        :    7
+
+
+ CURRENT VALUE OF MARQUARDT LAMBDA =    1.000E-08 ----->
+
+ SINGULAR VALUES:-
+   84203.84       23938.30       5966.673       2807.258    
+
+
+ MATRIX OF EIGENVECTORS:-
+ -0.4463266      0.2016591     -0.5651199     -0.6639019    
+  0.1388802     -0.9325030     -5.6424786E-02 -0.3285829    
+  0.8667988      0.2764116     -0.1187536     -0.3976859    
+  0.1736800     -0.1156221     -0.8144651      0.5413995    
+
+ Number of singular values used in solution = 3
+
+ Param "q5" frozen: gradient and update vectors out of bounds
+
+
+ CURRENT VALUE OF MARQUARDT LAMBDA =    1.000E-08 ----->
+
+ SINGULAR VALUES:-
+   83006.51       6155.110       4992.437    
+
+
+ MATRIX OF EIGENVECTORS:-
+ -0.4415464     -0.7692819     -0.4617815    
+  0.8809388     -0.2740438     -0.3858068    
+  0.1702458     -0.5771528      0.7986933    
+
+ Number of singular values used in solution = 3
+
+
+ ------------------------------------------------------------------------------
+ OPTIMISATION ITERATION NO.        :    8
+
+
+ CURRENT VALUE OF MARQUARDT LAMBDA =    1.000E-08 ----->
+
+ SINGULAR VALUES:-
+   37339.09       17186.06       1118.600       977.8833    
+
+
+ MATRIX OF EIGENVECTORS:-
+ -0.5245809      0.1340107     -0.7819416     -0.3089066    
+  0.3121464     -0.8878739     -0.3002665     -0.1551921    
+  0.7850254      0.4395567     -0.3464011     -0.2655773    
+  0.1054260      2.2602909E-02 -0.4223904      0.8999782    
+
+ Number of singular values used in solution = 3
+
+
+ ------------------------------------------------------------------------------
+ OPTIMISATION ITERATION NO.        :    9
+
+
+ CURRENT VALUE OF MARQUARDT LAMBDA =    1.000E-08 ----->
+
+ SINGULAR VALUES:-
+   28819.10       14528.73       760.0514       725.4391    
+
+
+ MATRIX OF EIGENVECTORS:-
+ -0.5508036      5.2432256E-02 -1.6280808E-02 -0.8328272    
+  0.4274028     -0.8392373      1.5501041E-02 -0.3358085    
+  0.7112633      0.5395828      0.1034874     -0.4384579    
+  8.9703901E-02  4.2214693E-02 -0.9943767     -3.7230491E-02
+
+ Number of singular values used in solution = 3
+
+
+ ------------------------------------------------------------------------------
+ OPTIMISATION ITERATION NO.        :   10
+
+
+ CURRENT VALUE OF MARQUARDT LAMBDA =    1.000E-08 ----->
+
+ SINGULAR VALUES:-
+   28007.26       14557.72       704.4936       500.9103    
+
+
+ MATRIX OF EIGENVECTORS:-
+ -0.5506404      2.6414297E-02 -0.7889963      0.2712606    
+  0.4695927     -0.8164970     -0.3202842      0.1011604    
+  0.6860049      0.5743260     -0.4445852      4.3484139E-02
+  7.5333112E-02  5.2769905E-02  0.2779332      0.9561869    
+
+ Number of singular values used in solution = 3
+
+ Param "q5" frozen: gradient and update vectors out of bounds
+
+
+ CURRENT VALUE OF MARQUARDT LAMBDA =    1.000E-08 ----->
+
+ SINGULAR VALUES:-
+   24835.90       2458.028       517.8238    
+
+
+ MATRIX OF EIGENVECTORS:-
+ -0.5399178     -0.8405175      4.4935794E-02
+  0.8369649     -0.5417687     -7.7307247E-02
+  8.9322899E-02 -4.1298732E-03  0.9959942    
+
+ Number of singular values used in solution = 3
+
+
+ ------------------------------------------------------------------------------
+ OPTIMISATION ITERATION NO.        :   11
+
+
+ CURRENT VALUE OF MARQUARDT LAMBDA =    1.000E-08 ----->
+
+ SINGULAR VALUES:-
+   17204.17       7675.338       292.4423       67.32532    
+
+
+ MATRIX OF EIGENVECTORS:-
+ -0.4707952     -0.2256296     -0.7919813      0.3165575    
+  0.8137381     -0.4843134     -0.2929457      0.1321120    
+  0.3406518      0.8428708     -0.4068105      8.9612652E-02
+  1.1766824E-02  6.4036019E-02  0.3485020      0.9350440    
+
+ Number of singular values used in solution = 3
+
+ Param "q5" frozen: gradient and update vectors out of bounds
+
+
+ CURRENT VALUE OF MARQUARDT LAMBDA =    1.000E-08 ----->
+
+ SINGULAR VALUES:-
+   10377.69       1541.888       101.0197    
+
+
+ MATRIX OF EIGENVECTORS:-
+ -0.5681766     -0.8228593      8.8230354E-03
+  0.8213461     -0.5677266     -5.5471327E-02
+  5.0654171E-02 -2.4270745E-02  0.9984213    
+
+ Number of singular values used in solution = 3
+
+
+ ------------------------------------------------------------------------------
+ OPTIMISATION ITERATION NO.        :   12
+
+
+ CURRENT VALUE OF MARQUARDT LAMBDA =    1.000E-08 ----->
+
+ SINGULAR VALUES:-
+   17725.39       7491.651       341.6628       29.12664    
+
+
+ MATRIX OF EIGENVECTORS:-
+ -0.4564959     -0.2333325     -0.8254012      0.2363901    
+  0.8365212     -0.4410947     -0.3094027      9.9688268E-02
+  0.3029860      0.8652122     -0.3949836      5.9960203E-02
+  6.5853388E-03  4.8981730E-02  0.2587870      0.9646692    
+
+ Number of singular values used in solution = 3
+
+
+ ------------------------------------------------------------------------------
+ OPTIMISATION ITERATION NO.        :   13
+
+
+ CURRENT VALUE OF MARQUARDT LAMBDA =    1.000E-08 ----->
+
+ SINGULAR VALUES:-
+   17410.81       7297.440       329.0788       28.91384    
+
+
+ MATRIX OF EIGENVECTORS:-
+ -0.4581506     -0.2336940     -0.8232721      0.2402253    
+  0.8363751     -0.4398441     -0.3108579      0.1018883    
+  0.3008860      0.8657318     -0.3951783      6.1726113E-02
+  6.5083251E-03  4.9322133E-02  0.2634853      0.9633797    
+
+ Number of singular values used in solution = 3
+
+
+ ------------------------------------------------------------------------------
+ OPTIMISATION ITERATION NO.        :   14
+
+
+ CURRENT VALUE OF MARQUARDT LAMBDA =    1.000E-08 ----->
+
+ SINGULAR VALUES:-
+   15884.34       6380.512       271.6191       27.86859    
+
+
+ MATRIX OF EIGENVECTORS:-
+ -0.4663419     -0.2352662     -0.8117301      0.2612838    
+  0.8354618     -0.4337825     -0.3175812      0.1139232    
+  0.2906732      0.8682604     -0.3956249      7.1511443E-02
+  6.1543715E-03  5.1052856E-02  0.2893395      0.9558443    
+
+ Number of singular values used in solution = 3
+
+
+ ------------------------------------------------------------------------------
+ OPTIMISATION ITERATION NO.        :   15
+
+
+ CURRENT VALUE OF MARQUARDT LAMBDA =    1.000E-08 ----->
+
+ SINGULAR VALUES:-
+   15869.00       6374.081       271.0973       27.85539    
+
+
+ MATRIX OF EIGENVECTORS:-
+ -0.4667221     -0.2349955     -0.8115283      0.2614755    
+  0.8351911     -0.4340354     -0.3178781      0.1141166    
+  0.2908405      0.8682069     -0.3956012      7.1612010E-02
+  6.1726462E-03  5.1061047E-02  0.2896118      0.9557613    
+
+ Number of singular values used in solution = 3
+
+
+ ------------------------------------------------------------------------------
+ OPTIMISATION ITERATION NO.        :   16
+
+
+ CURRENT VALUE OF MARQUARDT LAMBDA =    1.000E-08 ----->
+
+ SINGULAR VALUES:-
+   15869.90       6374.627       271.1296       27.85596    
+
+
+ MATRIX OF EIGENVECTORS:-
+ -0.4667200     -0.2349924     -0.8115350      0.2614613    
+  0.8351894     -0.4340418     -0.3178765      0.1141093    
+  0.2908488      0.8682046     -0.3956013      7.1605555E-02
+  6.1730287E-03  5.1059884E-02  0.2895947      0.9557666    
+
+ Number of singular values used in solution = 3
+
+
+ ------------------------------------------------------------------------------
+ OPTIMISATION ITERATION NO.        :   17
+
+
+ CURRENT VALUE OF MARQUARDT LAMBDA =    1.000E-08 ----->
+
+ SINGULAR VALUES:-
+   15869.88       6374.612       271.1287       27.85594    
+
+
+ MATRIX OF EIGENVECTORS:-
+ -0.4667201     -0.2349925     -0.8115348      0.2614617    
+  0.8351894     -0.4340417     -0.3178766      0.1141095    
+  0.2908486      0.8682046     -0.3956014      7.1605745E-02
+  6.1730181E-03  5.1059915E-02  0.2895951      0.9557664    
+
+ Number of singular values used in solution = 3
+
+
+ ------------------------------------------------------------------------------
+ OPTIMISATION ITERATION NO.        :   18
+
+
+ CURRENT VALUE OF MARQUARDT LAMBDA =    1.000E-08 ----->
+
+ SINGULAR VALUES:-
+   15869.88       6374.613       271.1288       27.85595    
+
+
+ MATRIX OF EIGENVECTORS:-
+ -0.4667201     -0.2349925     -0.8115348      0.2614617    
+  0.8351894     -0.4340417     -0.3178766      0.1141095    
+  0.2908486      0.8682046     -0.3956014      7.1605740E-02
+  6.1730184E-03  5.1059914E-02  0.2895951      0.9557664    
+
+ Number of singular values used in solution = 3
+
+
+ ------------------------------------------------------------------------------
+ OPTIMISATION ITERATION NO.        :   19
+
+
+ CURRENT VALUE OF MARQUARDT LAMBDA =    1.000E-08 ----->
+
+ SINGULAR VALUES:-
+   15869.88       6374.613       271.1288       27.85595    
+
+
+ MATRIX OF EIGENVECTORS:-
+ -0.4667201     -0.2349925     -0.8115348      0.2614617    
+  0.8351894     -0.4340417     -0.3178766      0.1141095    
+  0.2908486      0.8682046     -0.3956014      7.1605740E-02
+  6.1730185E-03  5.1059914E-02  0.2895951      0.9557664    
+
+ Number of singular values used in solution = 3
+
+
+ ------------------------------------------------------------------------------
+ OPTIMISATION ITERATION NO.        :   20
+
+
+ CURRENT VALUE OF MARQUARDT LAMBDA =    1.000E-08 ----->
+
+ SINGULAR VALUES:-
+   15869.88       6374.613       271.1288       27.85595    
+
+
+ MATRIX OF EIGENVECTORS:-
+ -0.4667201     -0.2349925     -0.8115348      0.2614617    
+  0.8351894     -0.4340417     -0.3178766      0.1141095    
+  0.2908486      0.8682046     -0.3956014      7.1605740E-02
+  6.1730185E-03  5.1059914E-02  0.2895951      0.9557664    
+
+ Number of singular values used in solution = 3
+
+
+ ------------------------------------------------------------------------------
+ OPTIMISATION ITERATION NO.        :   21
+
+
+ CURRENT VALUE OF MARQUARDT LAMBDA =    1.000E-08 ----->
+
+ SINGULAR VALUES:-
+   15869.88       6374.613       271.1288       27.85595    
+
+
+ MATRIX OF EIGENVECTORS:-
+ -0.4667201     -0.2349925     -0.8115348      0.2614617    
+  0.8351894     -0.4340417     -0.3178766      0.1141095    
+  0.2908486      0.8682046     -0.3956014      7.1605740E-02
+  6.1730185E-03  5.1059914E-02  0.2895951      0.9557664    
+
+ Number of singular values used in solution = 3
+
+
+ ------------------------------------------------------------------------------
+ OPTIMISATION ITERATION NO.        :   22
+
+
+ CURRENT VALUE OF MARQUARDT LAMBDA =    1.000E-08 ----->
+
+ SINGULAR VALUES:-
+   15869.88       6374.613       271.1288       27.85595    
+
+
+ MATRIX OF EIGENVECTORS:-
+ -0.4667201     -0.2349925     -0.8115348      0.2614617    
+  0.8351894     -0.4340417     -0.3178766      0.1141095    
+  0.2908486      0.8682046     -0.3956014      7.1605740E-02
+  6.1730185E-03  5.1059914E-02  0.2895951      0.9557664    
+
+ Number of singular values used in solution = 3
+
+
+ ------------------------------------------------------------------------------
+ OPTIMISATION ITERATION NO.        :   23
+
+
+ CURRENT VALUE OF MARQUARDT LAMBDA =    1.000E-08 ----->
+
+ SINGULAR VALUES:-
+   15869.88       6374.613       271.1288       27.85595    
+
+
+ MATRIX OF EIGENVECTORS:-
+ -0.4667201     -0.2349925     -0.8115348      0.2614617    
+  0.8351894     -0.4340417     -0.3178766      0.1141095    
+  0.2908486      0.8682046     -0.3956014      7.1605740E-02
+  6.1730185E-03  5.1059914E-02  0.2895951      0.9557664    
+
+ Number of singular values used in solution = 3

@@ -1,0 +1,110 @@
+                        PARAMETER SENSITIVITIES: CASE eeek
+
+
+ OPTIMISATION ITERATION NO.  1 ----->
+ Parameter name    Group          Current value    Sensitivity
+   q1              q1              1.300000E-03      4.34806    
+   q5              q5              1.300000E-04      7.80025    
+   q9              q9              1.300000E-04      5.22030    
+   r               r               2.800000E-03     0.543673    
+
+
+ OPTIMISATION ITERATION NO.  2 ----->
+ Parameter name    Group          Current value    Sensitivity
+   q1              q1              1.195399E-03      4.71671    
+   q5              q5              1.008491E-04      8.28336    
+   q9              q9              1.105470E-04      5.58957    
+   r               r               2.840717E-03     0.554417    
+
+
+ OPTIMISATION ITERATION NO.  3 ----->
+ Parameter name    Group          Current value    Sensitivity
+   q1              q1              1.202180E-03      4.71999    
+   q5              q5              1.031002E-04      8.25125    
+   q9              q9              1.116591E-04      5.56894    
+   r               r               2.838364E-03     0.555384    
+
+
+ OPTIMISATION ITERATION NO.  4 ----->
+ Parameter name    Group          Current value    Sensitivity
+   q1              q1              1.202576E-03      4.71848    
+   q5              q5              1.032356E-04      8.24915    
+   q9              q9              1.117034E-04      5.56766    
+   r               r               2.838227E-03     0.555341    
+
+
+ OPTIMISATION ITERATION NO.  5 ----->
+ Parameter name    Group          Current value    Sensitivity
+   q1              q1              1.202575E-03      4.71848    
+   q5              q5              1.032349E-04      8.24915    
+   q9              q9              1.117025E-04      5.56767    
+   r               r               2.838227E-03     0.555341    
+
+
+ OPTIMISATION ITERATION NO.  6 ----->
+ Parameter name    Group          Current value    Sensitivity
+   q1              q1              1.202575E-03      4.71848    
+   q5              q5              1.032349E-04      8.24915    
+   q9              q9              1.117025E-04      5.56767    
+   r               r               2.838227E-03     0.555341    
+
+
+ OPTIMISATION ITERATION NO.  7 ----->
+ Parameter name    Group          Current value    Sensitivity
+   q1              q1              1.202575E-03      4.71848    
+   q5              q5              1.032349E-04      8.24915    
+   q9              q9              1.117025E-04      5.56767    
+   r               r               2.838227E-03     0.555341    
+
+
+ OPTIMISATION ITERATION NO.  8 ----->
+ Parameter name    Group          Current value    Sensitivity
+   q1              q1              1.202575E-03      4.71848    
+   q5              q5              1.032349E-04      8.24915    
+   q9              q9              1.117025E-04      5.56767    
+   r               r               2.838227E-03     0.555341    
+
+
+ OPTIMISATION ITERATION NO.  9 ----->
+ Parameter name    Group          Current value    Sensitivity
+   q1              q1              1.202575E-03      4.71848    
+   q5              q5              1.032349E-04      8.24915    
+   q9              q9              1.117025E-04      5.56767    
+   r               r               2.838227E-03     0.555341    
+
+
+ OPTIMISATION ITERATION NO. 10 ----->
+ Parameter name    Group          Current value    Sensitivity
+   q1              q1              1.202575E-03      4.71848    
+   q5              q5              1.032349E-04      8.24915    
+   q9              q9              1.117025E-04      5.56767    
+   r               r               2.838227E-03     0.555341    
+
+
+ OPTIMISATION ITERATION NO. 11 ----->
+ Parameter name    Group          Current value    Sensitivity
+   q1              q1              1.202575E-03      4.71848    
+   q5              q5              1.032349E-04      8.24915    
+   q9              q9              1.117025E-04      5.56767    
+   r               r               2.838227E-03     0.555341    
+
+
+ OPTIMISATION ITERATION NO. 12 ----->
+ Parameter name    Group          Current value    Sensitivity
+   q1              q1              1.202575E-03      4.71848    
+   q5              q5              1.032349E-04      8.24915    
+   q9              q9              1.117025E-04      5.56767    
+   r               r               2.838227E-03     0.555341    
+
+
+
+                        COMPLETION OF OPTIMISATION PROCESS
+
+ Composite sensitivities for all observations/prior info ----->
+
+ Number of observations with non-zero weight =    12
+ Parameter name    Group          Current value    Sensitivity
+   q1              q1              1.202575E-03      4.71848    
+   q5              q5              1.032349E-04      8.24915    
+   q9              q9              1.117025E-04      5.56767    
+   r               r               2.838227E-03     0.555341    
