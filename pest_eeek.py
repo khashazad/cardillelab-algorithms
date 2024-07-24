@@ -48,6 +48,7 @@ start running the Kalman filter and the date to stop running the kalman filter
 
 import argparse
 import os
+import json
 
 import ee
 import numpy as np
@@ -86,16 +87,26 @@ def main(args):
         lines = f.readlines()
         assert len(lines) == 4, "PEST parameter file must specify Q, R, P, and x0"
 
+        parameters = {}
+
         Q, R, P, x0 = lines
         Q = np.array([float(x) for x in Q.split(",")]).reshape(num_params, num_params)
+        parameters["process noise (Q)"] = Q.tolist()
+
         R = np.array([float(x) for x in R.split(",")]).reshape(
             NUM_MEASURES, NUM_MEASURES
         )
+        parameters["measurement noise (R)"] = R.tolist()
+
         P = np.array([float(x) for x in P.split(",")]).reshape(num_params, num_params)
+        parameters["initial state covariance matrix (P)"] = P.tolist()
         P = ee.Image(ee.Array(P.tolist())).rename("P")
+
         x0 = np.array([float(x) for x in x0.split(",")]).reshape(
             num_params, NUM_MEASURES
         )
+        parameters["initial state matrix (X0)"] = x0.tolist()
+
         x0 = ee.Image(ee.Array(x0.tolist())).rename("x")
 
         H = utils.sinusoidal(
@@ -112,6 +123,9 @@ def main(args):
             "R": lambda **kwargs: ee.Image(ee.Array(R.tolist())),
             "num_params": num_params,
         }
+
+        with open('eeek_params.json', 'w') as f:
+            json.dump(parameters, f, indent=4)
 
     #################################################
     # Create parameters to run filter on each point #
@@ -144,8 +158,8 @@ def main(args):
             .filterDate(kwargs["start_date"], kwargs["stop_date"])
         )
 
-        # pprint(COLLECTIONS[args.collection].getInfo())
-        print(col.size().getInfo())
+        # print number of images in collection
+        # print(col.size().getInfo())
 
         kalman_init["point_coords"] = coords
         kalman_result = kalman_filter.kalman_filter(col, **kalman_init)

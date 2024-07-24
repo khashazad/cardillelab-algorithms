@@ -1,0 +1,575 @@
+
+                       PEST RUN RECORD: CASE eeek
+
+
+PEST Version: 17.5
+
+
+PEST run mode:-
+
+   Parameter estimation mode
+
+
+Case dimensions:-
+
+   Number of parameters                           :    10
+   Number of adjustable parameters                :     3
+   Number of parameter groups                     :    10
+   Number of observations                         :    12
+   Number of prior estimates                      :     0
+
+
+Model command line(s):-
+
+   model.bat
+
+
+Jacobian command line:-
+
+   na
+
+
+Model interface files:-
+
+   Templates:
+      input.tpl
+   for model input files:
+      pest_input.csv
+
+   (Parameter values written using single precision protocol.)
+   (Decimal point always included.)
+
+   Instruction files:
+      output.ins
+   for reading model output files:
+      pest_output.csv
+
+
+PEST-to-model message file:-
+
+   na
+
+
+Singular value decomposition:-
+
+   Perform SVD on XtQX or Q^(1/2)X               : XtQX
+   Max. number of singular values to employ      : 3
+   Ratio of lowest/highest singular value        :  1.000000E-06
+   Record eigenvectors in SVD file               : yes
+
+
+Derivatives calculation:-
+
+Param        Increment   Increment   Increment   Forward or   Multiplier  Method
+group        type                    low bound   central      (central)   (central)
+q1           relative    1.0000E-02   none         switch       2.000     parabolic
+q5           relative    1.0000E-02   none         switch       2.000     parabolic
+q9           relative    1.0000E-02   none         switch       2.000     parabolic
+r            relative    1.0000E-02   none         switch       2.000     parabolic
+p1           relative    1.0000E-02   none         switch       2.000     parabolic
+p5           relative    1.0000E-02   none         switch       2.000     parabolic
+p9           relative    1.0000E-02   none         switch       2.000     parabolic
+x1           relative    1.0000E-02   none         switch       2.000     parabolic
+x2           relative    1.0000E-02   none         switch       2.000     parabolic
+x3           relative    1.0000E-02   none         switch       2.000     parabolic
+
+
+Parameter definitions:-
+
+Name         Trans-            Change       Initial        Lower          Upper
+             formation         limit        value          bound          bound
+q1           none              relative   1.000000E-02   1.000000E-06    1.00000    
+q5           fixed               na       1.250000E-04      na             na
+q9           none              relative   1.000000E-02   1.000000E-06    1.00000    
+r            none              relative   1.000000E-02   1.000000E-06    1000.00    
+p1           fixed               na       1.010000E-03      na             na
+p5           fixed               na       2.220000E-03      na             na
+p9           fixed               na       3.330000E-03      na             na
+x1           fixed               na       0.250000          na             na
+x2           fixed               na      -1.500000E-02      na             na
+x3           fixed               na      -4.500000E-02      na             na
+
+Name         Group          Scale         Offset        Model command number
+q1           q1            1.00000        0.00000            1
+q5           q5            1.00000        0.00000            1
+q9           q9            1.00000        0.00000            1
+r            r             1.00000        0.00000            1
+p1           p1            1.00000        0.00000            1
+p5           p5            1.00000        0.00000            1
+p9           p9            1.00000        0.00000            1
+x1           x1            1.00000        0.00000            1
+x2           x2            1.00000        0.00000            1
+x3           x3            1.00000        0.00000            1
+
+
+Prior information:-
+
+   No prior information supplied
+
+
+Observations:-
+
+Observation name        Observation       Weight       Group
+ intp_p1_mid            0.130122          1.000       obsgroup    
+ cos_p1_mid             5.542147E-02      1.000       obsgroup    
+ sin_p1_mid            -5.791578E-02      1.000       obsgroup    
+ intp_p1_final          6.962904E-02      1.000       obsgroup    
+ cos_p1_final           5.367293E-02      1.000       obsgroup    
+ sin_p1_final          -3.607480E-02      1.000       obsgroup    
+ intp_p2_mid            0.252271          1.000       obsgroup    
+ cos_p2_mid            -2.375351E-02      1.000       obsgroup    
+ sin_p2_mid            -3.507710E-02      1.000       obsgroup    
+ intp_p2_final          0.225189          1.000       obsgroup    
+ cos_p2_final          -2.410060E-02      1.000       obsgroup    
+ sin_p2_final          -2.523384E-02      1.000       obsgroup    
+
+
+Control settings:-
+
+   Initial lambda                                               :  0.0000    
+   Lambda adjustment factor                                     :  2.0000    
+   Sufficient new/old phi ratio per optimisation iteration      : 0.30000    
+   Limiting relative phi reduction between lambdas              : 5.00000E-02
+   Maximum trial lambdas per iteration                          :   1
+   Forgive model run failure during lamda testing               : no
+   Forgive model run failure during Jacobian runs               : no
+
+   Perform Broyden's update of Jacobian matrix                  : no
+   Undertake observation re-referencing                         : no
+
+   Maximum  factor  parameter change (factor-limited changes)   : na
+   Maximum relative parameter change (relative-limited changes) :  5.0000
+   Fraction of initial parameter values used in computing
+   change limit for near-zero parameters                        : 1.00000E-03
+   Allow bending of parameter upgrade vector                    : no
+   Allow parameters to stick to their bounds                    : no
+
+   Relative phi reduction below which to begin use of
+   central derivatives                                          : 0.10000             
+   Iteration at which to first consider derivatives switch      :   1
+
+   Relative phi reduction indicating convergence                : 0.10000E-06
+   Number of phi values required within this range              :  10
+   Maximum number of consecutive failures to lower phi          :  10
+   Minimal relative parameter change indicating convergence     : 0.10000E-01
+   Number of consecutive iterations with minimal param change   :  10
+   Maximum number of optimisation iterations                    :  50
+
+   Attempt automatic user intervention                          : no
+
+   Attempt reuse of parameter sensitivities                     : no
+
+   Scale parameters by their bounds                             : no
+
+
+File saving options: -
+
+   Save best JCO file                                           : yes
+   Save multiple JCO files                                      : no
+   Save multiple REI files                                      : no
+   Save multiple PAR files                                      : no
+
+
+                            OPTIMISATION RECORD
+
+
+INITIAL CONDITIONS: 
+   Sum of squared weighted residuals (ie phi) =  9.47320E-03
+
+      Current parameter values
+      q1              1.000000E-02
+      q5              1.250000E-04
+      q9              1.000000E-02
+      r               1.000000E-02
+      p1              1.010000E-03
+      p5              2.220000E-03
+      p9              3.330000E-03
+      x1              0.250000    
+      x2             -1.500000E-02
+      x3             -4.500000E-02
+
+
+OPTIMISATION ITERATION NO.        : 1
+   Model calls so far             : 1
+   Starting phi for this iteration:  9.47320E-03
+
+       Lambda =  1.00000E-08 ----->
+          Phi =  2.31562E-02  (  2.444 times starting phi)
+
+   No more lambdas: allowed lambdas per iteration =  1
+   Lowest phi this iteration:  2.31562E-02
+   Relative phi reduction between optimisation iterations less than 0.1000
+   Switch to higher order derivatives calculation
+   (restart from best parameters so far - these achieved at iteration    0)
+
+      Current parameter values
+      q1              1.000000E-02
+      q5              1.250000E-04
+      q9              1.000000E-02
+      r               1.000000E-02
+      p1              1.010000E-03
+      p5              2.220000E-03
+      p9              3.330000E-03
+      x1              0.250000    
+      x2             -1.500000E-02
+      x3             -4.500000E-02
+
+
+OPTIMISATION ITERATION NO.        : 2
+   Model calls so far             : 5
+   Starting phi for this iteration:  9.47320E-03
+
+       Lambda =  1.00000E-08 ----->
+          Phi =  2.31562E-02  (  2.444 times starting phi)
+
+   No more lambdas: allowed lambdas per iteration =  1
+   Lowest phi this iteration:  2.31562E-02
+
+      Current parameter values                 Previous parameter values
+      q1              1.000000E-06             q1               1.000000E-02
+      q5              1.250000E-04             q5               1.250000E-04
+      q9              1.000000E-06             q9               1.000000E-02
+      r               1.000000E-06             r                1.000000E-02
+      p1              1.010000E-03             p1               1.010000E-03
+      p5              2.220000E-03             p5               2.220000E-03
+      p9              3.330000E-03             p9               3.330000E-03
+      x1              0.250000                 x1               0.250000    
+      x2             -1.500000E-02             x2              -1.500000E-02
+      x3             -4.500000E-02             x3              -4.500000E-02
+   Maximum relative change: 0.9999     ["q1"]
+
+
+OPTIMISATION ITERATION NO.        : 3
+   Model calls so far             : 12
+   Starting phi for this iteration:  2.31562E-02
+       param "q9" frozen: gradient and update vectors out of bounds
+       param "r" frozen: gradient and update vectors out of bounds
+
+       Lambda =  1.00000E-08 ----->
+          Phi =  1.66487E-02  (  0.719 of starting phi)
+
+   No more lambdas: allowed lambdas per iteration =  1
+   Lowest phi this iteration:  1.66487E-02
+
+      Current parameter values                 Previous parameter values
+      q1              5.100000E-05             q1               1.000000E-06
+      q5              1.250000E-04             q5               1.250000E-04
+      q9              1.000000E-06             q9               1.000000E-06
+      r               1.000000E-06             r                1.000000E-06
+      p1              1.010000E-03             p1               1.010000E-03
+      p5              2.220000E-03             p5               2.220000E-03
+      p9              3.330000E-03             p9               3.330000E-03
+      x1              0.250000                 x1               0.250000    
+      x2             -1.500000E-02             x2              -1.500000E-02
+      x3             -4.500000E-02             x3              -4.500000E-02
+   Maximum relative change:  50.00     ["q1"]
+
+
+OPTIMISATION ITERATION NO.        : 4
+   Model calls so far             : 19
+   Starting phi for this iteration:  1.66487E-02
+   All frozen parameters freed.
+       param "q9" frozen: gradient and update vectors out of bounds
+       param "r" frozen: gradient and update vectors out of bounds
+
+       Lambda =  1.00000E-08 ----->
+          Phi =  5.75132E-03  (  0.345 of starting phi)
+
+   No more lambdas: allowed lambdas per iteration =  1
+   Lowest phi this iteration:  5.75132E-03
+
+      Current parameter values                 Previous parameter values
+      q1              2.716752E-04             q1               5.100000E-05
+      q5              1.250000E-04             q5               1.250000E-04
+      q9              1.000000E-06             q9               1.000000E-06
+      r               1.000000E-06             r                1.000000E-06
+      p1              1.010000E-03             p1               1.010000E-03
+      p5              2.220000E-03             p5               2.220000E-03
+      p9              3.330000E-03             p9               3.330000E-03
+      x1              0.250000                 x1               0.250000    
+      x2             -1.500000E-02             x2              -1.500000E-02
+      x3             -4.500000E-02             x3              -4.500000E-02
+   Maximum relative change:  4.327     ["q1"]
+
+
+OPTIMISATION ITERATION NO.        : 5
+   Model calls so far             : 26
+   Starting phi for this iteration:  5.75132E-03
+   All frozen parameters freed.
+
+       Lambda =  1.00000E-08 ----->
+          Phi =  2.88698E-03  (  0.502 of starting phi)
+
+   No more lambdas: allowed lambdas per iteration =  1
+   Lowest phi this iteration:  2.88698E-03
+
+      Current parameter values                 Previous parameter values
+      q1              5.095652E-04             q1               2.716752E-04
+      q5              1.250000E-04             q5               1.250000E-04
+      q9              5.100000E-05             q9               1.000000E-06
+      r               2.322343E-05             r                1.000000E-06
+      p1              1.010000E-03             p1               1.010000E-03
+      p5              2.220000E-03             p5               2.220000E-03
+      p9              3.330000E-03             p9               3.330000E-03
+      x1              0.250000                 x1               0.250000    
+      x2             -1.500000E-02             x2              -1.500000E-02
+      x3             -4.500000E-02             x3              -4.500000E-02
+   Maximum relative change:  50.00     ["q9"]
+
+
+OPTIMISATION ITERATION NO.        : 6
+   Model calls so far             : 33
+   Starting phi for this iteration:  2.88698E-03
+
+       Lambda =  1.00000E-08 ----->
+          Phi =  1.65158E-03  (  0.572 of starting phi)
+
+   No more lambdas: allowed lambdas per iteration =  1
+   Lowest phi this iteration:  1.65158E-03
+
+      Current parameter values                 Previous parameter values
+      q1              7.082721E-04             q1               5.095652E-04
+      q5              1.250000E-04             q5               1.250000E-04
+      q9              1.061916E-04             q9               5.100000E-05
+      r               1.393406E-04             r                2.322343E-05
+      p1              1.010000E-03             p1               1.010000E-03
+      p5              2.220000E-03             p5               2.220000E-03
+      p9              3.330000E-03             p9               3.330000E-03
+      x1              0.250000                 x1               0.250000    
+      x2             -1.500000E-02             x2              -1.500000E-02
+      x3             -4.500000E-02             x3              -4.500000E-02
+   Maximum relative change:  5.000     ["r"]
+
+
+OPTIMISATION ITERATION NO.        : 7
+   Model calls so far             : 40
+   Starting phi for this iteration:  1.65158E-03
+
+       Lambda =  1.00000E-08 ----->
+          Phi =  3.04782E-04  (  0.185 of starting phi)
+
+   No more lambdas: allowed lambdas per iteration =  1
+   Lowest phi this iteration:  3.04782E-04
+
+      Current parameter values                 Previous parameter values
+      q1              1.177759E-03             q1               7.082721E-04
+      q5              1.250000E-04             q5               1.250000E-04
+      q9              2.259771E-04             q9               1.061916E-04
+      r               8.360434E-04             r                1.393406E-04
+      p1              1.010000E-03             p1               1.010000E-03
+      p5              2.220000E-03             p5               2.220000E-03
+      p9              3.330000E-03             p9               3.330000E-03
+      x1              0.250000                 x1               0.250000    
+      x2             -1.500000E-02             x2              -1.500000E-02
+      x3             -4.500000E-02             x3              -4.500000E-02
+   Maximum relative change:  5.000     ["r"]
+
+
+OPTIMISATION ITERATION NO.        : 8
+   Model calls so far             : 47
+   Starting phi for this iteration:  3.04782E-04
+
+       Lambda =  1.00000E-08 ----->
+          Phi =  2.51832E-05  (  0.083 of starting phi)
+
+   No more lambdas: allowed lambdas per iteration =  1
+   Lowest phi this iteration:  2.51832E-05
+
+      Current parameter values                 Previous parameter values
+      q1              1.262630E-03             q1               1.177759E-03
+      q5              1.250000E-04             q5               1.250000E-04
+      q9              1.525372E-04             q9               2.259771E-04
+      r               2.220381E-03             r                8.360434E-04
+      p1              1.010000E-03             p1               1.010000E-03
+      p5              2.220000E-03             p5               2.220000E-03
+      p9              3.330000E-03             p9               3.330000E-03
+      x1              0.250000                 x1               0.250000    
+      x2             -1.500000E-02             x2              -1.500000E-02
+      x3             -4.500000E-02             x3              -4.500000E-02
+   Maximum relative change:  1.656     ["r"]
+
+
+OPTIMISATION ITERATION NO.        : 9
+   Model calls so far             : 54
+   Starting phi for this iteration:  2.51832E-05
+
+       Lambda =  1.00000E-08 ----->
+          Phi =  1.97154E-07  (  0.008 of starting phi)
+
+   No more lambdas: allowed lambdas per iteration =  1
+   Lowest phi this iteration:  1.97154E-07
+
+      Current parameter values                 Previous parameter values
+      q1              1.248781E-03             q1               1.262630E-03
+      q5              1.250000E-04             q5               1.250000E-04
+      q9              1.243771E-04             q9               1.525372E-04
+      r               2.930332E-03             r                2.220381E-03
+      p1              1.010000E-03             p1               1.010000E-03
+      p5              2.220000E-03             p5               2.220000E-03
+      p9              3.330000E-03             p9               3.330000E-03
+      x1              0.250000                 x1               0.250000    
+      x2             -1.500000E-02             x2              -1.500000E-02
+      x3             -4.500000E-02             x3              -4.500000E-02
+   Maximum relative change: 0.3197     ["r"]
+
+
+OPTIMISATION ITERATION NO.        : 10
+   Model calls so far             : 61
+   Starting phi for this iteration:  1.97154E-07
+
+       Lambda =  1.00000E-08 ----->
+          Phi =  1.17015E-11  (  0.000 of starting phi)
+
+   No more lambdas: allowed lambdas per iteration =  1
+   Lowest phi this iteration:  1.17015E-11
+
+      Current parameter values                 Previous parameter values
+      q1              1.249992E-03             q1               1.248781E-03
+      q5              1.250000E-04             q5               1.250000E-04
+      q9              1.249888E-04             q9               1.243771E-04
+      r               2.999494E-03             r                2.930332E-03
+      p1              1.010000E-03             p1               1.010000E-03
+      p5              2.220000E-03             p5               2.220000E-03
+      p9              3.330000E-03             p9               3.330000E-03
+      x1              0.250000                 x1               0.250000    
+      x2             -1.500000E-02             x2              -1.500000E-02
+      x3             -4.500000E-02             x3              -4.500000E-02
+   Maximum relative change: 2.3602E-02 ["r"]
+
+
+OPTIMISATION ITERATION NO.        : 11
+   Model calls so far             : 68
+   Starting phi for this iteration:  1.17015E-11
+
+       Lambda =  1.00000E-08 ----->
+          Phi =  1.44740E-19  (  0.000 of starting phi)
+
+   No more lambdas: allowed lambdas per iteration =  1
+   Lowest phi this iteration:  1.44740E-19
+
+      Current parameter values                 Previous parameter values
+      q1              1.250000E-03             q1               1.249992E-03
+      q5              1.250000E-04             q5               1.250000E-04
+      q9              1.250000E-04             q9               1.249888E-04
+      r               3.000000E-03             r                2.999494E-03
+      p1              1.010000E-03             p1               1.010000E-03
+      p5              2.220000E-03             p5               2.220000E-03
+      p9              3.330000E-03             p9               3.330000E-03
+      x1              0.250000                 x1               0.250000    
+      x2             -1.500000E-02             x2              -1.500000E-02
+      x3             -4.500000E-02             x3              -4.500000E-02
+   Maximum relative change: 1.6871E-04 ["r"]
+
+
+OPTIMISATION ITERATION NO.        : 12
+   Model calls so far             : 75
+   Starting phi for this iteration:  1.44740E-19
+
+       Lambda =  1.00000E-08 ----->
+          Phi =   0.0000      (  0.000 of starting phi)
+
+   No more lambdas: allowed lambdas per iteration =  1
+   Lowest phi this iteration:   0.0000    
+
+      Current parameter values                 Previous parameter values
+      q1              1.250000E-03             q1               1.250000E-03
+      q5              1.250000E-04             q5               1.250000E-04
+      q9              1.250000E-04             q9               1.250000E-04
+      r               3.000000E-03             r                3.000000E-03
+      p1              1.010000E-03             p1               1.010000E-03
+      p5              2.220000E-03             p5               2.220000E-03
+      p9              3.330000E-03             p9               3.330000E-03
+      x1              0.250000                 x1               0.250000    
+      x2             -1.500000E-02             x2              -1.500000E-02
+      x3             -4.500000E-02             x3              -4.500000E-02
+   Maximum relative change: 2.0000E-08 ["r"]
+
+   Optimisation complete: phi is zero
+   Total model calls:     82
+
+   The model has been run one final time using best parameters. 
+   Thus all model input files contain best parameter values, and model 
+   output files contain model results based on these parameters.
+
+
+                            OPTIMISATION RESULTS
+
+Covariance matrix and parameter confidence intervals cannot be determined:-
+Some form or regularisation was implemented so these are not applicable.
+
+Use the PREDUNC7 utility to obtain a full posterior covariance matrix.
+
+
+Parameters ----->
+
+Parameter      Estimated value
+ q1             1.250000E-03
+ q5             1.250000E-04
+ q9             1.250000E-04
+ r              3.000000E-03
+ p1             1.010000E-03
+ p5             2.220000E-03
+ p9             3.330000E-03
+ x1             0.250000    
+ x2            -1.500000E-02
+ x3            -4.500000E-02
+
+See file eeek.sen for parameter sensitivities.
+
+
+Observations ----->
+
+Observation            Measured       Calculated     Residual       Weight     Group
+                       value          value
+intp_p1_mid           0.130122       0.130122        0.00000        1.000      obsgroup    
+cos_p1_mid            5.542147E-02   5.542147E-02    0.00000        1.000      obsgroup    
+sin_p1_mid           -5.791578E-02  -5.791578E-02    0.00000        1.000      obsgroup    
+intp_p1_final         6.962904E-02   6.962904E-02    0.00000        1.000      obsgroup    
+cos_p1_final          5.367293E-02   5.367293E-02    0.00000        1.000      obsgroup    
+sin_p1_final         -3.607480E-02  -3.607480E-02    0.00000        1.000      obsgroup    
+intp_p2_mid           0.252271       0.252271        0.00000        1.000      obsgroup    
+cos_p2_mid           -2.375351E-02  -2.375351E-02    0.00000        1.000      obsgroup    
+sin_p2_mid           -3.507710E-02  -3.507710E-02    0.00000        1.000      obsgroup    
+intp_p2_final         0.225189       0.225189        0.00000        1.000      obsgroup    
+cos_p2_final         -2.410060E-02  -2.410060E-02    0.00000        1.000      obsgroup    
+sin_p2_final         -2.523384E-02  -2.523384E-02    0.00000        1.000      obsgroup    
+
+See file eeek.res for more details of residuals in graph-ready format.
+
+See file eeek.seo for composite observation sensitivities.
+
+
+Objective function ----->
+
+  Sum of squared weighted residuals (ie phi)                =   0.000    
+
+
+Correlation Coefficient ----->
+
+  Correlation coefficient                                   =   1.0000    
+
+
+Analysis of residuals ----->
+
+  All residuals:-
+     Number of residuals with non-zero weight                       =    12
+     Mean value of non-zero weighted residuals                      =   0.000    
+     Maximum weighted residual [observation "intp_p1_mid"]          =   0.000    
+     Minimum weighted residual [observation "intp_p1_mid"]          =   0.000    
+     Standard variance of weighted residuals                        =   0.000    
+     Standard error of weighted residuals                           =   0.000    
+
+     Note: the above variance was obtained by dividing the objective 
+     function by the number of system degrees of freedom (ie. number of 
+     observations with non-zero weight plus number of prior information 
+     articles with non-zero weight minus the number of adjustable parameters.)
+     If the degrees of freedom is negative the divisor becomes 
+     the number of observations with non-zero weight plus the number of 
+     prior information items with non-zero weight.
+
+
+Covariance and other statistical matrices cannot be determined:-
+Some form or regularisation was implemented so these are not applicable.
+
+Use the PREDUNC7 utility to obtain a full posterior covariance matrix.
+

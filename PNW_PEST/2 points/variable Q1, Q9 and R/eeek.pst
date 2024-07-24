@@ -24,10 +24,10 @@ x1           relative 0.01  0.0  switch  2.0 parabolic
 x2           relative 0.01  0.0  switch  2.0 parabolic
 x3           relative 0.01  0.0  switch  2.0 parabolic
 * parameter data
-q1           none relative     0.00001         0.000001 1.0000 q1              1.0000        0.0000      1
-q5           none relative     0.00001      0.000001 1.0000 q5              1.0000        0.0000      1
-q9           none relative     0.00001      0.000001 1.0000 q9              1.0000        0.0000      1
-r            none relative     0.00001        0.000001 1000.0 r               1.0000        0.0000      1
+q1           none relative     0.01         0.000001 1.0000 q1              1.0000        0.0000      1
+q5           fixed relative    0.000125      0.000001 1.0000 q5              1.0000        0.0000      1
+q9           none relative     0.01      0.000001 1.0000 q9              1.0000        0.0000      1
+r            none relative     0.01        0.000001 1000.0 r               1.0000        0.0000      1
 p1           fixed relative    0.00101       0.000001 1.0000 p1              1.0000        0.0000      1
 p5           fixed relative    0.00222       0.000001 1.0000 p5              1.0000        0.0000      1
 p9           fixed relative    0.00333       0.000001 1.0000 p9              1.0000        0.0000      1

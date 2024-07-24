@@ -118,7 +118,7 @@ def kalman_filter(
 
     if measurement_band is None:
         measurement_band = collection.first().bandNames().getString(0)
-        print(f"Using {measurement_band.getInfo()} as measurement band.")
+        # print(f"Using {measurement_band.getInfo()} as measurement band.")
 
     def _iterator(curr, prev):
         """Kalman Filter Loop."""
