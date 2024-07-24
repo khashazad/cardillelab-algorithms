@@ -75,13 +75,13 @@ L8_GATHER_COLLECTIONS = afn_gather_collections_and_reduce({
 
 L8_L9_GC = afn_gather_collections_and_reduce({
     "L8dictionary": {
-        "years_list": [2023],
+        "years_list": [2022, 2023],
         "first_doy": 150,
         "last_doy": 250,
         "cloud_cover_threshold": 20
     },
     "L9dictionary": {
-        "years_list": [2023],
+        "years_list": [2022, 2023],
         "first_doy": 150,
         "last_doy": 250,
         "cloud_cover_threshold": 20
@@ -103,7 +103,7 @@ L8_L9_GC = afn_gather_collections_and_reduce({
         "S1": False,
         "DW": False
     },
-    "first_expectation_year": 2023,
+    "first_expectation_year": 2022,
     "verbose": False
 })
 

@@ -2,7 +2,7 @@ import ee
 import ee.geometry
 from pprint import pprint
 
-from eeek import constants
+from eeek import constants, utils
 
 ee.Initialize(opt_url=ee.data.HIGH_VOLUME_API_BASE_URL)
 
@@ -10,6 +10,8 @@ UNMASK_VALUE = -999
 
 # use 2pi * time since this date as input to sinusoids
 START_DATE = "2016-01-01"
+
+FREQUENCY = ee.Number(6.283)
 
 
 def predict(x, P, F, Q):
@@ -27,6 +29,7 @@ def predict(x, P, F, Q):
     """
     x_bar = F.matrixMultiply(x)
     P_bar = F.matrixMultiply(P).matrixMultiply(F.matrixTranspose()).add(Q)
+
     return x_bar, P_bar
 
 
@@ -122,9 +125,10 @@ def kalman_filter(
 
     def _iterator(curr, prev):
         """Kalman Filter Loop."""
-        curr = (ee.Image(curr)
-                # .unmask(UNMASK_VALUE, sameFootprint=False)
-                )
+        curr = (
+            ee.Image(curr)
+            # .unmask(UNMASK_VALUE, sameFootprint=False)
+        )
         prev = ee.List(prev)
 
         last = ee.Image(prev.get(-1))
@@ -144,16 +148,31 @@ def kalman_filter(
         x = x_prev.where(curr.select(measurement_band).gt(-999), x)
         P = P_prev.where(curr.select(measurement_band).gt(-999), P)
 
+        pixel_image = (
+            x.select(constants.STATE)
+            .arrayProject([0])
+            .arrayFlatten([["INTP", "COS0", "SIN0"]])
+        )
+
+        intp = pixel_image.select("INTP")
+        cos = pixel_image.select("COS0")
+        sin = pixel_image.select("SIN0")
+
+        phi = t.multiply(FREQUENCY)
+        estimate = intp.add(cos.multiply(phi.cos())).add(sin.multiply(phi.sin()))
+
         outputs = [
             z.rename(constants.MEASUREMENT),
             x.rename(constants.STATE),
             P.rename(constants.COV),
+            estimate.rename(constants.ESTIMATE),
+            ee.Image(curr.date().millis()).rename(constants.DATE)
         ]
         outputs.extend(preprocess_results)
         outputs.extend(postprocess_results)
 
         return ee.List(prev).add(ee.Image.cat(*outputs))
-    
+
     result = ee.List(collection.iterate(_iterator, [init_image]))
 
     # slice to drop the initial image
