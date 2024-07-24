@@ -48,6 +48,8 @@ start running the Kalman filter and the date to stop running the kalman filter
 
 import argparse
 import os
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 
 import ee
 import numpy as np
@@ -75,8 +77,12 @@ def main(args):
     num_params = len(param_names)
 
     request_band_names = param_names.copy()
+    if args.store_estimate:
+        request_band_names.append("estimate")
     if args.store_measurement:
         request_band_names.append("z")
+    if args.store_date:
+        request_band_names.append("date")
     num_request_bands = len(request_band_names)
 
     #################################################
@@ -141,7 +147,7 @@ def main(args):
         col = (
             COLLECTIONS[args.collection]
             .filterBounds(ee.Geometry.Point(coords))
-            .filterDate(kwargs["start_date"], kwargs["stop_date"])
+            # .filterDate(kwargs["start_date"], kwargs["stop_date"])
         )
 
         # pprint(COLLECTIONS[args.collection].getInfo())
@@ -158,8 +164,6 @@ def main(args):
         request = utils.build_request(coords)
         request["expression"] = states
         data = utils.compute_pixels_wrapper(request).reshape(-1, num_request_bands)
-
-
 
         df = pd.DataFrame(data, columns=request_band_names)
         df["point"] = [index] * df.shape[0]
@@ -188,11 +192,42 @@ def main(args):
     # last_row = all_results.iloc[-1]
     # new_df = pd.DataFrame([last_row])
     # new_df.to_csv(args.output, index=False)
+    
+    generate_graph(args.output)
 
     # delete intermediate files
     for f in all_output_files:
         os.remove(f)
 
+def generate_graph(output):
+
+    data = pd.read_csv(output)
+
+    data['date'] = pd.to_datetime(data['date'], unit='ms')
+
+    filtered_data = data[data['z'] != 0]
+
+    dates = filtered_data['date']
+    estimate = filtered_data['estimate']
+    z = filtered_data['z']
+
+    plt.figure(figsize=(10, 6))
+
+    plt.plot(dates, estimate, label='Estimate', color='blue', linestyle='-')
+
+    plt.scatter(dates, z, label='Z', color='red', s=10)
+
+    plt.gca().xaxis.set_major_locator(mdates.AutoDateLocator())
+    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%b %Y'))
+
+    plt.title('Estimate and Z Values Over Time (Excluding Zero Values)')
+    plt.xlabel('Date')
+    plt.ylabel('Values')
+    plt.legend()
+
+    # plt.xticks(rotation=45)    
+    plt.savefig("estimate_vs_observed_graph")
+    plt.show()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -241,5 +276,15 @@ if __name__ == "__main__":
         "--store_measurement",
         action="store_true",
         help="if set the measurements at each time step will be saved",
+    )
+    parser.add_argument(
+        "--store_estimate",
+        action="store_true",
+        help="if set the estimate at each time step will be saved",
+    )
+    parser.add_argument(
+        "--store_date",
+        action="store_true",
+        help="if set the measurement date at each time step will be saved",
     )
     main(parser.parse_args())
