@@ -207,7 +207,7 @@ def main(args):
     # new_df = pd.DataFrame([last_row])
     # new_df.to_csv(args.output, index=False)
     
-    generate_graph(args.output)
+    # generate_graph(args.output)
 
     # delete intermediate files
     for f in all_output_files:

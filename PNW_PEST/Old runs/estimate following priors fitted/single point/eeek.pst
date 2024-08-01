@@ -1,0 +1,94 @@
+pcf
+* control data
+restart estimation
+10 50 10 0 1
+1 1 single point
+0 2.0 0.3 0.05 1
+5.0 5.0 0.001
+0.1
+50 1e-07 10 4 0.01 10 1e-05
+0 0 0 0 nojcosave nojcosaveitn noverboserec noreisaveitn noparsaveitn
+* singular value decomposition
+1
+3 1e-06
+0
+* parameter groups
+q1 relative 0.01 0.0 switch 2.0 parabolic
+q5 relative 0.01 0.0 switch 2.0 parabolic
+q9 relative 0.01 0.0 switch 2.0 parabolic
+r relative 0.01 0.0 switch 2.0 parabolic
+p1 relative 0.01 0.0 switch 2.0 parabolic
+p5 relative 0.01 0.0 switch 2.0 parabolic
+p9 relative 0.01 0.0 switch 2.0 parabolic
+x1 relative 0.01 0.0 switch 2.0 parabolic
+x2 relative 0.01 0.0 switch 2.0 parabolic
+x3 relative 0.01 0.0 switch 2.0 parabolic
+* parameter data
+q1 none relative 0.00125 1e-06 1.0 q1 1.0 0.0
+q5 none relative 0.000125 1e-06 1.0 q5 1.0 0.0
+q9 none relative 0.000125 1e-06 1.0 q9 1.0 0.0
+r none relative 0.002 1e-06 1000.0 r 1.0 0.0
+p1 fixed relative 0.00101 1e-06 1.0 p1 1.0 0.0
+p5 fixed relative 0.00222 1e-06 1.0 p5 1.0 0.0
+p9 fixed relative 0.00333 1e-06 1.0 p9 1.0 0.0
+x1 fixed relative 0.25 -5.0 1.0 x1 1.0 0.0
+x2 fixed relative -0.015 -5.0 1.0 x2 1.0 0.0
+x3 fixed relative -0.045 -5.0 1.0 x3 1.0 0.0
+* observation groups
+obsgroup
+* observation data
+estimate0_1 0.086 1.0 obsgroup
+estimate0_2 0.085 1.0 obsgroup
+estimate0_3 0.084 1.0 obsgroup
+estimate0_4 0.083 1.0 obsgroup
+estimate0_5 0.082 1.0 obsgroup
+estimate0_6 0.081 1.0 obsgroup
+estimate0_7 0.08 1.0 obsgroup
+estimate0_8 0.079 1.0 obsgroup
+estimate0_9 0.078 1.0 obsgroup
+estimate0_10 0.077 1.0 obsgroup
+estimate0_11 0.076 1.0 obsgroup
+estimate0_12 0.075 1.0 obsgroup
+estimate0_13 0.075 1.0 obsgroup
+estimate0_14 0.074 1.0 obsgroup
+estimate0_15 0.073 1.0 obsgroup
+estimate0_16 0.073 1.0 obsgroup
+estimate0_17 0.072 1.0 obsgroup
+estimate0_18 0.072 1.0 obsgroup
+estimate0_19 0.072 1.0 obsgroup
+estimate0_20 0.072 1.0 obsgroup
+estimate0_21 0.071 1.0 obsgroup
+estimate0_22 0.071 1.0 obsgroup
+estimate0_23 0.072 1.0 obsgroup
+estimate0_24 0.072 1.0 obsgroup
+estimate0_25 0.072 1.0 obsgroup
+estimate0_26 0.086 1.0 obsgroup
+estimate0_27 0.085 1.0 obsgroup
+estimate0_28 0.084 1.0 obsgroup
+estimate0_29 0.083 1.0 obsgroup
+estimate0_30 0.082 1.0 obsgroup
+estimate0_31 0.081 1.0 obsgroup
+estimate0_32 0.08 1.0 obsgroup
+estimate0_33 0.079 1.0 obsgroup
+estimate0_34 0.078 1.0 obsgroup
+estimate0_35 0.077 1.0 obsgroup
+estimate0_36 0.076 1.0 obsgroup
+estimate0_37 0.075 1.0 obsgroup
+estimate0_38 0.075 1.0 obsgroup
+estimate0_39 0.074 1.0 obsgroup
+estimate0_40 0.073 1.0 obsgroup
+estimate0_41 0.073 1.0 obsgroup
+estimate0_42 0.072 1.0 obsgroup
+estimate0_43 0.072 1.0 obsgroup
+estimate0_44 0.072 1.0 obsgroup
+estimate0_45 0.072 1.0 obsgroup
+estimate0_46 0.071 1.0 obsgroup
+estimate0_47 0.071 1.0 obsgroup
+estimate0_48 0.072 1.0 obsgroup
+estimate0_49 0.072 1.0 obsgroup
+estimate0_50 0.072 1.0 obsgroup
+* model command line
+model.bat
+* model input/output
+input.tpl  pest_input.csv
+output.ins  pest_output.csv
