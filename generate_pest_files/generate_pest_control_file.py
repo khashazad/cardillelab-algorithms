@@ -115,7 +115,8 @@ def create_pest_instruction_file(observations):
         file.write("pif *\n")
         file.write(f"l1\n")
         for observation_name, measurement_value in observations:
-            file.write(f"l1 *,* *,* *,* *,* !{observation_name}! *,*\n")
+            # file.write(f"l1 *,* *,* *,* *,* !{observation_name}! *,*\n")
+            file.write(f"l1 *,*!{observation_name}! *,*\n")
             # if measurement_value != 0:
             #     # file.write(f"l1 *,* *,* *,* *,* !{observation_name}! *,*\n")
             #     file.write(f"l1 *,*!{observation_name}! *,*\n")

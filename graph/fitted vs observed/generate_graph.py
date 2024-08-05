@@ -3,15 +3,15 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import os
 
-data = pd.read_csv(os.path.relpath("./graph/fitted vs observed/eeek_output.csv"))
+data = pd.read_csv(os.path.relpath("./graph/fitted vs observed/fitted_vs_observed.csv"))
 
 data['date'] = pd.to_datetime(data['date'], unit='ms')
 
-filtered_data = data[data['z'] != 0]
+filtered_data = data[data['observed'] != 0]
 
 dates = filtered_data['date']
 fitted = filtered_data['fitted']
-observed = filtered_data['z']
+observed = filtered_data['observed']
 
 plt.figure(figsize=(10, 6))
 
