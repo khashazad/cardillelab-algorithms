@@ -31,9 +31,9 @@ r none relative 0.003 -5 5 r 1.0 0.0
 p1 fixed relative 0.00101 -5 1.0 p1 5 0.0
 p5 fixed relative 0.00222 -5 5 p5 1.0 0.0
 p9 fixed relative 0.00333 -5 5 p9 1.0 0.0
-x1 fixed relative 0.064383 -5.0 5 x1 1.0 0.0
-x2 fixed relative -0.022933 -5.0 1.0 x2 1.0 0.0
-x3 fixed relative 0.002803 -5.0 1.0 x3 1.0 0.0
+x1 fixed relative 0.0694202 -5.0 5 x1 1.0 0.0
+x2 fixed relative -0.00617829 -5.0 1.0 x2 1.0 0.0
+x3 fixed relative 0.006266787 -5.0 1.0 x3 1.0 0.0
 * observation groups
 obsgroup
 * observation data
