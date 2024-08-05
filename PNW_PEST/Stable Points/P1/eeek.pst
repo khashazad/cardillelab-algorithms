@@ -27,7 +27,7 @@ x3 relative 0.01 0.0 switch 2.0 parabolic
 q1 none relative 0.00125 -5 5 q1 1.0 0.0
 q5 none relative 0.000125 -5 5 q5 1.0 0.0
 q9 none relative 0.000125 -5 5 q9 1.0 0.0
-r none relative 0.2 -5 5 r 1.0 0.0
+r none relative 0.003 -5 5 r 1.0 0.0
 p1 fixed relative 0.00101 -5 1.0 p1 5 0.0
 p5 fixed relative 0.00222 -5 5 p5 1.0 0.0
 p9 fixed relative 0.00333 -5 5 p9 1.0 0.0
