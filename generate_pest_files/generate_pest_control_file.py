@@ -6,7 +6,6 @@ def read_json(filename):
         data = json.load(file)
     return data
 
-
 def create_control_file(data, output_filename, observation_count):
     with open(output_filename, "w") as file:
         file.write("pcf\n")  
@@ -82,7 +81,6 @@ def create_control_file(data, output_filename, observation_count):
         file.write("* observation groups\n")
         file.write("obsgroup\n")
 
-
 def read_csv(file_path):
     # Read the CSV file
     df = pd.read_csv(file_path)
@@ -91,37 +89,44 @@ def read_csv(file_path):
 def parse_observations(df):
     observations = []
     previous_point_index = None
-    counter = 1
+    observation_index = 1
     for index, row in df.iterrows():
-        observation_value = row['value']
+
         point_index = row['point']
+        intercept = row['intercept']
+        cos = row['cos']
+        sin = row['sin']
+        repetion_count = int(row['repetition'])
+
         if point_index != previous_point_index:
-            counter = 1
+            observation_index = 1
             previous_point_index = point_index
-        observation_name = f"intercept{int(point_index)}_{counter}"
-        observations.append((observation_name, observation_value))
-        counter += 1
+        
+        for i in range(repetion_count):
+            observations.append((f"intercept_{int(point_index)}_{observation_index}", intercept))
+            observations.append((f"cos_{int(point_index)}_{observation_index}", cos))
+            observations.append((f"sin_{int(point_index)}_{observation_index}", sin))
+            observation_index += 1
+
     return observations
 
 def write_observations_to_control_file(observations, file_path):
     with open(file_path, 'a') as file:
         file.write("* observation data\n")
-        for observation_name, measurement_value in observations:
-            if measurement_value != 0:
-                file.write(f"{observation_name} {measurement_value} 1.0 obsgroup\n")
+        for observation_name, observation_value in observations:
+            file.write(f"{observation_name.ljust(15)} {str(observation_value).ljust(15)} 1.0 obsgroup\n")
 
-def create_pest_instruction_file(observations):
-    with open("./generate_pest_files/output.ins", "w") as file:
+def create_pest_instruction_file(observations, instructions_filename):
+    with open(instructions_filename, "w") as file:
         file.write("pif *\n")
         file.write(f"l1\n")
-        for observation_name, measurement_value in observations:
-            # file.write(f"l1 *,* *,* *,* *,* !{observation_name}! *,*\n")
-            file.write(f"l1 *,*!{observation_name}! *,*\n")
-            # if measurement_value != 0:
-            #     # file.write(f"l1 *,* *,* *,* *,* !{observation_name}! *,*\n")
-            #     file.write(f"l1 *,*!{observation_name}! *,*\n")
-            # else:
-            #     file.write(f"l1\n")
+        grouped_observation = [observations[i:i+3] for i in range(0, len(observations), 3)]
+        for obs in grouped_observation:
+            intercept = obs[0][0]
+            cos = obs[1][0]
+            sin = obs[2][0]
+
+            file.write(f"l1 *,* !{intercept}! *,* !{cos}! *,* !{sin}!  *,*\n")
 
 def append_model_and_io_sections(file_path):
     with open(file_path, 'a') as file:
@@ -131,18 +136,32 @@ def append_model_and_io_sections(file_path):
         file.write("input.tpl  pest_input.csv\n")
         file.write("output.ins  pest_output.csv\n")
 
+def create_template_file(template_filename):
+    with open(template_filename, "w") as file:
+        file.write("ptf #\n")
+        file.write("#q1        #,0,0,0,#q5        #,0,0,0,#q9        #\n")
+        file.write("#r         #\n")
+        file.write("#p1        #,0,0,0,#p5        #,0,0,0,#p9        #\n")
+        file.write("#x1        #,#x2        #,#x3        #\n")
+
 if __name__ == "__main__":
-    parameters = "./generate_pest_files/pest_control_file_params.json"
-    control_filename = "./generate_pest_files/eeek.pst"
-    eeek_output_filename = "./generate_pest_files/eeek_output.csv"
-    observations_filename = "./generate_pest_files/observation_values.csv"
+
+    parameters = "./generate_pest_files/parameters.json"
+    observations_filename = "./generate_pest_files/observations.csv"
+
+    control_filename = "./generate_pest_files/output/eeek.pst"
+    instructions_filename = "./generate_pest_files/output/output.ins"
+    template_filename = "./generate_pest_files/output/input.tpl"
 
     data = read_json(parameters)
+    
     df = read_csv(observations_filename)
     observations = parse_observations(df)
     
     create_control_file(data, control_filename, len([x for x in observations if x[1] != 0]))
     write_observations_to_control_file(observations, control_filename)
-    create_pest_instruction_file(observations)
+    create_pest_instruction_file(observations, instructions_filename)
     append_model_and_io_sections(control_filename)
-    print(f"Control file '{control_filename}' has been created.")
+    create_template_file(template_filename)
+    print(f"Control files '{control_filename}' has been created.")
+

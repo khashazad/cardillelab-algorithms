@@ -353,5 +353,15 @@
       "offset": 0.0,
       "dercom": 1
     }
+  ],
+  "points": [
+    {
+      "longitude": -122.5169,
+      "latitude": 45.08154
+    },
+    {
+      "longitude": -122.706414328255,
+      "latitude": 44.6527014159043
+    }
   ]
 }
