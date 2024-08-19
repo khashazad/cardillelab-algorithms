@@ -98,7 +98,7 @@ def parse_observations(df):
         if point_index != previous_point_index:
             counter = 1
             previous_point_index = point_index
-        observation_name = f"estimate{int(point_index)}_{counter}"
+        observation_name = f"intercept{int(point_index)}_{counter}"
         observations.append((observation_name, observation_value))
         counter += 1
     return observations
@@ -111,7 +111,7 @@ def write_observations_to_control_file(observations, file_path):
                 file.write(f"{observation_name} {measurement_value} 1.0 obsgroup\n")
 
 def create_pest_instruction_file(observations):
-    with open("output.ins", "w") as file:
+    with open("./generate_pest_files/output.ins", "w") as file:
         file.write("pif *\n")
         file.write(f"l1\n")
         for observation_name, measurement_value in observations:
@@ -132,10 +132,10 @@ def append_model_and_io_sections(file_path):
         file.write("output.ins  pest_output.csv\n")
 
 if __name__ == "__main__":
-    parameters = "pest_control_file_params.json"
-    control_filename = "eeek.pst"
-    eeek_output_filename = "./eeek_output.csv"
-    observations_filename = "observation_values.csv"
+    parameters = "./generate_pest_files/pest_control_file_params.json"
+    control_filename = "./generate_pest_files/eeek.pst"
+    eeek_output_filename = "./generate_pest_files/eeek_output.csv"
+    observations_filename = "./generate_pest_files/observation_values.csv"
 
     data = read_json(parameters)
     df = read_csv(observations_filename)
