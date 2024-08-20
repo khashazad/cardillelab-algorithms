@@ -81,11 +81,6 @@ def create_control_file(data, output_filename, observation_count):
         file.write("* observation groups\n")
         file.write("obsgroup\n")
 
-def read_csv(file_path):
-    # Read the CSV file
-    df = pd.read_csv(file_path)
-    return df
-
 def parse_observations(df):
     observations = []
     previous_point_index = None
@@ -142,7 +137,16 @@ def create_template_file(template_filename):
         file.write("#q1        #,0,0,0,#q5        #,0,0,0,#q9        #\n")
         file.write("#r         #\n")
         file.write("#p1        #,0,0,0,#p5        #,0,0,0,#p9        #\n")
-        file.write("#x1        #,#x2        #,#x3        #\n")
+        # file.write("#x1        #,#x2        #,#x3        #\n")
+
+def create_points_file(points_filename, points):
+    with open(points_filename, "w") as file:
+        for point in points:
+            file.write(f"{point["longitude"]},{point["latitude"]},{point["initial_state"]["x1"]},{point["initial_state"]["x2"]},{point["initial_state"]["x3"]}\n")
+
+def create_model_bat_file(file_path):
+    with open(file_path, "w") as file:
+        file.write(r"python C:\Users\kazad\OneDrive\Documents\GitHub\eeek\pest_eeek.py --input=pest_input.csv --output=pest_output.csv --points=points.csv --num_sinusoid_pairs=1 --include_intercept --store_measurement --collection=L8_L9_GC --store_estimate --store_date")
 
 if __name__ == "__main__":
 
@@ -152,16 +156,19 @@ if __name__ == "__main__":
     control_filename = "./generate_pest_files/output/eeek.pst"
     instructions_filename = "./generate_pest_files/output/output.ins"
     template_filename = "./generate_pest_files/output/input.tpl"
+    points_filename = "./generate_pest_files/output/points.csv"
+    model_filename = "./generate_pest_files/output/model.bat"
+    parameters = read_json(parameters)
 
-    data = read_json(parameters)
+    observations = parse_observations(pd.read_csv(observations_filename))
     
-    df = read_csv(observations_filename)
-    observations = parse_observations(df)
-    
-    create_control_file(data, control_filename, len([x for x in observations if x[1] != 0]))
+    create_control_file(parameters, control_filename, len([x for x in observations if x[1] != 0]))
     write_observations_to_control_file(observations, control_filename)
     create_pest_instruction_file(observations, instructions_filename)
     append_model_and_io_sections(control_filename)
     create_template_file(template_filename)
+    create_points_file(points_filename, parameters["points"])
+    create_model_bat_file(model_filename)
+
     print(f"Control files '{control_filename}' has been created.")
 

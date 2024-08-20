@@ -91,11 +91,13 @@ def main(args):
     #################################################
     with open(args.input, "r") as f:
         lines = f.readlines()
-        assert len(lines) == 4, "PEST parameter file must specify Q, R, P, and x0"
+        # assert len(lines) == 4, "PEST parameter file must specify Q, R, P, and x0"
+        assert len(lines) == 3, "PEST parameter file must specify Q, R, P"
+
 
         parameters = {}
 
-        Q, R, P, x0 = lines
+        Q, R, P = lines
         Q = np.array([float(x) for x in Q.split(",")]).reshape(num_params, num_params)
         parameters["process noise (Q)"] = Q.tolist()
 
@@ -108,12 +110,12 @@ def main(args):
         parameters["initial state covariance matrix (P)"] = P.tolist()
         P = ee.Image(ee.Array(P.tolist())).rename("P")
 
-        x0 = np.array([float(x) for x in x0.split(",")]).reshape(
-            num_params, NUM_MEASURES
-        )
-        parameters["initial state matrix (X0)"] = x0.tolist()
+        # x0 = np.array([float(x) for x in x0.split(",")]).reshape(
+        #     num_params, NUM_MEASURES
+        # )
+        # parameters["initial state matrix (X0)"] = x0.tolist()
 
-        x0 = ee.Image(ee.Array(x0.tolist())).rename("x")
+        # x0 = ee.Image(ee.Array(x0.tolist())).rename("x")
 
         H = utils.sinusoidal(
             args.num_sinusoid_pairs,
@@ -122,7 +124,7 @@ def main(args):
         )
 
         kalman_init = {
-            "init_image": ee.Image.cat([P, x0]),
+            # "init_image": ee.Image.cat([P, x0]),
             "F": utils.identity(num_params),
             "Q": lambda **kwargs: ee.Image(ee.Array(Q.tolist())),
             "H": H,
@@ -139,14 +141,15 @@ def main(args):
     points = []
     with open(args.points, "r") as f:
         for i, line in enumerate(f.readlines()):
-            lon, lat, start, stop = line.split(",")
+            lon, lat, x1, x2, x3 = line.split(",")
             points.append(
                 {
                     "index": i,
                     "longitude": float(lon),
                     "latitude": float(lat),
-                    "start_date": start.strip(),
-                    "stop_date": stop.strip(),
+                    "x0": [float(x1), float(x2), float(x3)],
+                    # "start_date": start.strip(),
+                    # "stop_date": stop.strip(),
                 }
             )
 
@@ -164,11 +167,20 @@ def main(args):
             # .filterDate(kwargs["start_date"], kwargs["stop_date"])
         )
 
+        x0 = np.array(kwargs["x0"]).reshape(
+            num_params, NUM_MEASURES
+        )
+
+        x0 = ee.Image(ee.Array(x0.tolist())).rename("x")
+
         # print number of images in collection
         # print(col.size().getInfo())
 
+        kalman_init["init_image"] = ee.Image.cat([P , x0])
         kalman_init["point_coords"] = coords
+
         kalman_result = kalman_filter.kalman_filter(col, **kalman_init)
+
         states = (
             kalman_result.map(lambda im: utils.unpack_arrays(im, param_names))
             .select(request_band_names)
