@@ -1,5 +1,14 @@
 import json
+import ee.geometry
 import pandas as pd
+import ee
+from eeek.image_collections import COLLECTIONS
+from eeek.harmonic_utils import add_harmonic_bands, fit_harmonic_to_collection, determine_harmonic_independents_via_modality_dictionary
+from eeek import utils
+from pprint import pprint
+
+ee.Initialize(opt_url=ee.data.HIGH_VOLUME_API_BASE_URL)
+
 
 def read_json(filename):
     with open(filename, "r") as file:
@@ -148,26 +157,98 @@ def create_model_bat_file(file_path):
     with open(file_path, "w") as file:
         file.write(r"python C:\Users\kazad\OneDrive\Documents\GitHub\eeek\pest_eeek.py --input=pest_input.csv --output=pest_output.csv --points=points.csv --num_sinusoid_pairs=1 --include_intercept --store_measurement --collection=L8_L9_GC --store_estimate --store_date")
 
+def get_coefficients_for_points(points):
+
+    COLLECTIONS["L8_L9_2022_2023"]
+
+    coefficients_by_point = {}
+
+    for i, point in enumerate(points):
+        longitude = point[0]
+        latitude = point[1]
+        
+        request = utils.build_request((longitude, latitude))
+        request["expression"] = get_fitted_coefficients(COLLECTIONS["L8_L9_2022"], (longitude, latitude))
+        coefficients_2022 = utils.compute_pixels_wrapper(request)
+
+        coefficients_by_point[i] = {
+            "2022": {
+                "intercept": coefficients_2022[0],
+                "cos": coefficients_2022[1],
+                "sin": coefficients_2022[2]
+            }
+        }
+
+        request = utils.build_request((longitude, latitude))
+        request["expression"] = get_fitted_coefficients(COLLECTIONS["L8_L9_2023"], (longitude, latitude))
+        coefficients_2023 = utils.compute_pixels_wrapper(request)
+
+        coefficients_by_point[i]["2023"] = {
+            "intercept": coefficients_2023[0],
+            "cos": coefficients_2023[1],
+            "sin": coefficients_2023[2]
+        }
+
+    pprint(coefficients_by_point)
+
+
+def get_fitted_coefficients(collection, coords):
+    modality = {"constant": True, "linear": False, "unimodal": True, "bimodal": False, "trimodal": False}
+
+    image_collection = ee.ImageCollection(collection.filterBounds(ee.Geometry.Point(coords)))
+
+    # print(image_collection.size().getInfo())
+    # print(image_collection.first().bandNames().getInfo())   
+    reduced_image_collection_with_harmonics = add_harmonic_bands(image_collection, modality)
+
+    harmonic_independent_variables = determine_harmonic_independents_via_modality_dictionary(modality)
+    
+    harmonic_one_time_regression = fit_harmonic_to_collection(reduced_image_collection_with_harmonics, "swir",harmonic_independent_variables)
+    fitted_coefficients = harmonic_one_time_regression["harmonic_trend_coefficients"]
+
+    return fitted_coefficients
+    # print(fitted_coefficients.getInfo())
+
+    # coefficients_by_point = {}
+
+    # for i, point in enumerate(points):
+    #     longitude = point[0]
+    #     latitude = point[1]
+        
+    #     request = utils.build_request((longitude, latitude))
+    #     request["expression"] = fitted_coefficients
+    #     coefficients = utils.compute_pixels_wrapper(request)
+
+    #     coefficients_by_point[i] = {
+    #         "intercept": coefficients[0],
+    #         "cos": coefficients[1],
+    #         "sin": coefficients[2]
+    #     }
+
+    # pprint(coefficients_by_point)
+
 if __name__ == "__main__":
 
-    parameters = "./generate_pest_files/parameters.json"
-    observations_filename = "./generate_pest_files/observations.csv"
+    parameters = "./pest_parameters.json"
+    observations_filename = "./generated_pest_files/observations.csv"
 
-    control_filename = "./generate_pest_files/output/eeek.pst"
-    instructions_filename = "./generate_pest_files/output/output.ins"
-    template_filename = "./generate_pest_files/output/input.tpl"
-    points_filename = "./generate_pest_files/output/points.csv"
-    model_filename = "./generate_pest_files/output/model.bat"
+    control_filename = "./generated_pest_files/eeek.pst"
+    instructions_filename = "./generated_pest_files/output.ins"
+    template_filename = "./generated_pest_files/input.tpl"
+    points_filename = "./generated_pest_files/points.csv"
+    model_filename = "./generated_pest_files/model.bat"
     parameters = read_json(parameters)
 
     observations = parse_observations(pd.read_csv(observations_filename))
+
+    get_coefficients_for_points(parameters["points"])
     
     create_control_file(parameters, control_filename, len([x for x in observations if x[1] != 0]))
     write_observations_to_control_file(observations, control_filename)
     create_pest_instruction_file(observations, instructions_filename)
     append_model_and_io_sections(control_filename)
     create_template_file(template_filename)
-    create_points_file(points_filename, parameters["points"])
+    # create_points_file(points_filename, parameters["points"])
     create_model_bat_file(model_filename)
 
     print(f"Control files '{control_filename}' has been created.")

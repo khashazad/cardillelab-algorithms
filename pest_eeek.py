@@ -161,11 +161,14 @@ def main(args):
         index = kwargs["index"]
 
         coords = (float(kwargs["longitude"]), float(kwargs["latitude"]))
+
         col = (
             COLLECTIONS[args.collection]
             .filterBounds(ee.Geometry.Point(coords))
             # .filterDate(kwargs["start_date"], kwargs["stop_date"])
         )
+
+        print(col.first().getInfo())
 
         x0 = np.array(kwargs["x0"]).reshape(
             num_params, NUM_MEASURES
