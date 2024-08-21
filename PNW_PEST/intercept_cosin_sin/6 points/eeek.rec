@@ -88,7 +88,7 @@ This information not provided as non-verbose run record file requested.
 
 Control settings:-
 
-   Initial lambda                                               :  10.000    
+   Initial lambda                                               :  0.0000    
    Lambda adjustment factor                                     :  2.0000    
    Sufficient new/old phi ratio per optimisation iteration      : 0.30000    
    Limiting relative phi reduction between lambdas              : 5.00000E-02
@@ -144,102 +144,78 @@ OPTIMISATION ITERATION NO.        : 1
    Model calls so far             : 1
    Starting phi for this iteration:   45.371    
 
-       Lambda =   10.000     ----->
-          Phi =   40.609      (  0.895 of starting phi)
+       Lambda =  1.00000E-08 ----->
+          Phi =   40.446      (  0.891 of starting phi)
 
    No more lambdas: allowed lambdas per iteration =  1
-   Lowest phi this iteration:   40.609    
+   Lowest phi this iteration:   40.446    
    Maximum relative change:  5.000     ["q9"]
 
 
 OPTIMISATION ITERATION NO.        : 2
    Model calls so far             : 6
-   Starting phi for this iteration:   40.609    
+   Starting phi for this iteration:   40.446    
 
-       Lambda =   5.0000     ----->
-          Phi =   36.661      (  0.903 of starting phi)
+       Lambda =  1.00000E-08 ----->
+          Phi =   37.324      (  0.923 of starting phi)
 
    No more lambdas: allowed lambdas per iteration =  1
-   Lowest phi this iteration:   36.661    
+   Lowest phi this iteration:   37.324    
    Relative phi reduction between optimisation iterations less than 0.1000
    Switch to higher order derivatives calculation
-   Maximum relative change:  3.447     ["q9"]
+   Maximum relative change:  4.551     ["q9"]
 
 
 OPTIMISATION ITERATION NO.        : 3
    Model calls so far             : 11
-   Starting phi for this iteration:   36.661    
+   Starting phi for this iteration:   37.324    
 
-       Lambda =   2.5000     ----->
-          Phi =   39.086      (  1.066 times starting phi)
+       Lambda =  1.00000E-08 ----->
+          Phi =   814.16      ( 21.813 times starting phi)
 
    No more lambdas: allowed lambdas per iteration =  1
-   Lowest phi this iteration:   39.086    
-   Maximum relative change:  1.445     ["q5"]
+   Lowest phi this iteration:   814.16    
+   Maximum relative change:  4.852     ["q5"]
 
 
 OPTIMISATION ITERATION NO.        : 4
    Model calls so far             : 20
-   Starting phi for this iteration:   39.086    
+   Starting phi for this iteration:   814.16    
 
-       Lambda =   1.2500     ----->
-          Phi =   34.961      (  0.894 of starting phi)
+       Lambda =  1.00000E-08 ----->
+          Phi =   1394.8      (  1.713 times starting phi)
 
    No more lambdas: allowed lambdas per iteration =  1
-   Lowest phi this iteration:   34.961    
-   Maximum relative change:  3.645     ["q1"]
+   Lowest phi this iteration:   1394.8    
+   Maximum relative change: 0.1978     ["q1"]
 
 
 OPTIMISATION ITERATION NO.        : 5
    Model calls so far             : 29
-   Starting phi for this iteration:   34.961    
+   Starting phi for this iteration:   1394.8    
 
-       Lambda =  0.62500     ----->
-          Phi =   35.715      (  1.022 times starting phi)
+       Lambda =  1.00000E-08 ----->
+          Phi =   9377.0      (  6.723 times starting phi)
 
    No more lambdas: allowed lambdas per iteration =  1
-   Lowest phi this iteration:   35.715    
-   Maximum relative change:  3.786     ["r"]
+   Lowest phi this iteration:   9377.0    
+   Maximum relative change: 1.7218E-02 ["q5"]
 
 
 OPTIMISATION ITERATION NO.        : 6
    Model calls so far             : 38
-   Starting phi for this iteration:   35.715    
+   Starting phi for this iteration:   9377.0    
 
-       Lambda =  0.31250     ----->
-          Phi =   35.780      (  1.002 times starting phi)
-
-   No more lambdas: allowed lambdas per iteration =  1
-   Lowest phi this iteration:   35.780    
-   Maximum relative change: 0.1931     ["q1"]
-
-
-OPTIMISATION ITERATION NO.        : 7
-   Model calls so far             : 47
-   Starting phi for this iteration:   35.780    
-
-       Lambda =  0.15625     ----->
-          Phi =   36.521      (  1.021 times starting phi)
+       Lambda =  1.00000E-08 ----->
+          Phi =   1134.8      (  0.121 of starting phi)
 
    No more lambdas: allowed lambdas per iteration =  1
-   Lowest phi this iteration:   36.521    
-   Maximum relative change: 6.4369E-02 ["q5"]
-
-
-OPTIMISATION ITERATION NO.        : 8
-   Model calls so far             : 56
-   Starting phi for this iteration:   36.521    
-
-       Lambda =  7.81250E-02 ----->
-          Phi =   36.848      (  1.009 times starting phi)
-
-   No more lambdas: allowed lambdas per iteration =  1
-   Lowest phi this iteration:   36.848    
-   Maximum relative change: 3.2185E-02 ["q5"]
+   Lowest phi this iteration:   1134.8    
+   Maximum relative change: 3.9875E-02 ["q1"]
 
    Optimisation complete:   4 optimisation iterations have elapsed since lowest
                           phi was achieved.
-   Total model calls:     65
+   Total model calls:     47
 
    The model has been run one final time using best parameters. 
    Thus all model input files contain best parameter values, and model 
@@ -267,23 +243,23 @@ See file eeek.seo for composite observation sensitivities.
 
 Objective function ----->
 
-  Sum of squared weighted residuals (ie phi)                =   34.96    
+  Sum of squared weighted residuals (ie phi)                =   37.32    
 
 
 Correlation Coefficient ----->
 
-  Correlation coefficient                                   =  0.14921    
+  Correlation coefficient                                   =  0.14178    
 
 
 Analysis of residuals ----->
 
   All residuals:-
      Number of residuals with non-zero weight                       =   900
-     Mean value of non-zero weighted residuals                      =  2.9573E-02
-     Maximum weighted residual [observation "cos_5_36"]             =  0.5677    
+     Mean value of non-zero weighted residuals                      = -1.2780E-02
+     Maximum weighted residual [observation "intercept_5_1"]        =  0.5588    
      Minimum weighted residual [observation "sin_3_1"]              = -0.5588    
-     Standard variance of weighted residuals                        =  3.9019E-02
-     Standard error of weighted residuals                           =  0.1975    
+     Standard variance of weighted residuals                        =  4.1656E-02
+     Standard error of weighted residuals                           =  0.2041    
 
      Note: the above variance was obtained by dividing the objective 
      function by the number of system degrees of freedom (ie. number of 

@@ -1,35 +1,48 @@
 import pandas as pd
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
 import os
 
-data = pd.read_csv(os.path.relpath("./graph/estimate vs observed/eeek_output.csv"))
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 
+target_final_intercept = 1
+
+data = pd.read_csv(os.path.relpath("./graph/estimate vs observed/data/v1.csv"))
+data_v2 = pd.read_csv(os.path.relpath("./graph/estimate vs observed/data/v2.csv"))
+data_original = pd.read_csv(os.path.relpath("./graph/estimate vs observed/data/original.csv"))
+
+data['estimate_original'] = data_original['estimate']
+data['estimate_v2'] = data_v2['estimate']
+data['INTP_v2'] = data_v2['INTP']
 data['date'] = pd.to_datetime(data['date'], unit='ms')
 
 filtered_data = data[data['z'] != 0]
 
-dates = filtered_data['date']
-estimate = filtered_data['estimate']
-intercept = filtered_data['INTP']
-z = filtered_data['z']
+grouped_data = filtered_data.groupby(filtered_data["point"])
 
 plt.figure(figsize=(10, 6))
 
-plt.plot(dates, estimate, label='Estimate', color='blue', linestyle='-')
+for group_name, group_data in grouped_data:
+    dates = group_data['date']
+    estimate = group_data['estimate']
+    estimate_v2 = group_data['estimate_v2']
+    estimate_original = group_data['estimate_original']
+    z = group_data['z']
+    intp = group_data['INTP']
+    intp_v2 = group_data['INTP_v2']  
 
-plt.plot(dates, intercept, label='Intercept', color='green', linestyle='solid')
+    plt.plot(dates, estimate, label='Estimate - Optimized', linestyle='-')
+    plt.plot(dates, estimate_v2, label='Estimate - Optimized - v2', linestyle='-')
+    plt.plot(dates, estimate_original, label='Estimate - Original', linestyle='solid')
+    plt.scatter(dates, z, label='Observed', s=10)
+    # plt.plot(dates, [intp.iloc[-1]] * len(dates), label='Final Intercept', linestyle='--')
+    # plt.plot(dates, [intp_v2.iloc[-1]] * len(dates), label='Final Intercept - v2', linestyle='--')
+    # plt.plot(dates, [target_final_intercept] * len(dates), label='Target Intercept', linestyle='--')
 
-plt.scatter(dates, z, label='Observed', color='red', s=10)
+    plt.gca().xaxis.set_major_locator(mdates.AutoDateLocator())
+    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%b %Y'))
 
-plt.gca().xaxis.set_major_locator(mdates.AutoDateLocator())
-plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%b %Y'))
+    plt.title(f'Kalman Estimate - Point {group_name}')
+    plt.legend()
 
-plt.title('Estimate, Intercept and  Observed Values')
-# plt.xlabel('Date')
-# plt.ylabel('Values')
-plt.legend()
-
-# plt.xticks(rotation=45)    
-plt.savefig("./graph/estimate vs observed/graph")
-plt.show()
+    plt.savefig(f"./graph/estimate vs observed/graphs/graph_group_{group_name}")
+    plt.show()
