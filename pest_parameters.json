@@ -24,17 +24,17 @@
       "DPOINT": { "value": "point", "description": "Decimal point usage" }
     },
     "line4": {
-      "RLAMBDA1": { "value": 0, "description": "Initial Marquardt lambda" },
-      "RLAMFAC": { "value": 2.0, "description": "Lambda adjustment factor" },
+      "RLAMBDA1": { "value": 5, "description": "Initial Marquardt lambda" },
+      "RLAMFAC": { "value": -2.0, "description": "Lambda adjustment factor" },
       "PHIRATSUF": {
-        "value": 0.3,
+        "value": 0.5,
         "description": "Objective function ratio sufficient"
       },
       "PHIREDLAM": {
-        "value": 0.05,
+        "value": 0.1,
         "description": "Relative reduction in the objective function"
       },
-      "NUMLAM": { "value": 1, "description": "Number of lambdas tested" }
+      "NUMLAM": { "value": 10, "description": "Number of lambdas tested" }
     },
     "line5": {
       "RELPARMAX": {
@@ -46,32 +46,32 @@
         "description": "Maximum factor parameter change"
       },
       "ABSPARMAX": {
-        "value": 0.001,
+        "value": 5,
         "description": "Maximum absolute parameter change"
       }
     },
     "line6": {
       "PHIREDSWH": {
-        "value": 0.1,
+        "value": 0.3,
         "description": "Objective function reduction switch"
       }
     },
     "line7": {
       "NOPTMAX": { "value": 50, "description": "Maximum number of iterations" },
       "PHIREDSTP": {
-        "value": 0.0000001,
+        "value": 0.001,
         "description": "Objective function reduction stop threshold"
       },
       "NPHISTP": {
-        "value": 10,
+        "value": 4,
         "description": "Number of iterations for objective function reduction"
       },
       "NPHINORED": {
-        "value": 4,
+        "value": 10,
         "description": "Number of iterations before stopping if objective function hasnt lowered"
       },
       "RELPARSTP": {
-        "value": 0.01,
+        "value": 0.001,
         "description": "Relative parameter change stop threshold"
       },
       "NRELPAR": {
@@ -203,33 +203,6 @@
       "forcen": "switch",
       "derincmul": 2.0,
       "splitthresh": "parabolic"
-    },
-    {
-      "name": "x1",
-      "inctyp": "relative",
-      "derinc": 0.01,
-      "derinclb": 0.0,
-      "forcen": "switch",
-      "derincmul": 2.0,
-      "splitthresh": "parabolic"
-    },
-    {
-      "name": "x2",
-      "inctyp": "relative",
-      "derinc": 0.01,
-      "derinclb": 0.0,
-      "forcen": "switch",
-      "derincmul": 2.0,
-      "splitthresh": "parabolic"
-    },
-    {
-      "name": "x3",
-      "inctyp": "relative",
-      "derinc": 0.01,
-      "derinclb": 0.0,
-      "forcen": "switch",
-      "derincmul": 2.0,
-      "splitthresh": "parabolic"
     }
   ],
   "parameter_data": [
@@ -287,9 +260,9 @@
       "inctyp": "relative",
       "parval1": 0.00101,
       "parlbnd": -5,
-      "parubnd": 1.0,
+      "parubnd": 5,
       "pargp": "p1",
-      "scale": 5,
+      "scale": 1.0,
       "offset": 0.0,
       "dercom": 1
     },
@@ -316,62 +289,7 @@
       "scale": 1.0,
       "offset": 0.0,
       "dercom": 1
-    },
-    {
-      "name": "x1",
-      "trans": "fixed",
-      "inctyp": "relative",
-      "parval1": 0.0694202,
-      "parlbnd": -5.0,
-      "parubnd": 5,
-      "pargp": "x1",
-      "scale": 1.0,
-      "offset": 0.0,
-      "dercom": 1
-    },
-    {
-      "name": "x2",
-      "trans": "fixed",
-      "inctyp": "relative",
-      "parval1": -0.00617829,
-      "parlbnd": -5.0,
-      "parubnd": 1.0,
-      "pargp": "x2",
-      "scale": 1.0,
-      "offset": 0.0,
-      "dercom": 1
-    },
-    {
-      "name": "x3",
-      "trans": "fixed",
-      "inctyp": "relative",
-      "parval1": 0.006266787,
-      "parlbnd": -5.0,
-      "parubnd": 1.0,
-      "pargp": "x3",
-      "scale": 1.0,
-      "offset": 0.0,
-      "dercom": 1
     }
   ],
-  "points": [
-    {
-      "longitude": -122.5169,
-      "latitude": 45.08154,
-      "initial_state": {
-        "x1": 0.0694202,
-        "x2": -0.00617829,
-        "x3": 0.006266787
-      }
-    },
-    {
-      "longitude": -122.706414328255,
-      "latitude": 44.6527014159043,
-      "initial_state": {
-        "x1": 0.29170171,
-        "x2": 0.08117568,
-        "x3": 0.09905824
-      }
-    }
-  ]
+  "points": [[-122.068748148899, 44.7279289347753]]
 }
