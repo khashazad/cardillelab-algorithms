@@ -1,0 +1,41 @@
+                        PARAMETER SENSITIVITIES: CASE eeek
+
+
+ OPTIMISATION ITERATION NO.  1 ----->
+ Parameter name    Group          Current value    Sensitivity
+   q1              q1               2.00000         3.398683E-04
+   q5              q5               1.00000         9.124103E-04
+   q9              q9               1.00000         3.100673E-04
+   r               r                1.00000         8.405316E-05
+
+
+ OPTIMISATION ITERATION NO.  2 ----->
+ Parameter name    Group          Current value    Sensitivity
+   q1              q1               1.31656         5.483191E-04
+   q5              q5               1.61056         5.749543E-04
+   q9              q9               1.20013         2.400856E-04
+   r               r                1.56557         6.195910E-05
+
+
+ OPTIMISATION ITERATION NO.  3 ----->
+ Parameter name    Group          Current value    Sensitivity
+   q1              q1             -0.354755         0.208719    
+   q5              q5              0.572804         9.436145E-02
+   q9              q9               2.45073         2.112024E-03
+   r               r                3.07985         4.682498E-03
+
+
+ OPTIMISATION ITERATION NO.  4 ----->
+ Parameter name    Group          Current value    Sensitivity
+   q1              q1             -0.388721         5.450770E-02
+   q5              q5              0.774919         2.057601E-02
+   q9              q9               2.38365         6.045869E-04
+   r               r                3.11449         1.280573E-03
+
+
+ OPTIMISATION ITERATION NO.  5 ----->
+ Parameter name    Group          Current value    Sensitivity
+   q1              q1             -0.333476         1.422965E-02
+   q5              q5              0.972592         3.802776E-03
+   q9              q9               2.18768         1.826135E-04
+   r               r                3.22606         2.958505E-04

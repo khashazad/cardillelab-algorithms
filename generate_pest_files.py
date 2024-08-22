@@ -184,7 +184,7 @@ def create_points_file(points_filename, coefficients_by_point):
 
 def create_model_bat_file(file_path):
     with open(file_path, "w") as file:
-        file.write(r"python C:\Users\kazad\OneDrive\Documents\GitHub\eeek\pest_eeek.py --input=pest_input.csv --output=pest_output.csv --points=points.csv --num_sinusoid_pairs=1 --include_intercept --store_measurement --collection=L8_L9_GC --store_estimate --store_date")
+        file.write(r"python C:\Users\kazad\OneDrive\Documents\GitHub\eeek\pest_eeek.py --input=pest_input.csv --output=pest_output.csv --points=points.csv --num_sinusoid_pairs=1 --include_intercept --store_measurement --collection=L8_L9_2022_2023 --store_estimate --store_date")
 
 def get_coefficients_for_points(points):
 
@@ -250,7 +250,7 @@ if __name__ == "__main__":
 
     fitted_coefficiets_by_point = get_coefficients_for_points(parameters["points"])
 
-    pprint(fitted_coefficiets_by_point)
+    # pprint(fitted_coefficiets_by_point)
     observations = build_observations(fitted_coefficiets_by_point)
 
     create_control_file(parameters, control_filename, len([x for x in observations if x[1] != 0]))

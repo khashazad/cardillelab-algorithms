@@ -168,7 +168,7 @@ def main(args):
             # .filterDate(kwargs["start_date"], kwargs["stop_date"])
         )
 
-        print(col.first().getInfo())
+        # print(col.first().getInfo())
 
         x0 = np.array(kwargs["x0"]).reshape(
             num_params, NUM_MEASURES
