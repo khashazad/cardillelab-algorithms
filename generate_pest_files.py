@@ -90,26 +90,48 @@ def create_control_file(data, output_filename, observation_count):
         file.write("* observation groups\n")
         file.write("obsgroup\n")
 
-def parse_observations(df):
-    observations = []
-    previous_point_index = None
-    observation_index = 1
-    for index, row in df.iterrows():
+# def parse_observations(df):
+#     observations = []
+#     previous_point_index = None
+#     observation_index = 1
+#     for index, row in df.iterrows():
 
-        point_index = row['point']
-        intercept = row['intercept']
-        cos = row['cos']
-        sin = row['sin']
-        repetion_count = int(row['repetition'])
+#         point_index = row['point']
+#         intercept = row['intercept']
+#         cos = row['cos']
+#         sin = row['sin']
+#         repetion_count = int(row['repetition'])
 
-        if point_index != previous_point_index:
-            observation_index = 1
-            previous_point_index = point_index
+#         if point_index != previous_point_index:
+#             observation_index = 1
+#             previous_point_index = point_index
         
-        for i in range(repetion_count):
-            observations.append((f"intercept_{int(point_index)}_{observation_index}", intercept))
-            observations.append((f"cos_{int(point_index)}_{observation_index}", cos))
-            observations.append((f"sin_{int(point_index)}_{observation_index}", sin))
+#         for i in range(repetion_count):
+#             observations.append((f"intercept_{int(point_index)}_{observation_index}", intercept))
+#             observations.append((f"cos_{int(point_index)}_{observation_index}", cos))
+#             observations.append((f"sin_{int(point_index)}_{observation_index}", sin))
+#             observation_index += 1
+
+#     return observations
+
+def build_observations(coefficients_by_point):
+    observations = []
+
+    for index, dic in enumerate(coefficients_by_point):
+        observation_index = 1
+        coefficients_2022 = dic["2022"]
+        coefficients_2023 = dic["2023"]
+        
+        for i in range(25):
+            observations.append((f"intercept_{int(index)}_{observation_index}", coefficients_2022["intercept"]))
+            observations.append((f"cos_{int(index)}_{observation_index}", coefficients_2022["cos"]))
+            observations.append((f"sin_{int(index)}_{observation_index}", coefficients_2022["sin"]))
+            observation_index += 1
+
+        for i in range(25):
+            observations.append((f"intercept_{int(index)}_{observation_index}", coefficients_2023["intercept"]))
+            observations.append((f"cos_{int(index)}_{observation_index}", coefficients_2023["cos"]))
+            observations.append((f"sin_{int(index)}_{observation_index}", coefficients_2023["sin"]))
             observation_index += 1
 
     return observations
@@ -148,10 +170,17 @@ def create_template_file(template_filename):
         file.write("#p1        #,0,0,0,#p5        #,0,0,0,#p9        #\n")
         # file.write("#x1        #,#x2        #,#x3        #\n")
 
-def create_points_file(points_filename, points):
+def create_points_file(points_filename, coefficients_by_point):
     with open(points_filename, "w") as file:
-        for point in points:
-            file.write(f"{point["longitude"]},{point["latitude"]},{point["initial_state"]["x1"]},{point["initial_state"]["x2"]},{point["initial_state"]["x3"]}\n")
+        for idx, point in enumerate(coefficients_by_point):
+            longitude = point["coordinates"][0]
+            latitude = point["coordinates"][1]
+
+            intercept = point["2022"]["intercept"]
+            cos = point["2022"]["cos"]
+            sin = point["2022"]["sin"]
+
+            file.write(f"{longitude},{latitude},{intercept},{cos},{sin}\n")
 
 def create_model_bat_file(file_path):
     with open(file_path, "w") as file:
@@ -159,18 +188,19 @@ def create_model_bat_file(file_path):
 
 def get_coefficients_for_points(points):
 
+    output_list = []
     coefficients_by_point = {}
 
     for i, point in enumerate(points):
         longitude = point[0]
         latitude = point[1]
         
-        request = utils.build_request((longitude, latitude))
-        pprint(COLLECTIONS["L8_L9_2022"].size().getInfo())
-        request["expression"] = get_fitted_coefficients(COLLECTIONS["L8_L9_2022"], (-122.068748148899, 44.7279289347753))
-        coefficients_2022 = utils.compute_pixels_wrapper(request)
+        request_2022 = utils.build_request((longitude, latitude))
+        request_2022["expression"] = get_fitted_coefficients(COLLECTIONS["L8_L9_2022"], (longitude, latitude))
+        coefficients_2022 = utils.compute_pixels_wrapper(request_2022)
 
         coefficients_by_point[i] = {
+            "coordinates": (longitude, latitude),
             "2022": {
                 "intercept": coefficients_2022[0],
                 "cos": coefficients_2022[1],
@@ -178,26 +208,25 @@ def get_coefficients_for_points(points):
             }
         }
 
-        # request = utils.build_request((longitude, latitude))
-        # request["expression"] = get_fitted_coefficients(COLLECTIONS["L8_L9_2023"], (longitude, latitude))
-        # coefficients_2023 = utils.compute_pixels_wrapper(request)
+        request_2023 = utils.build_request((longitude, latitude))
+        request_2023["expression"] = get_fitted_coefficients(COLLECTIONS["L8_L9_2023"], (longitude, latitude))
+        coefficients_2023 = utils.compute_pixels_wrapper(request_2023)
 
-        # coefficients_by_point[i]["2023"] = {
-        #     "intercept": coefficients_2023[0],
-        #     "cos": coefficients_2023[1],
-        #     "sin": coefficients_2023[2]
-        # }
+        coefficients_by_point[i]["2023"] = {
+            "intercept": coefficients_2023[0],
+            "cos": coefficients_2023[1],
+            "sin": coefficients_2023[2]
+        }
 
-    pprint(coefficients_by_point)
-
+        output_list.append(coefficients_by_point[i])
+    
+    return output_list
 
 def get_fitted_coefficients(collection, coords):
     modality = {"constant": True, "linear": False, "unimodal": True, "bimodal": False, "trimodal": False}
 
     image_collection = ee.ImageCollection(collection.filterBounds(ee.Geometry.Point(coords)))
 
-    # print(image_collection.size().getInfo())
-    # print(image_collection.first().bandNames().getInfo())   
     reduced_image_collection_with_harmonics = add_harmonic_bands(image_collection, modality)
 
     harmonic_independent_variables = determine_harmonic_independents_via_modality_dictionary(modality)
@@ -206,29 +235,10 @@ def get_fitted_coefficients(collection, coords):
     fitted_coefficients = harmonic_one_time_regression["harmonic_trend_coefficients"]
 
     return fitted_coefficients
-    # print(fitted_coefficients.getInfo())
-
-    # coefficients_by_point = {}
-
-    # for i, point in enumerate(points):
-    #     longitude = point[0]
-    #     latitude = point[1]
-        
-    #     request = utils.build_request((longitude, latitude))
-    #     request["expression"] = fitted_coefficients
-    #     coefficients = utils.compute_pixels_wrapper(request)
-
-    #     coefficients_by_point[i] = {
-    #         "intercept": coefficients[0],
-    #         "cos": coefficients[1],
-    #         "sin": coefficients[2]
-    #     }
-
-    # pprint(coefficients_by_point)
 
 if __name__ == "__main__":
 
-    parameters = "./pest_parameters.json"
+    parameters = "./PEST parameters/original_parameters.json"
     observations_filename = "./generated_pest_files/observations.csv"
 
     control_filename = "./generated_pest_files/eeek.pst"
@@ -238,16 +248,17 @@ if __name__ == "__main__":
     model_filename = "./generated_pest_files/model.bat"
     parameters = read_json(parameters)
 
-    observations = parse_observations(pd.read_csv(observations_filename))
+    fitted_coefficiets_by_point = get_coefficients_for_points(parameters["points"])
 
-    get_coefficients_for_points(parameters["points"])
-    
+    pprint(fitted_coefficiets_by_point)
+    observations = build_observations(fitted_coefficiets_by_point)
+
     create_control_file(parameters, control_filename, len([x for x in observations if x[1] != 0]))
     write_observations_to_control_file(observations, control_filename)
     create_pest_instruction_file(observations, instructions_filename)
     append_model_and_io_sections(control_filename)
     create_template_file(template_filename)
-    # create_points_file(points_filename, parameters["points"])
+    create_points_file(points_filename, fitted_coefficiets_by_point)
     create_model_bat_file(model_filename)
 
     print(f"Control files '{control_filename}' has been created.")
