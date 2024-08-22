@@ -115,13 +115,16 @@ def add_cos_and_sin_bands_to_ic(an_ic, var_args_harmonic_bands):
     
     cos_name = var_args_harmonic_bands['cos_name']
     sin_name = var_args_harmonic_bands['sin_name']
+
     if non_standard_period_boolean:
         non_standard_period_value = var_args_harmonic_bands['non_standard_period_value']
         period = non_standard_period_value
     else:
         period = 2
-    angular_frequency = 2 * math.pi / period
-    two_pi_freq = ee.Image(angular_frequency).multiply(2 * math.pi)
+
+    angular_frequency = ee.Number(2).divide(period) 
+    two_pi_freq = angular_frequency.multiply(2 * math.pi)
+
     def get_cos_and_sin_for_date_given_angular_freq(an_image):
         the_time_band = ee.Image(an_image).select(time_band_name)
         time_radians = the_time_band.multiply(two_pi_freq)

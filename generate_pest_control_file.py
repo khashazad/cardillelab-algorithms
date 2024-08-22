@@ -159,8 +159,6 @@ def create_model_bat_file(file_path):
 
 def get_coefficients_for_points(points):
 
-    COLLECTIONS["L8_L9_2022_2023"]
-
     coefficients_by_point = {}
 
     for i, point in enumerate(points):
@@ -168,7 +166,8 @@ def get_coefficients_for_points(points):
         latitude = point[1]
         
         request = utils.build_request((longitude, latitude))
-        request["expression"] = get_fitted_coefficients(COLLECTIONS["L8_L9_2022"], (longitude, latitude))
+        pprint(COLLECTIONS["L8_L9_2022"].size().getInfo())
+        request["expression"] = get_fitted_coefficients(COLLECTIONS["L8_L9_2022"], (-122.068748148899, 44.7279289347753))
         coefficients_2022 = utils.compute_pixels_wrapper(request)
 
         coefficients_by_point[i] = {
@@ -179,15 +178,15 @@ def get_coefficients_for_points(points):
             }
         }
 
-        request = utils.build_request((longitude, latitude))
-        request["expression"] = get_fitted_coefficients(COLLECTIONS["L8_L9_2023"], (longitude, latitude))
-        coefficients_2023 = utils.compute_pixels_wrapper(request)
+        # request = utils.build_request((longitude, latitude))
+        # request["expression"] = get_fitted_coefficients(COLLECTIONS["L8_L9_2023"], (longitude, latitude))
+        # coefficients_2023 = utils.compute_pixels_wrapper(request)
 
-        coefficients_by_point[i]["2023"] = {
-            "intercept": coefficients_2023[0],
-            "cos": coefficients_2023[1],
-            "sin": coefficients_2023[2]
-        }
+        # coefficients_by_point[i]["2023"] = {
+        #     "intercept": coefficients_2023[0],
+        #     "cos": coefficients_2023[1],
+        #     "sin": coefficients_2023[2]
+        # }
 
     pprint(coefficients_by_point)
 
