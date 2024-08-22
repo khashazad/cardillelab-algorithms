@@ -6,6 +6,7 @@ from eeek.image_collections import COLLECTIONS
 from eeek.harmonic_utils import add_harmonic_bands, fit_harmonic_to_collection, determine_harmonic_independents_via_modality_dictionary
 from eeek import utils
 from pprint import pprint
+import csv
 
 ee.Initialize(opt_url=ee.data.HIGH_VOLUME_API_BASE_URL)
 
@@ -114,25 +115,30 @@ def create_control_file(data, output_filename, observation_count):
 
 #     return observations
 
-def build_observations(coefficients_by_point):
+def build_observations(coefficients_by_point, output_filename):
     observations = []
 
-    for index, dic in enumerate(coefficients_by_point):
-        observation_index = 1
-        coefficients_2022 = dic["2022"]
-        coefficients_2023 = dic["2023"]
-        
-        for i in range(25):
-            observations.append((f"intercept_{int(index)}_{observation_index}", coefficients_2022["intercept"]))
-            observations.append((f"cos_{int(index)}_{observation_index}", coefficients_2022["cos"]))
-            observations.append((f"sin_{int(index)}_{observation_index}", coefficients_2022["sin"]))
-            observation_index += 1
+    with open(output_filename, "w") as file:
+        csv_writer = csv.writer(file)
+        csv_writer.writerow(["point", "intercept", "cos", "sin"])
+        for index, dic in enumerate(coefficients_by_point):
+            observation_index = 1
+            coefficients_2022 = dic["2022"]
+            coefficients_2023 = dic["2023"]
+            
+            for i in range(25):
+                observations.append((f"intercept_{int(index)}_{observation_index}", coefficients_2022["intercept"]))
+                observations.append((f"cos_{int(index)}_{observation_index}", coefficients_2022["cos"]))
+                observations.append((f"sin_{int(index)}_{observation_index}", coefficients_2022["sin"]))
+                csv_writer.writerow([index, coefficients_2022["intercept"], coefficients_2022["cos"], coefficients_2022["sin"]])
+                observation_index += 1
 
-        for i in range(25):
-            observations.append((f"intercept_{int(index)}_{observation_index}", coefficients_2023["intercept"]))
-            observations.append((f"cos_{int(index)}_{observation_index}", coefficients_2023["cos"]))
-            observations.append((f"sin_{int(index)}_{observation_index}", coefficients_2023["sin"]))
-            observation_index += 1
+            for i in range(25):
+                observations.append((f"intercept_{int(index)}_{observation_index}", coefficients_2023["intercept"]))
+                observations.append((f"cos_{int(index)}_{observation_index}", coefficients_2023["cos"]))
+                observations.append((f"sin_{int(index)}_{observation_index}", coefficients_2023["sin"]))
+                csv_writer.writerow([index, coefficients_2023["intercept"], coefficients_2023["cos"], coefficients_2023["sin"]])
+                observation_index += 1
 
     return observations
 
@@ -251,7 +257,7 @@ if __name__ == "__main__":
     fitted_coefficiets_by_point = get_coefficients_for_points(parameters["points"])
 
     # pprint(fitted_coefficiets_by_point)
-    observations = build_observations(fitted_coefficiets_by_point)
+    observations = build_observations(fitted_coefficiets_by_point, observations_filename)
 
     create_control_file(parameters, control_filename, len([x for x in observations if x[1] != 0]))
     write_observations_to_control_file(observations, control_filename)
