@@ -192,39 +192,44 @@ def create_model_bat_file(file_path):
     with open(file_path, "w") as file:
         file.write(r"python C:\Users\kazad\OneDrive\Documents\GitHub\eeek\pest_eeek.py --input=pest_input.csv --output=pest_output.csv --points=points.csv --num_sinusoid_pairs=1 --include_intercept --store_measurement --collection=L8_L9_2022_2023 --store_estimate --store_date")
 
-def get_coefficients_for_points(points):
+def get_coefficients_for_points(points, fitted_coefficiets_filename):
 
     output_list = []
     coefficients_by_point = {}
 
-    for i, point in enumerate(points):
-        longitude = point[0]
-        latitude = point[1]
-        
-        request_2022 = utils.build_request((longitude, latitude))
-        request_2022["expression"] = get_fitted_coefficients(COLLECTIONS["L8_L9_2022"], (longitude, latitude))
-        coefficients_2022 = utils.compute_pixels_wrapper(request_2022)
+    with open(fitted_coefficiets_filename, "w", newline="") as file:
+        csv_writer = csv.writer(file)
+        csv_writer.writerow(["point", "longitude", "latitude", "intercept_2022", "cos_2022", "sin_2022", "intercept_2023", "cos_2023", "sin_2023"])
+        for i, point in enumerate(points):
+            longitude = point[0]
+            latitude = point[1]
+            
+            request_2022 = utils.build_request((longitude, latitude))
+            request_2022["expression"] = get_fitted_coefficients(COLLECTIONS["L8_L9_2022"], (longitude, latitude))
+            coefficients_2022 = utils.compute_pixels_wrapper(request_2022)
 
-        coefficients_by_point[i] = {
-            "coordinates": (longitude, latitude),
-            "2022": {
-                "intercept": coefficients_2022[0],
-                "cos": coefficients_2022[1],
-                "sin": coefficients_2022[2]
+            coefficients_by_point[i] = {
+                "coordinates": (longitude, latitude),
+                "2022": {
+                    "intercept": coefficients_2022[0],
+                    "cos": coefficients_2022[1],
+                    "sin": coefficients_2022[2]
+                }
             }
-        }
 
-        request_2023 = utils.build_request((longitude, latitude))
-        request_2023["expression"] = get_fitted_coefficients(COLLECTIONS["L8_L9_2023"], (longitude, latitude))
-        coefficients_2023 = utils.compute_pixels_wrapper(request_2023)
+            request_2023 = utils.build_request((longitude, latitude))
+            request_2023["expression"] = get_fitted_coefficients(COLLECTIONS["L8_L9_2023"], (longitude, latitude))
+            coefficients_2023 = utils.compute_pixels_wrapper(request_2023)
 
-        coefficients_by_point[i]["2023"] = {
-            "intercept": coefficients_2023[0],
-            "cos": coefficients_2023[1],
-            "sin": coefficients_2023[2]
-        }
+            coefficients_by_point[i]["2023"] = {
+                "intercept": coefficients_2023[0],
+                "cos": coefficients_2023[1],
+                "sin": coefficients_2023[2]
+            }
 
-        output_list.append(coefficients_by_point[i])
+            csv_writer.writerow([i, longitude, latitude, coefficients_2022[0], coefficients_2022[1], coefficients_2022[2], coefficients_2023[0], coefficients_2023[1], coefficients_2023[2]])
+
+            output_list.append(coefficients_by_point[i])
     
     return output_list
 
@@ -252,9 +257,10 @@ if __name__ == "__main__":
     template_filename = "./generated_pest_files/input.tpl"
     points_filename = "./generated_pest_files/points.csv"
     model_filename = "./generated_pest_files/model.bat"
+    fitted_coefficiets_filename = "./generated_pest_files/fitted_coefficients.csv"
     parameters = read_json(parameters)
 
-    fitted_coefficiets_by_point = get_coefficients_for_points(parameters["points"])
+    fitted_coefficiets_by_point = get_coefficients_for_points(parameters["points"], fitted_coefficiets_filename)
 
     # pprint(fitted_coefficiets_by_point)
     observations = build_observations(fitted_coefficiets_by_point, observations_filename)

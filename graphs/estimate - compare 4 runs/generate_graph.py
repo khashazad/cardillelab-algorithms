@@ -8,7 +8,7 @@ import matplotlib.dates as mdates
 data_files = ["v1.csv", "v2.csv", "v3.csv", "v4.csv"]
 
 
-for point_index in range(6):
+for point_index in range(9):
     fig, axs = plt.subplots(2, 2, figsize=(12, 8))
 
     for index, data_file in enumerate(data_files):
@@ -17,7 +17,7 @@ for point_index in range(6):
         data = pd.read_csv(os.path.relpath(f"./graphs/estimate - compare 4 runs/data/{data_file}"))
         observations = pd.read_csv(os.path.relpath(f"./graphs/estimate - compare 4 runs/data/observations.csv"))
 
-        year_difference = pd.to_datetime(data['date'], unit='ms').dt.year - pd.to_datetime('2016-01-01').year
+        year_difference = (pd.to_datetime(data['date'], unit='ms')- pd.to_datetime('2016-01-01')).dt.total_seconds()  / (365.25 * 24 * 60 * 60)
 
         phi = 6.283 * year_difference
         phi_cos = phi.apply(math.cos)
@@ -49,13 +49,13 @@ for point_index in range(6):
         if index == 0:
             ax.set_title('Starting from default parameters')
         elif index == 1:
-            ax.set_title('Starting from default parameters increased by factor of 2')
-        elif index == 2:
             ax.set_title('Starting from default parameters increased by factor of 10')
+        elif index == 2:
+            ax.set_title('Starting from default parameters increased by factor of 100')
         elif index == 3:
             ax.set_title('Starting from default parameters')
         ax.legend()
 
     plt.tight_layout()
     plt.savefig(f"./graphs/estimate - compare 4 runs/images/{point_index}")
-    plt.show()
+    # plt.show()
