@@ -1,0 +1,73 @@
+ RECORD OF SVD CALCULATIONS: CASE eeek
+
+
+ ------------------------------------------------------------------------------
+ OPTIMISATION ITERATION NO.        :    1
+
+
+ CURRENT VALUE OF MARQUARDT LAMBDA =     10.0     ----->
+
+ SINGULAR VALUES:-
+   1213.971       408.2577       8.450208       6.711941    
+
+ Number of singular values used in solution = 3
+
+
+ ------------------------------------------------------------------------------
+ OPTIMISATION ITERATION NO.        :    2
+
+
+ CURRENT VALUE OF MARQUARDT LAMBDA =     5.00     ----->
+
+ SINGULAR VALUES:-
+   3849.532       335.1202       9.729244       6.662587    
+
+ Number of singular values used in solution = 3
+
+
+ ------------------------------------------------------------------------------
+ OPTIMISATION ITERATION NO.        :    3
+
+
+ CURRENT VALUE OF MARQUARDT LAMBDA =     2.50     ----->
+
+ SINGULAR VALUES:-
+   3480.621       358.0375       6.967652       3.000969    
+
+ Number of singular values used in solution = 3
+
+
+ ------------------------------------------------------------------------------
+ OPTIMISATION ITERATION NO.        :    4
+
+
+ CURRENT VALUE OF MARQUARDT LAMBDA =     1.25     ----->
+
+ SINGULAR VALUES:-
+  1.1396259E+10  8.9869768E+07   2008407.       1602775.    
+
+ Number of singular values used in solution = 3
+
+
+ ------------------------------------------------------------------------------
+ OPTIMISATION ITERATION NO.        :    5
+
+
+ CURRENT VALUE OF MARQUARDT LAMBDA =    0.625     ----->
+
+ SINGULAR VALUES:-
+  1.5451509E+10  6.9040206E+07   3510863.       859593.3    
+
+ Number of singular values used in solution = 3
+
+
+ ------------------------------------------------------------------------------
+ OPTIMISATION ITERATION NO.        :    6
+
+
+ CURRENT VALUE OF MARQUARDT LAMBDA =    0.313     ----->
+
+ SINGULAR VALUES:-
+  4.1708990E+09  8.2561305E+07   1186046.       420707.3    
+
+ Number of singular values used in solution = 3
