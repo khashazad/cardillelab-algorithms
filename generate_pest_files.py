@@ -118,7 +118,7 @@ def create_control_file(data, output_filename, observation_count):
 def build_observations(coefficients_by_point, output_filename):
     observations = []
 
-    with open(output_filename, "w") as file:
+    with open(output_filename, "w", newline="") as file:
         csv_writer = csv.writer(file)
         csv_writer.writerow(["point", "intercept", "cos", "sin"])
         for index, dic in enumerate(coefficients_by_point):
@@ -177,7 +177,7 @@ def create_template_file(template_filename):
         # file.write("#x1        #,#x2        #,#x3        #\n")
 
 def create_points_file(points_filename, coefficients_by_point):
-    with open(points_filename, "w") as file:
+    with open(points_filename, "w", newline="") as file:
         for idx, point in enumerate(coefficients_by_point):
             longitude = point["coordinates"][0]
             latitude = point["coordinates"][1]
