@@ -30,7 +30,7 @@ def create_control_file(data, output_filename, observation_count):
         # Line 2
         line2 = data["control_data"]["line2"]
         file.write(
-            f"{len(data["parameter_data"])} {observation_count} {len(data["parameter_data"])} {line2['NPRIOR']['value']} 1\n"
+            f"{len(data["parameter_data"])} {observation_count} {len(data["parameter_data"])} {line2['NPRIOR']['value']} {line2['NOBSGP']['value']}\n"
         )
 
         # Line 3
@@ -249,7 +249,7 @@ def get_fitted_coefficients(collection, coords):
 
 if __name__ == "__main__":
 
-    parameters = "./PEST parameters/original_parameters.json"
+    parameters = "./PEST parameters/v2_parameters.json"
     observations_filename = "./generated_pest_files/observations.csv"
 
     control_filename = "./generated_pest_files/eeek.pst"

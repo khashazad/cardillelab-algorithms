@@ -1,7 +1,8 @@
 import json
 import csv
+import os
 
-json_files = ['v1.json', 'v2.json', 'v3.json', 'v4.json']
+json_files = [file for file in os.listdir('./format parameters/params') if file.endswith('.json')]
 
 def get_run_title(index): 
     if index == 0:

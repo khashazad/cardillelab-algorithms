@@ -27,11 +27,11 @@
       "RLAMBDA1": { "value": 10, "description": "Initial Marquardt lambda" },
       "RLAMFAC": { "value": 2.0, "description": "Lambda adjustment factor" },
       "PHIRATSUF": {
-        "value": 0.3,
+        "value": 0.2,
         "description": "Objective function ratio sufficient: If at any stage PEST calculates an objective function which is a fraction PHIRATSUF or less of the starting objective function for that iteration, moves on to the next iteration. If it is set too high, PEST may not be given the opportunity of refining lambda in order that its value continues to be optimal as the inversion process progresses"
       },
       "PHIREDLAM": {
-        "value": 0.05,
+        "value": 0.03,
         "description": "Relative reduction in the objective function: If it is set too large, the criterion for moving on to the next iteration is too easily met and PEST is not given the opportunity of adjusting lambda to its optimal value for that particular stage of the parameter estimation process. If set too low, PEST will test too many Marquardt lambdas on each iteration of the inversion process when it would be better off starting a new iteration."
       },
       "NUMLAM": { "value": 10, "description": "Number of lambdas tested" }
@@ -59,7 +59,7 @@
     "line7": {
       "NOPTMAX": { "value": 50, "description": "Maximum number of iterations" },
       "PHIREDSTP": {
-        "value": 0.0000001,
+        "value": 0.00000001,
         "description": "Objective function reduction stop threshold"
       },
       "NPHISTP": {
@@ -67,11 +67,11 @@
         "description": "Number of iterations for objective function reduction"
       },
       "NPHINORED": {
-        "value": 4,
+        "value": 8,
         "description": "Number of iterations before stopping if objective function hasnt lowered"
       },
       "RELPARSTP": {
-        "value": 0.005,
+        "value": 0.003,
         "description": "Relative parameter change stop threshold"
       },
       "NRELPAR": {

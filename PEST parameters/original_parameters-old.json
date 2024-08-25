@@ -34,7 +34,7 @@
         "value": 0.05,
         "description": "Relative reduction in the objective function: If it is set too large, the criterion for moving on to the next iteration is too easily met and PEST is not given the opportunity of adjusting lambda to its optimal value for that particular stage of the parameter estimation process. If set too low, PEST will test too many Marquardt lambdas on each iteration of the inversion process when it would be better off starting a new iteration."
       },
-      "NUMLAM": { "value": 10, "description": "Number of lambdas tested" }
+      "NUMLAM": { "value": 1, "description": "Number of lambdas tested" }
     },
     "line5": {
       "RELPARMAX": {
