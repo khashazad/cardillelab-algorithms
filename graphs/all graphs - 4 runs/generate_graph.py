@@ -16,9 +16,9 @@ def get_subgraph_title(index):
     if index == 0:
         return 'Default parameters'
     elif index == 1:
-        return 'Default parameters increased by factor of 10'
+        return 'Default parameters increased by factor of 2'
     elif index == 2:
-        return 'Default parameters increased by factor of 100'
+        return 'Default parameters increased by factor of 10'
     elif index == 3:
         return 'Far from default parameters'
 
@@ -186,9 +186,15 @@ for point_index in range(points_count):
 
         data["time"] = (pd.to_datetime(data['date'], unit='ms') - pd.to_datetime('2016-01-01')).dt.total_seconds() / (365.25 * 24 * 60 * 60)
 
-        filtered_data = data[data['z'] != 0]
-
         filtered_data = filtered_data[filtered_data['point'] == point_index]
+
+        # print(len(filtered_data))
+
+        # intercept_2022 = filtered_data["INTP"].iloc[24]
+        # cos0_2022 = filtered_data["COS0"].iloc[24]
+        # sin0_2022 = filtered_data["SIN0"].iloc[24]
+
+        filtered_data = filtered_data[filtered_data['z'] != 0]
 
         dates = filtered_data['date']
 
@@ -196,18 +202,24 @@ for point_index in range(points_count):
         cos0 = filtered_data["COS0"].iloc[-1]
         sin0 = filtered_data["SIN0"].iloc[-1]  
 
-        beta0 = intercept
+        x = filtered_data["time"]
+
+        # A_2022 = np.sqrt(cos0_2022**2 + sin0_2022**2)   
+        # phi_2022 = np.arctan2(sin0_2022, cos0_2022)
+
+        # y_2022 = intercept_2022 + A_2022 * np.cos(2 * np.pi * x - phi_2022)
+
         A = np.sqrt(cos0**2 + sin0**2)
         phi = np.arctan2(sin0, cos0)
 
-        x = filtered_data["time"]
-        y = beta0 + A * np.cos(2 * np.pi * x - phi)
+        y = intercept + A * np.cos(2 * np.pi * x - phi)
 
         z = filtered_data["z"]
 
         # Plot the modified curve
-        ax.plot(dates, y, label="Fit with final coefficients")
-        ax.scatter(dates, z, label="Measurements")
+        ax.plot(dates, y, label="Fit with final coefficients", color='blue')
+        # ax.plot(dates, y_2022, label="Fit with final 2022 coefficients", color='green')
+        ax.scatter(dates, z, label="Measurements", color='red')
 
 
         # Add labels and legend 

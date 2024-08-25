@@ -7,9 +7,9 @@ def get_run_title(index):
     if index == 0:
         return 'Start from default parameters'
     elif index == 1:
-        return 'Start from default parameters increased by factor of 10'
+        return 'Start from default parameters increased by factor of 2'
     elif index == 2:
-        return 'Start from default parameters increased by factor of 100'
+        return 'Start from default parameters increased by factor of 10'
     elif index == 3:
         return 'Start far from default parameters'
     
