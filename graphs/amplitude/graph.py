@@ -36,8 +36,8 @@ for point_index in range(6):
 
         amplitude = np.sqrt(cos**2 + sin**2)
         
-        plt.plot(dates, amplitude, label="Amplitude", linestyle='-', color='blue')
-        plt.plot(dates, filtered_data['target_amplitude'], label="Target Amplitude", linestyle='--', color='green')
+        ax.plot(dates, amplitude, label="Amplitude", linestyle='-', color='blue')
+        ax.plot(dates, filtered_data['target_amplitude'], label="Target Amplitude", linestyle='--', color='green')
 
         ax.xaxis.set_major_locator(mdates.AutoDateLocator())
         ax.xaxis.set_major_formatter(mdates.DateFormatter('%b %Y'))
@@ -54,4 +54,4 @@ for point_index in range(6):
 
     plt.tight_layout()
     plt.savefig(f"./graphs/amplitude/images/{point_index}")
-    plt.show()
+    # plt.show()
