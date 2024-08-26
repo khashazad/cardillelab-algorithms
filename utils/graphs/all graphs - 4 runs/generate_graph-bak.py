@@ -64,7 +64,7 @@ for point_index in range(points_count):
         ax.xaxis.set_major_formatter(mdates.DateFormatter('%b %Y'))
 
         ax.set_title(get_subgraph_title(index))
-        ax.legend()
+        # ax.legend()
 
     plt.tight_layout()
 
@@ -118,7 +118,7 @@ for point_index in range(points_count):
         ax.xaxis.set_major_formatter(mdates.DateFormatter('%b %Y'))
 
         ax.set_title(get_subgraph_title(index))
-        ax.legend()
+        # ax.legend()
 
     plt.tight_layout()
 
@@ -163,7 +163,7 @@ for point_index in range(points_count):
         ax.xaxis.set_major_formatter(mdates.DateFormatter('%b %Y'))
 
         ax.set_title(get_subgraph_title(index))
-        ax.legend()
+        # ax.legend()
 
     plt.tight_layout()
     point_directory = f"./graphs/{directory}/images/estimate vs target/{point_index}"
@@ -227,9 +227,10 @@ for point_index in range(points_count):
 
         # Add labels and legend 
         ax.set_title(get_subgraph_title(index))
-        ax.legend()
+        # ax.legend()
 
     plt.tight_layout()
+    plt.legend()
     point_directory = f"./graphs/{directory}/images/estimate vs target/{point_index}"
     if not os.path.exists(point_directory):
         os.makedirs(point_directory)

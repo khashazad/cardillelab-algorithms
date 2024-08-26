@@ -7,6 +7,8 @@ from eeek.harmonic_utils import add_harmonic_bands, fit_harmonic_to_collection, 
 from eeek import utils
 from pprint import pprint
 import csv
+import os
+import shutil
 
 ee.Initialize(opt_url=ee.data.HIGH_VOLUME_API_BASE_URL)
 
@@ -249,11 +251,15 @@ def get_fitted_coefficients(collection, coords):
 
 if __name__ == "__main__":
 
-    parameters = "./PEST parameters/original_parameters.json"
+    parameters = "./PEST parameters/original_parameters - no lambda.json"
 
     points_coordinates = "./PEST parameters/points-15.json"
 
     output_directory = "./pest files/"
+
+    if os.path.exists(output_directory):
+        shutil.rmtree(output_directory)
+    os.makedirs(output_directory)
 
     control_filename = output_directory + "eeek.pst"
     instructions_filename = output_directory + "output.ins"

@@ -13,15 +13,29 @@ merged_df = pd.merge(observations_df, pest_output_df)
 
 grouped_df = merged_df.groupby('point')
 
-with open(f'{script_directory}/rms.csv', 'w') as file:
+with open(f'{script_directory}/rms.csv', 'w', newline='') as file:
     csv_writer = csv.writer(file)
     csv_writer.writerow(['point', 'intercept_rms', 'cos_rms', 'sin_rms', 'sum'])
 
+    rmse = lambda x, y: math.sqrt(((x - y) ** 2).mean())
+
+    records = []
+
     for group_name, group_data in grouped_df:
-        intercept_rms = math.sqrt(((group_data['INTP'] - group_data['intercept']) ** 2).mean())
-        cos_rms = math.sqrt(((group_data['COS0'] - group_data['cos']) ** 2).mean())
-        sin_rms = math.sqrt(((group_data['SIN0'] - group_data['sin']) ** 2).mean())
+        intercept_rms = rmse(group_data['INTP'], group_data['intercept'])
+        cos_rms = rmse(group_data['COS0'], group_data['cos'])
+        sin_rms = rmse(group_data['SIN0'], group_data['sin'])
         sum = intercept_rms + cos_rms + sin_rms
+        
+        records.append([group_name, intercept_rms, cos_rms, sin_rms, sum])
+
+   
 
         csv_writer.writerow([group_name, intercept_rms, cos_rms, sin_rms, sum])  
+
+    df = pd.DataFrame(records, columns=['point', 'intercept_rmse', 'cos_rmse', 'sin_rmse', 'sum_rmse'])
+
+    
+    top_5_rows = df.nlargest(15, 'sum_rmse')[['point', 'sum_rmse', 'intercept_rmse', 'cos_rmse', 'sin_rmse']]
+    print(top_5_rows)
 
