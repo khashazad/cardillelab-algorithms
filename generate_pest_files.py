@@ -249,7 +249,9 @@ def get_fitted_coefficients(collection, coords):
 
 if __name__ == "__main__":
 
-    parameters = "./PEST parameters/v2_parameters.json"
+    parameters = "./PEST parameters/original_parameters.json"
+
+    points_coordinates = "./PEST parameters/points.json"
     observations_filename = "./generated_pest_files/observations.csv"
 
     control_filename = "./generated_pest_files/eeek.pst"
@@ -259,8 +261,9 @@ if __name__ == "__main__":
     model_filename = "./generated_pest_files/model.bat"
     fitted_coefficiets_filename = "./generated_pest_files/fitted_coefficients.csv"
     parameters = read_json(parameters)
+    points = read_json(points_coordinates)
 
-    fitted_coefficiets_by_point = get_coefficients_for_points(parameters["points"], fitted_coefficiets_filename)
+    fitted_coefficiets_by_point = get_coefficients_for_points(points['points'], fitted_coefficiets_filename)
 
     # pprint(fitted_coefficiets_by_point)
     observations = build_observations(fitted_coefficiets_by_point, observations_filename)

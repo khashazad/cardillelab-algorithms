@@ -1,24 +1,24 @@
 {
     "process noise (Q)": [
         [
-            0.00125,
+            0.0005,
             0.0,
             0.0
         ],
         [
             0.0,
-            0.000125,
+            0.0008,
             0.0
         ],
         [
             0.0,
             0.0,
-            0.000125
+            0.0036
         ]
     ],
     "measurement noise (R)": [
         [
-            0.003
+            0.0015
         ]
     ],
     "initial state covariance matrix (P)": [
