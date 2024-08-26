@@ -250,14 +250,17 @@ def get_fitted_coefficients(collection, coords):
 if __name__ == "__main__":
 
     parameters = "./PEST parameters/v2_parameters.json"
-    observations_filename = "./generated_pest_files/observations.csv"
 
-    control_filename = "./generated_pest_files/eeek.pst"
-    instructions_filename = "./generated_pest_files/output.ins"
-    template_filename = "./generated_pest_files/input.tpl"
-    points_filename = "./generated_pest_files/points.csv"
-    model_filename = "./generated_pest_files/model.bat"
-    fitted_coefficiets_filename = "./generated_pest_files/fitted_coefficients.csv"
+    output_directory = "./pest files/"
+
+    control_filename = output_directory + "eeek.pst"
+    instructions_filename = output_directory + "output.ins"
+    template_filename = output_directory + "input.tpl"
+    points_filename = output_directory + "points.csv"
+    model_filename = output_directory + "model.bat"
+    fitted_coefficiets_filename = output_directory + "fitted_coefficients.csv"
+    observations_filename = output_directory + "observations.csv"
+
     parameters = read_json(parameters)
 
     fitted_coefficiets_by_point = get_coefficients_for_points(parameters["points"], fitted_coefficiets_filename)
