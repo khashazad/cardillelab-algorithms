@@ -210,7 +210,7 @@
       "name": "q1",
       "trans": "none",
       "inctyp": "relative",
-      "parval1": 0.00063,
+      "parval1": 0.0005,
       "parlbnd": -5,
       "parubnd": 5,
       "pargp": "q1",
@@ -222,7 +222,7 @@
       "name": "q5",
       "trans": "none",
       "inctyp": "relative",
-      "parval1": 0.0011,
+      "parval1": 0.0008,
       "parlbnd": -5,
       "parubnd": 5,
       "pargp": "q5",
@@ -234,7 +234,7 @@
       "name": "q9",
       "trans": "none",
       "inctyp": "relative",
-      "parval1": 0.0044,
+      "parval1": 0.004,
       "parlbnd": -5,
       "parubnd": 5,
       "pargp": "q9",
@@ -246,7 +246,7 @@
       "name": "r",
       "trans": "none",
       "inctyp": "relative",
-      "parval1": -0.00022,
+      "parval1": 0.0015,
       "parlbnd": -5,
       "parubnd": 5,
       "pargp": "r",
@@ -290,13 +290,5 @@
       "offset": 0.0,
       "dercom": 1
     }
-  ],
-  "points": [
-    [-122.0687481, 44.72792893],
-    [-122.31635, 47.13156],
-    [-122.449581, 44.67748608],
-    [-122.5100322, 44.67070005],
-    [-122.7064143, 44.65270142],
-    [-123.6989455, 44.55566358]
   ]
 }
