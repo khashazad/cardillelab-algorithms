@@ -251,7 +251,7 @@ if __name__ == "__main__":
 
     parameters = "./PEST parameters/original_parameters.json"
 
-    points_coordinates = "./PEST parameters/points.json"
+    points_coordinates = "./PEST parameters/points-15.json"
 
     output_directory = "./pest files/"
 
@@ -268,7 +268,7 @@ if __name__ == "__main__":
 
     fitted_coefficiets_by_point = get_coefficients_for_points(points['points'], fitted_coefficiets_filename)
 
-    # pprint(fitted_coefficiets_by_point)
+    pprint(fitted_coefficiets_by_point)
     observations = build_observations(fitted_coefficiets_by_point, observations_filename)
 
     create_control_file(parameters, control_filename, len([x for x in observations if x[1] != 0]))
