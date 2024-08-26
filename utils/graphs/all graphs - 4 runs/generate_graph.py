@@ -17,7 +17,7 @@ images_directory = f"{script_directory}/images"
 if os.path.exists(images_directory):
     shutil.rmtree(images_directory)
 
-data_files = ["v1.csv", "v2.csv", "v3.csv"]
+data_files = ["v1.csv", "v2.csv", "v3.csv", "v4.csv"]
 
 target_observations = pd.read_csv(os.path.relpath(f"{script_directory}/data/observations.csv"))
 
@@ -25,21 +25,21 @@ points_count = len(target_observations['point'].unique())
 
 flag = {
     "estimate": True,
-    "final_2023_fit": True,
-    "final_2022_fit": True,
+    "final_2022_fit": False,
+    "final_2023_fit": False,
     "intercept_cos_sin": True,
     "residuals": True
 }
 
 def get_subgraph_title(index): 
     if index == 0:
-        return 'Default parameters'
+        return 'starting from 9 points initial - v1'
     elif index == 1:
-        return 'Default parameters increased by factor of 2'
+        return 'starting from 9 points optimized - v2'
     elif index == 2:
-        return 'Default parameters increased by factor of 10'
+        return 'starting from 9 points initial - v1'
     elif index == 3:
-        return 'Far from default parameters'
+        return 'starting from 9 points optimized - v2'
     
 
 def estimate(axs, actual, expected, point_index, file_index):
@@ -56,10 +56,6 @@ def estimate(axs, actual, expected, point_index, file_index):
     actual['date'] = pd.to_datetime(actual['date'], unit='ms')
     
     filtered_data = actual[(actual['z'] != 0) & (actual['point'] == point_index)]
-
-    axes.plot(filtered_data['date'], filtered_data['estimate'], label='Estimate - Optimized', linestyle='-', color='blue')
-    axes.plot(filtered_data['date'], filtered_data['observation_estimate'], label='Target', linestyle='--', color='green')
-    axes.scatter(filtered_data['date'], filtered_data['z'], label='Observed', s=10, color='red')
 
     if flag["final_2022_fit"]:
         filtered_data_2022 = filtered_data[filtered_data['date'].dt.year == 2022]
@@ -90,6 +86,11 @@ def estimate(axs, actual, expected, point_index, file_index):
         y = intercept + A * np.cos(2 * np.pi * x - phi)
 
         axes.plot(filtered_data['date'], y, label="Final 2023 fit", color='purple')
+
+    
+    axes.plot(filtered_data['date'], filtered_data['estimate'], label='Estimate - Optimized', linestyle='-', color='blue')
+    axes.plot(filtered_data['date'], filtered_data['observation_estimate'], label='Target', linestyle='--', color='green')
+    axes.scatter(filtered_data['date'], filtered_data['z'], label='Observed', s=13, color='red')
 
     axes.xaxis.set_major_locator(mdates.AutoDateLocator())
     axes.xaxis.set_major_formatter(mdates.DateFormatter('%b %Y'))
@@ -150,7 +151,7 @@ def residuals_over_time(axs, actual, expected, point_index, file_index):
 
     axes.scatter(dates, intercept_residual, label='intercept', linestyle='-', color='blue', s=10)
     axes.scatter(dates, cos_residual, label='cos', linestyle='-', color='green', s=10)
-    axes.scatter(dates, sin_residual, label='sin', linestyle='-', color='red', s=10)
+    axes.scatter(dates, sin_residual, label='sin', linestyle='-', color='red', s=13)
 
     axes.axhline(y=0, color='black', linestyle='--')
 

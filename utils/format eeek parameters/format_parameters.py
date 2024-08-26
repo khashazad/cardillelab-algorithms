@@ -18,10 +18,10 @@ with open(f'{script_directory}/formatted_params.csv', 'w', newline='') as csvfil
 
             q_diagonal = [data['process noise (Q)'][i][i] for i in range(len(data['process noise (Q)']))]
 
-            q1 = data['process noise (Q)'][0][0]
-            q2 = data['process noise (Q)'][1][1]
-            q3 = data['process noise (Q)'][2][2]
+            q1 = round(float(data['process noise (Q)'][0][0]), 5)
+            q2 = round(float(data['process noise (Q)'][1][1]), 5)
+            q3 = round(float(data['process noise (Q)'][2][2]), 5)
 
-            error_term = data['measurement noise (R)'][0][0]
+            error_term = round(float(data['measurement noise (R)'][0][0]), 5)
 
             writer.writerow([file.split(".")[0], q1, q2, q3, error_term])
