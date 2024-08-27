@@ -1,0 +1,5 @@
+title,q1_initial,q2_initial,q3_initial,r_initial,q1_optimized,q2_optimized,q3_optimized,r_optimized,initial_objective_function,final_objective_function
+multiple lambdas - optimization 2,-6.88029e-05,0.00160309176,0.00469915869,-0.0001865096,-7e-05,0.0016,0.0047,-0.00019,30.062,30.06
+multiple lambdas - optimization 1,-6.869011e-05,0.00159883393,0.0046896496,-0.0001859968,-7e-05,0.00153,0.00471,-0.0002,30.064,30.06
+single lambda - optimization 2,-6.880348e-05,0.00160307088,0.00469918286,-0.0001864891,-7e-05,0.0016,0.0047,-0.00019,30.062,30.06
+single lambda - optimization 1,-6.869378e-05,0.00159896811,0.00468991173,-0.0001860166,-7e-05,0.00153,0.00471,-0.0002,30.064,30.06
