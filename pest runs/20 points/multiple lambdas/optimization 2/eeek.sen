@@ -1,0 +1,89 @@
+                        PARAMETER SENSITIVITIES: CASE eeek
+
+
+ OPTIMISATION ITERATION NO.  1 ----->
+ Parameter name    Group          Current value    Sensitivity
+   q1              q1             -7.000000E-05      1.33146    
+   q5              q5              1.600000E-03     0.128900    
+   q9              q9              4.700000E-03     2.939533E-02
+   r               r              -1.900000E-04     0.403652    
+
+
+ OPTIMISATION ITERATION NO.  2 ----->
+ Parameter name    Group          Current value    Sensitivity
+   q1              q1             -6.812624E-05      1.32292    
+   q5              q5              1.600034E-03     0.126658    
+   q9              q9              4.700291E-03     2.950472E-02
+   r               r              -1.833872E-04     0.390724    
+
+
+ OPTIMISATION ITERATION NO.  3 ----->
+ Parameter name    Group          Current value    Sensitivity
+   q1              q1             -6.879604E-05      1.32626    
+   q5              q5              1.600485E-03     0.128012    
+   q9              q9              4.700014E-03     2.952869E-02
+   r               r              -1.863460E-04     0.396955    
+
+
+ OPTIMISATION ITERATION NO.  4 ----->
+ Parameter name    Group          Current value    Sensitivity
+   q1              q1             -6.885748E-05      1.32381    
+   q5              q5              1.603506E-03     0.127629    
+   q9              q9              4.699030E-03     2.953886E-02
+   r               r              -1.863279E-04     0.395490    
+
+
+ OPTIMISATION ITERATION NO.  5 ----->
+ Parameter name    Group          Current value    Sensitivity
+   q1              q1             -6.877599E-05      1.32397    
+   q5              q5              1.603256E-03     0.127812    
+   q9              q9              4.699093E-03     2.953967E-02
+   r               r              -1.867976E-04     0.396514    
+
+
+ OPTIMISATION ITERATION NO.  6 ----->
+ Parameter name    Group          Current value    Sensitivity
+   q1              q1             -6.878646E-05      1.32411    
+   q5              q5              1.603006E-03     0.127757    
+   q9              q9              4.699185E-03     2.953775E-02
+   r               r              -1.865621E-04     0.396161    
+
+
+ OPTIMISATION ITERATION NO.  7 ----->
+ Parameter name    Group          Current value    Sensitivity
+   q1              q1             -6.881350E-05      1.32409    
+   q5              q5              1.603060E-03     0.127707    
+   q9              q9              4.699173E-03     2.953747E-02
+   r               r              -1.864219E-04     0.395867    
+
+
+ OPTIMISATION ITERATION NO.  8 ----->
+ Parameter name    Group          Current value    Sensitivity
+   q1              q1             -6.881002E-05      1.32405    
+   q5              q5              1.603133E-03     0.127723    
+   q9              q9              4.699146E-03     2.953803E-02
+   r               r              -1.864920E-04     0.395973    
+
+
+ OPTIMISATION ITERATION NO.  9 ----->
+ Parameter name    Group          Current value    Sensitivity
+   q1              q1             -6.880171E-05      1.32406    
+   q5              q5              1.603107E-03     0.127737    
+   q9              q9              4.699153E-03     2.953805E-02
+   r               r              -1.865272E-04     0.396051    
+
+
+ OPTIMISATION ITERATION NO. 10 ----->
+ Parameter name    Group          Current value    Sensitivity
+   q1              q1             -6.880290E-05      1.32407    
+   q5              q5              1.603092E-03     0.127732    
+   q9              q9              4.699159E-03     2.953792E-02
+   r               r              -1.865096E-04     0.396023    
+
+
+ OPTIMISATION ITERATION NO. 11 ----->
+ Parameter name    Group          Current value    Sensitivity
+   q1              q1             -6.880538E-05      1.32406    
+   q5              q5              1.603103E-03     0.127729    
+   q9              q9              4.699155E-03     2.953794E-02
+   r               r              -1.865015E-04     0.396003    

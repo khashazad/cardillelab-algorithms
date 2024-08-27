@@ -1,7 +1,6 @@
 import json
-import ee.geometry
+import ee.geometry, ee
 import pandas as pd
-import ee
 from eeek.image_collections import COLLECTIONS
 from eeek.harmonic_utils import add_harmonic_bands, fit_harmonic_to_collection, determine_harmonic_independents_via_modality_dictionary
 from eeek import utils
@@ -12,6 +11,19 @@ import shutil
 
 ee.Initialize(opt_url=ee.data.HIGH_VOLUME_API_BASE_URL)
 
+script_directory = os.path.dirname(os.path.realpath(__file__))
+
+parameters = f"{script_directory}/pest configuration/default-multiple-lambda.json"
+
+points_coordinates = f"{script_directory}/points/points.json"
+
+output_directory = f"{script_directory}/pest runs/20 points/multiple lambdas/optimization 2/"
+
+if os.path.exists(output_directory):
+    print("Output directory already exists. Exiting to prevent overwriting.")
+    exit()
+
+os.makedirs(output_directory)
 
 def read_json(filename):
     with open(filename, "r") as file:
@@ -92,30 +104,6 @@ def create_control_file(data, output_filename, observation_count):
         # Observations groups
         file.write("* observation groups\n")
         file.write("obsgroup\n")
-
-# def parse_observations(df):
-#     observations = []
-#     previous_point_index = None
-#     observation_index = 1
-#     for index, row in df.iterrows():
-
-#         point_index = row['point']
-#         intercept = row['intercept']
-#         cos = row['cos']
-#         sin = row['sin']
-#         repetion_count = int(row['repetition'])
-
-#         if point_index != previous_point_index:
-#             observation_index = 1
-#             previous_point_index = point_index
-        
-#         for i in range(repetion_count):
-#             observations.append((f"intercept_{int(point_index)}_{observation_index}", intercept))
-#             observations.append((f"cos_{int(point_index)}_{observation_index}", cos))
-#             observations.append((f"sin_{int(point_index)}_{observation_index}", sin))
-#             observation_index += 1
-
-#     return observations
 
 def build_observations(coefficients_by_point, output_filename):
     observations = []
@@ -250,17 +238,6 @@ def get_fitted_coefficients(collection, coords):
     return fitted_coefficients
 
 if __name__ == "__main__":
-
-    parameters = "./PEST parameters/original_parameters.json"
-
-    points_coordinates = "./PEST parameters/points.json"
-
-    output_directory = "./pest files/"
-
-    if os.path.exists(output_directory):
-        shutil.rmtree(output_directory)
-    os.makedirs(output_directory)
-
     control_filename = output_directory + "eeek.pst"
     instructions_filename = output_directory + "output.ins"
     template_filename = output_directory + "input.tpl"
@@ -285,5 +262,5 @@ if __name__ == "__main__":
     create_points_file(points_filename, fitted_coefficiets_by_point)
     create_model_bat_file(model_filename)
 
-    print(f"Control files '{control_filename}' has been created.")
+    print(f"Pest files has been created.")
 
