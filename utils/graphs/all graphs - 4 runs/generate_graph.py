@@ -9,7 +9,6 @@ import shutil
 import os
 import shutil
 
-
 script_directory = os.path.dirname(os.path.abspath(__file__))
 
 images_directory = f"{script_directory}/images"
@@ -28,7 +27,8 @@ flag = {
     "final_2022_fit": False,
     "final_2023_fit": False,
     "intercept_cos_sin": True,
-    "residuals": True
+    "residuals": True,
+    "amplitude": True
 }
 
 def get_subgraph_title(index): 
@@ -96,7 +96,6 @@ def estimate(axs, actual, expected, point_index, file_index):
     axes.xaxis.set_major_formatter(mdates.DateFormatter('%b %Y'))
 
     axes.set_title(get_subgraph_title(file_index))
-    # axes.legend()
 
 def intercept_cos_sin(axs, actual, expected, point_index, file_index):
 
@@ -133,7 +132,6 @@ def intercept_cos_sin(axs, actual, expected, point_index, file_index):
     # axes.legend()
 
 def residuals_over_time(axs, actual, expected, point_index, file_index):
-
     axes = axs[file_index // 2, file_index % 2]
 
     actual['intercept_residual'] = actual['INTP'] - expected["intercept"]
@@ -159,7 +157,31 @@ def residuals_over_time(axs, actual, expected, point_index, file_index):
     axes.xaxis.set_major_formatter(mdates.DateFormatter('%b %Y'))
 
     axes.set_title(get_subgraph_title(file_index))
-    # axes.legend()
+
+def amplitude(axs, actual, expected, point_index, file_index):
+    axes = axs[file_index // 2, file_index % 2]
+
+    actual['date'] = pd.to_datetime(actual['date'], unit='ms')
+    actual['expected_cos'] = expected['cos']
+    actual['expected_sin'] = expected['sin']
+    actual['expected_amplitude'] = np.sqrt(expected['cos']**2 + expected['sin']**2)
+
+    filtered_data = actual[(actual['z'] != 0) & (actual['point'] == point_index)]
+
+    cos = filtered_data['COS0']
+    sin = filtered_data['SIN0']
+    dates = filtered_data['date']
+
+    amplitude_values = np.sqrt(cos**2 + sin**2)
+    expected_amplitude = filtered_data['expected_amplitude']
+
+    axes.plot(dates, amplitude_values, label='Measured Amplitude', linestyle='-', color='purple')
+    axes.plot(dates, expected_amplitude, label='Expected Amplitude', linestyle='--', color='orange')
+
+    axes.xaxis.set_major_locator(mdates.AutoDateLocator())
+    axes.xaxis.set_major_formatter(mdates.DateFormatter('%b %Y'))
+
+    axes.set_title(get_subgraph_title(file_index))
 
 def save_graph(fig, point_index, name):
     point_directory = f"{script_directory}/images/points/{point_index}"
@@ -173,6 +195,7 @@ def save_graph(fig, point_index, name):
         os.makedirs(directory)
     
     fig.savefig(f"{directory}/{point_index}")
+
 
 
 def get_unique_labels_and_handles(axs):
@@ -192,21 +215,29 @@ for point_index in range(points_count):
     fig_estimate_vs_target, axs_estimate_vs_target = plt.subplots(2, 2, figsize=(12, 8))
     fig_intercept_cos_sin, axs_intercept_cos_sin = plt.subplots(2, 2, figsize=(12, 8))
     fig_residuals, axs_residuals = plt.subplots(2, 2, figsize=(12, 8))
+    fig_amplitude, axs_amplitude = plt.subplots(2, 2, figsize=(12, 8))
 
     plots = [
         (fig_estimate_vs_target, axs_estimate_vs_target),
         (fig_intercept_cos_sin, axs_intercept_cos_sin),
-        (fig_residuals, axs_residuals)
+        (fig_residuals, axs_residuals),
+        (fig_amplitude, axs_amplitude)
     ]
 
     for file_index, data_file in enumerate(data_files):
         eeek_output = pd.read_csv(os.path.relpath(f"{script_directory}/data/{data_file}"))
 
-        estimate(axs_estimate_vs_target, eeek_output.copy(), target_observations.copy(), point_index, file_index)
+        if flag["estimate"]:
+            estimate(axs_estimate_vs_target, eeek_output.copy(), target_observations.copy(), point_index, file_index)
 
-        intercept_cos_sin(axs_intercept_cos_sin, eeek_output.copy(), target_observations.copy(), point_index, file_index)
+        if flag["intercept_cos_sin"]:
+            intercept_cos_sin(axs_intercept_cos_sin, eeek_output.copy(), target_observations.copy(), point_index, file_index)
 
-        residuals_over_time(axs_residuals, eeek_output.copy(), target_observations.copy(), point_index, file_index)
+        if flag["residuals"]:
+            residuals_over_time(axs_residuals, eeek_output.copy(), target_observations.copy(), point_index, file_index)
+
+        if flag["amplitude"]:
+            amplitude(axs_amplitude, eeek_output.copy(), target_observations.copy(), point_index, file_index)
 
         
     for fig, axs in plots:
@@ -221,3 +252,5 @@ for point_index in range(points_count):
         save_graph(fig_intercept_cos_sin, point_index, "intercept cos sin")
     if flag["residuals"]:
         save_graph(fig_residuals, point_index, "residuals over time")
+    if flag["amplitude"]:
+        save_graph(fig_amplitude, point_index, "amplitude")

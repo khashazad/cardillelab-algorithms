@@ -149,18 +149,18 @@ for point_index in range(points_count):
         dates = filtered_data['date']
         estimate = filtered_data['estimate']
         z = filtered_data['z']
-        intp = filtered_data['INTP']
+        intp = filtered_data['intp']
 
-        cos = filtered_data["COS0"]
-        sin = filtered_data["SIN0"]
+        cos = filtered_data["cos0"]
+        sin = filtered_data["sin0"]
 
         amplitude = np.sqrt(cos**2 + sin**2)
         
-        ax.plot(dates, amplitude, label="Amplitude", linestyle='-', color='blue')
-        ax.plot(dates, filtered_data['target_amplitude'], label="Target Amplitude", linestyle='--', color='green')
+        ax.plot(dates, amplitude, label="amplitude", linestyle='-', color='blue')
+        ax.plot(dates, filtered_data['target_amplitude'], label="target amplitude", linestyle='--', color='green')
 
-        ax.xaxis.set_major_locator(mdates.AutoDateLocator())
-        ax.xaxis.set_major_formatter(mdates.DateFormatter('%b %Y'))
+        ax.xaxis.set_major_locator(mdates.autodatelocator())
+        ax.xaxis.set_major_formatter(mdates.dateformatter('%b %y'))
 
         ax.set_title(get_subgraph_title(index))
         # ax.legend()
