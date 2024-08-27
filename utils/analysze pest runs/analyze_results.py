@@ -6,7 +6,7 @@ from graphs import create_graphs
 from rmse import calculate_rmse
 
 all_pest_results_directory = os.path.dirname(os.path.abspath(__file__)) + "/../../pest runs/"
-pest_runs = "20 points"
+pest_runs = "16 points"
 
 results_directory = os.path.join(all_pest_results_directory, pest_runs)
 
@@ -96,7 +96,7 @@ with open(os.path.join(analysis_directory, "analysis.csv"), "w", newline='') as 
     }
 
     calculate_rmse(data_files, observation_file_path, os.path.join(analysis_directory, "rmse"))
-    # create_graphs(data_files, observation_file_path, os.path.join(analysis_directory, "graphs"), flags)
+    create_graphs(data_files, observation_file_path, os.path.join(analysis_directory, "graphs"), flags)
 
 
 

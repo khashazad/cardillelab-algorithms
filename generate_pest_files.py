@@ -7,17 +7,19 @@ from eeek import utils
 from pprint import pprint
 import csv
 import os
-import shutil
 
 ee.Initialize(opt_url=ee.data.HIGH_VOLUME_API_BASE_URL)
 
+lambda_mode = 'multiple'
+points = 9 
+
 script_directory = os.path.dirname(os.path.realpath(__file__))
 
-parameters = f"{script_directory}/pest configuration/default-multiple-lambda.json"
+parameters = f"{script_directory}/pest configuration/default-{lambda_mode}-lambda.json"
 
-points_coordinates = f"{script_directory}/points/points.json"
+points_coordinates = f"{script_directory}/points/points-{points}.json"
 
-output_directory = f"{script_directory}/pest runs/20 points/multiple lambdas/optimization 2/"
+output_directory = f"{script_directory}/pest runs/{points} points/{lambda_mode} lambda/optimization 1/"
 
 if os.path.exists(output_directory):
     print("Output directory already exists. Exiting to prevent overwriting.")
