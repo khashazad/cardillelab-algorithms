@@ -69,27 +69,27 @@ NUM_MEASURES = 1  # eeek only supports one band at a time
 
 def main(args):
     param_names = []
-    if args.include_intercept:
+    if args["include_intercept"]:
         param_names.append("INTP")
-    if args.include_slope:
+    if args["include_slope"]:
         param_names.append("SLP")
-    for i in range(args.num_sinusoid_pairs):
+    for i in range(args["num_sinusoid_pairs"]):
         param_names.extend([f"COS{i}", f"SIN{i}"])
     num_params = len(param_names)
 
     request_band_names = param_names.copy()
-    if args.store_estimate:
+    if args["store_estimate"]:
         request_band_names.append("estimate")
-    if args.store_measurement:
+    if args["store_measurement"]:
         request_band_names.append("z")
-    if args.store_date:
+    if args["store_date"]:
         request_band_names.append("date")
     num_request_bands = len(request_band_names)
 
     #################################################
     ########### Read in PEST parameters #############
     #################################################
-    with open(args.input, "r") as f:
+    with open(args["input"], "r") as f:
         lines = f.readlines()
         # assert len(lines) == 4, "PEST parameter file must specify Q, R, P, and x0"
         assert len(lines) == 3, "PEST parameter file must specify Q, R, P"
@@ -118,9 +118,9 @@ def main(args):
         # x0 = ee.Image(ee.Array(x0.tolist())).rename("x")
 
         H = utils.sinusoidal(
-            args.num_sinusoid_pairs,
-            include_slope=args.include_slope,
-            include_intercept=args.include_intercept,
+            args["num_sinusoid_pairs"],
+            include_slope=args["include_slope"],
+            include_intercept=args["include_intercept"],
         )
 
         kalman_init = {
@@ -139,7 +139,7 @@ def main(args):
     # Create parameters to run filter on each point #
     #################################################
     points = []
-    with open(args.points, "r") as f:
+    with open(args["points"], "r") as f:
         for i, line in enumerate(f.readlines()):
             lon, lat, x1, x2, x3 = line.split(",")
             points.append(
@@ -163,7 +163,7 @@ def main(args):
         coords = (float(kwargs["longitude"]), float(kwargs["latitude"]))
 
         col = (
-            COLLECTIONS[args.collection]
+            COLLECTIONS[args["collection"]]
             .filterBounds(ee.Geometry.Point(coords))
             # .filterDate(kwargs["start_date"], kwargs["stop_date"])
         )
@@ -200,7 +200,7 @@ def main(args):
         # put point as the first column
         df = df[["point"] + request_band_names]
 
-        basename, ext = os.path.splitext(args.output)
+        basename, ext = os.path.splitext(args["output"])
         shard_path = basename + f"-{index:06d}" + ext
         df.to_csv(shard_path, index=False)
 
@@ -216,7 +216,7 @@ def main(args):
     ## Combine results from all runs to single csv ##
     #################################################
     all_results = pd.concat(map(pd.read_csv, all_output_files), ignore_index=True)
-    all_results.to_csv(args.output, index=False)
+    all_results.to_csv(args["output"], index=False)
 
     # last_row = all_results.iloc[-1]
     # new_df = pd.DataFrame([last_row])
