@@ -4,9 +4,10 @@ import shutil
 import csv
 from graphs import create_graphs
 from rmse import calculate_rmse
+from pest_eeek import main as run_eeek
 
 all_pest_results_directory = os.path.dirname(os.path.abspath(__file__)) + "/../../pest runs/"
-pest_runs = "20 points"
+pest_runs = "10 points - high rmse"
 
 results_directory = os.path.join(all_pest_results_directory, pest_runs)
 
@@ -49,6 +50,44 @@ def parse_optimized_parameters(json_file_path):
 
     return optimized_parameters
 
+def delete_existing_directory_and_create_new(directory_path):
+    if os.path.exists(directory_path):
+        shutil.rmtree(directory_path)
+    os.makedirs(directory_path)
+
+def run_eeek_with_custom_parameters(run_path):
+    eeek_runs_directory = os.path.join(run_path, "eeek_runs")
+
+    delete_existing_directory_and_create_new(eeek_runs_directory)
+
+    for param_file in os.listdir(os.path.join(run_path, "eeek_params")):
+        param_file_path = os.path.join(run_path, "eeek_params", param_file)
+        title = param_file.replace("_", " ")
+
+        run_directory = os.path.join(eeek_runs_directory, title)
+
+        os.mkdir(run_directory)
+        os.chdir(run_directory)
+
+        input_file_path = os.path.join(run_directory, "eeek_input.csv")
+        output_file_path = os.path.join(run_directory, "eeek_output.csv")
+        points_file_path = os.path.join(run_directory, "points.csv")
+
+        shutil.copy(param_file_path, input_file_path)
+        shutil.copy(os.path.join(run_path, "points.csv"), points_file_path)
+
+        run_eeek({
+            "input": input_file_path,
+            "output": output_file_path,
+            "points": points_file_path,
+            "num_sinusoid_pairs": 1,
+            "include_intercept": True,
+            "store_measurement": True,
+            "collection": "L8_L9_2022_2023",
+            "store_estimate": True,
+            "store_date": True
+        })
+
 observation_file_path = None 
 
 with open(os.path.join(analysis_directory, "analysis.csv"), "w", newline='') as file:
@@ -67,9 +106,11 @@ with open(os.path.join(analysis_directory, "analysis.csv"), "w", newline='') as 
         for run in os.listdir(grouped_run_folder_path):
             run_path = os.path.join(grouped_run_folder_path, run)
 
+            run_eeek_with_custom_parameters(run_path)
+
             run_title = f"{grouped_run_folder} - {run}"
 
-            data_files[run_title] = os.path.join(run_path, "pest_output.csv")
+            data_files[run_title] = os.path.join(run_path, "eeek_output.csv")
 
             if observation_file_path is None:
                 observation_file_path = os.path.join(run_path, "observations.csv")
