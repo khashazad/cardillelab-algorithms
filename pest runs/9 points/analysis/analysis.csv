@@ -1,0 +1,3 @@
+title,q1_initial,q2_initial,q3_initial,r_initial,q1_optimized,q2_optimized,q3_optimized,r_optimized,initial_objective_function,final_objective_function
+multiple lambda - optimization 1,0.0005,0.0008,0.004,0.0015,0.00062825186,0.00111585294,0.00444064372,-0.0002198341,6.7489,6.578
+single lambda - optimization 1,0.0005,0.0008,0.004,0.0015,0.00062888688,0.00111698687,0.00444025473,-0.0002198341,6.7489,6.578

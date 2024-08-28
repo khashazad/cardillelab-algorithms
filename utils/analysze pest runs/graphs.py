@@ -189,7 +189,8 @@ def create_graphs(data_files, observation_file_path, output_directory, flags):
                 (fig_amplitude, axs_amplitude)
             ]
 
-            for file_index, run_title in enumerate(sorted(data_files.keys(), key=lambda x: int(x.split('optimization')[-1].strip()))):
+            # for file_index, run_title in enumerate(sorted(data_files.keys(), key=lambda x: int(x.split('optimization')[-1].strip()))):
+            for file_index, run_title in enumerate(data_files.keys()):
                 eeek_output = pd.read_csv(data_files[run_title])
 
                 if flags["estimate"]:

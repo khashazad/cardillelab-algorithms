@@ -6,7 +6,7 @@ from graphs import create_graphs
 from rmse import calculate_rmse
 
 all_pest_results_directory = os.path.dirname(os.path.abspath(__file__)) + "/../../pest runs/"
-pest_runs = "16 points"
+pest_runs = "20 points"
 
 results_directory = os.path.join(all_pest_results_directory, pest_runs)
 
@@ -80,8 +80,8 @@ with open(os.path.join(analysis_directory, "analysis.csv"), "w", newline='') as 
             initial_objective_function, final_objective_function = parse_initial_and_final_objective_function(os.path.join(run_path, "eeek.rec"))
 
             output_row = [run_title]
-            output_row.extend(optimized_parameters)
             output_row.extend(initial_parameters)
+            output_row.extend(optimized_parameters)
             output_row.extend([initial_objective_function, final_objective_function])
 
             analysis_writer.writerow(output_row)
