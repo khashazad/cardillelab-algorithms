@@ -162,11 +162,16 @@ def main(args):
 
         coords = (float(kwargs["longitude"]), float(kwargs["latitude"]))
 
+        # print(len(COLLECTIONS[args["collection"]].getInfo()['features']))
+
         col = (
             COLLECTIONS[args["collection"]]
             .filterBounds(ee.Geometry.Point(coords))
             # .filterDate(kwargs["start_date"], kwargs["stop_date"])
         )
+
+
+        print(len(col.getInfo()['features']))
 
         # print(col.first().getInfo())
 
@@ -316,4 +321,6 @@ if __name__ == "__main__":
         action="store_true",
         help="if set the measurement date at each time step will be saved",
     )
-    main(parser.parse_args())
+
+    args = vars(parser.parse_args())
+    main(args)

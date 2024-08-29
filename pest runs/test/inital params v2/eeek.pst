@@ -1,0 +1,238 @@
+pcf
+* control data
+restart estimation
+7 200 7 0 1
+1 1 single point
+10 2.0 0.3 0.05 10
+5.0 5.0 0.001
+0.1
+50 1e-07 10 4 0.005 10 1e-05
+0 0 0 0 nojcosave nojcosaveitn noverboserec noreisaveitn parsaveitn
+* singular value decomposition
+1
+3 1e-06
+0
+* parameter groups
+q1 relative 0.01 0.0 switch 2.0 parabolic
+q5 relative 0.01 0.0 switch 2.0 parabolic
+q9 relative 0.01 0.0 switch 2.0 parabolic
+r relative 0.01 0.0 switch 2.0 parabolic
+p1 relative 0.01 0.0 switch 2.0 parabolic
+p5 relative 0.01 0.0 switch 2.0 parabolic
+p9 relative 0.01 0.0 switch 2.0 parabolic
+* parameter data
+q1 none relative -6.9e-05 -5 5 q1 1.0 0.0
+q5 none relative 0.0016 -5 5 q5 1.0 0.0
+q9 none relative 0.0047 -5 5 q9 1.0 0.0
+r none relative -0.000186 -5 5 r 1.0 0.0
+p1 fixed relative 0.00101 -5 5 p1 1.0 0.0
+p5 fixed relative 0.00222 -5 5 p5 1.0 0.0
+p9 fixed relative 0.00333 -5 5 p9 1.0 0.0
+* observation groups
+obsgroup
+* observation data
+intercept_0_1   0.08328512141223078 1.0 obsgroup
+cos_0_1         0.004425326626098816 1.0 obsgroup
+sin_0_1         0.010025834855714373 1.0 obsgroup
+estimate_0_1    0.08347941390366656 1.0 obsgroup
+intercept_0_2   0.08328512141223078 1.0 obsgroup
+cos_0_2         0.004425326626098816 1.0 obsgroup
+sin_0_2         0.010025834855714373 1.0 obsgroup
+estimate_0_2    0.08197443504779525 1.0 obsgroup
+intercept_0_3   0.08328512141223078 1.0 obsgroup
+cos_0_3         0.004425326626098816 1.0 obsgroup
+sin_0_3         0.010025834855714373 1.0 obsgroup
+estimate_0_3    0.08122947261186722 1.0 obsgroup
+intercept_0_4   0.08328512141223078 1.0 obsgroup
+cos_0_4         0.004425326626098816 1.0 obsgroup
+sin_0_4         0.010025834855714373 1.0 obsgroup
+estimate_0_4    0.08049423879544601 1.0 obsgroup
+intercept_0_5   0.08328512141223078 1.0 obsgroup
+cos_0_5         0.004425326626098816 1.0 obsgroup
+sin_0_5         0.010025834855714373 1.0 obsgroup
+estimate_0_5    0.07977221318611845 1.0 obsgroup
+intercept_0_6   0.08328512141223078 1.0 obsgroup
+cos_0_6         0.004425326626098816 1.0 obsgroup
+sin_0_6         0.010025834855714373 1.0 obsgroup
+estimate_0_6    0.07906681286195053 1.0 obsgroup
+intercept_0_7   0.08328512141223078 1.0 obsgroup
+cos_0_7         0.004425326626098816 1.0 obsgroup
+sin_0_7         0.010025834855714373 1.0 obsgroup
+estimate_0_7    0.07838137621973101 1.0 obsgroup
+intercept_0_8   0.08328512141223078 1.0 obsgroup
+cos_0_8         0.004425326626098816 1.0 obsgroup
+sin_0_8         0.010025834855714373 1.0 obsgroup
+estimate_0_8    0.07771914717558347 1.0 obsgroup
+intercept_0_9   0.08328512141223078 1.0 obsgroup
+cos_0_9         0.004425326626098816 1.0 obsgroup
+sin_0_9         0.010025834855714373 1.0 obsgroup
+estimate_0_9    0.07708325981272106 1.0 obsgroup
+intercept_0_10  0.08328512141223078 1.0 obsgroup
+cos_0_10        0.004425326626098816 1.0 obsgroup
+sin_0_10        0.010025834855714373 1.0 obsgroup
+estimate_0_10   0.07647672354899811 1.0 obsgroup
+intercept_0_11  0.08328512141223078 1.0 obsgroup
+cos_0_11        0.004425326626098816 1.0 obsgroup
+sin_0_11        0.010025834855714373 1.0 obsgroup
+estimate_0_11   0.07590240889445798 1.0 obsgroup
+intercept_0_12  0.08328512141223078 1.0 obsgroup
+cos_0_12        0.004425326626098816 1.0 obsgroup
+sin_0_12        0.010025834855714373 1.0 obsgroup
+estimate_0_12   0.07536303386627863 1.0 obsgroup
+intercept_0_13  0.08328512141223078 1.0 obsgroup
+cos_0_13        0.004425326626098816 1.0 obsgroup
+sin_0_13        0.010025834855714373 1.0 obsgroup
+estimate_0_13   0.07486115112541047 1.0 obsgroup
+intercept_0_14  0.08328512141223078 1.0 obsgroup
+cos_0_14        0.004425326626098816 1.0 obsgroup
+sin_0_14        0.010025834855714373 1.0 obsgroup
+estimate_0_14   0.07439913589578388 1.0 obsgroup
+intercept_0_15  0.08328512141223078 1.0 obsgroup
+cos_0_15        0.004425326626098816 1.0 obsgroup
+sin_0_15        0.010025834855714373 1.0 obsgroup
+estimate_0_15   0.07397917472325947 1.0 obsgroup
+intercept_0_16  0.08328512141223078 1.0 obsgroup
+cos_0_16        0.004425326626098816 1.0 obsgroup
+sin_0_16        0.010025834855714373 1.0 obsgroup
+estimate_0_16   0.07360325512752183 1.0 obsgroup
+intercept_0_17  0.08328512141223078 1.0 obsgroup
+cos_0_17        0.004425326626098816 1.0 obsgroup
+sin_0_17        0.010025834855714373 1.0 obsgroup
+estimate_0_17   0.07327315619588938 1.0 obsgroup
+intercept_0_18  0.08328512141223078 1.0 obsgroup
+cos_0_18        0.004425326626098816 1.0 obsgroup
+sin_0_18        0.010025834855714373 1.0 obsgroup
+estimate_0_18   0.07299044016355764 1.0 obsgroup
+intercept_0_19  0.08328512141223078 1.0 obsgroup
+cos_0_19        0.004425326626098816 1.0 obsgroup
+sin_0_19        0.010025834855714373 1.0 obsgroup
+estimate_0_19   0.07275644502012218 1.0 obsgroup
+intercept_0_20  0.08328512141223078 1.0 obsgroup
+cos_0_20        0.004425326626098816 1.0 obsgroup
+sin_0_20        0.010025834855714373 1.0 obsgroup
+estimate_0_20   0.07257227817737266 1.0 obsgroup
+intercept_0_21  0.08328512141223078 1.0 obsgroup
+cos_0_21        0.004425326626098816 1.0 obsgroup
+sin_0_21        0.010025834855714373 1.0 obsgroup
+estimate_0_21   0.07243881122832563 1.0 obsgroup
+intercept_0_22  0.08328512141223078 1.0 obsgroup
+cos_0_22        0.004425326626098816 1.0 obsgroup
+sin_0_22        0.010025834855714373 1.0 obsgroup
+estimate_0_22   0.07235667582229967 1.0 obsgroup
+intercept_0_23  0.08328512141223078 1.0 obsgroup
+cos_0_23        0.004425326626098816 1.0 obsgroup
+sin_0_23        0.010025834855714373 1.0 obsgroup
+estimate_0_23   0.07232626067555466 1.0 obsgroup
+intercept_0_24  0.08328512141223078 1.0 obsgroup
+cos_0_24        0.004425326626098816 1.0 obsgroup
+sin_0_24        0.010025834855714373 1.0 obsgroup
+estimate_0_24   0.07234770973164256 1.0 obsgroup
+intercept_0_25  0.09285786886981323 1.0 obsgroup
+cos_0_25        0.015807361266766923 1.0 obsgroup
+sin_0_25        0.017702205093882404 1.0 obsgroup
+estimate_0_25   0.08762738405367351 1.0 obsgroup
+intercept_0_26  0.09285786886981323 1.0 obsgroup
+cos_0_26        0.015807361266766923 1.0 obsgroup
+sin_0_26        0.017702205093882404 1.0 obsgroup
+estimate_0_26   0.0860481791908689 1.0 obsgroup
+intercept_0_27  0.09285786886981323 1.0 obsgroup
+cos_0_27        0.015807361266766923 1.0 obsgroup
+sin_0_27        0.017702205093882404 1.0 obsgroup
+estimate_0_27   0.08450120205092933 1.0 obsgroup
+intercept_0_28  0.09285786886981323 1.0 obsgroup
+cos_0_28        0.015807361266766923 1.0 obsgroup
+sin_0_28        0.017702205093882404 1.0 obsgroup
+estimate_0_28   0.0829937739000058 1.0 obsgroup
+intercept_0_29  0.09285786886981323 1.0 obsgroup
+cos_0_29        0.015807361266766923 1.0 obsgroup
+sin_0_29        0.017702205093882404 1.0 obsgroup
+estimate_0_29   0.08153302883362606 1.0 obsgroup
+intercept_0_30  0.09285786886981323 1.0 obsgroup
+cos_0_30        0.015807361266766923 1.0 obsgroup
+sin_0_30        0.017702205093882404 1.0 obsgroup
+estimate_0_30   0.0801258800136814 1.0 obsgroup
+intercept_0_31  0.09285786886981323 1.0 obsgroup
+cos_0_31        0.015807361266766923 1.0 obsgroup
+sin_0_31        0.017702205093882404 1.0 obsgroup
+estimate_0_31   0.07877898695100621 1.0 obsgroup
+intercept_0_32  0.09285786886981323 1.0 obsgroup
+cos_0_32        0.015807361266766923 1.0 obsgroup
+sin_0_32        0.017702205093882404 1.0 obsgroup
+estimate_0_32   0.07749872398839748 1.0 obsgroup
+intercept_0_33  0.09285786886981323 1.0 obsgroup
+cos_0_33        0.015807361266766923 1.0 obsgroup
+sin_0_33        0.017702205093882404 1.0 obsgroup
+estimate_0_33   0.0762911501332251 1.0 obsgroup
+intercept_0_34  0.09285786886981323 1.0 obsgroup
+cos_0_34        0.015807361266766923 1.0 obsgroup
+sin_0_34        0.017702205093882404 1.0 obsgroup
+estimate_0_34   0.07516198038240955 1.0 obsgroup
+intercept_0_35  0.09285786886981323 1.0 obsgroup
+cos_0_35        0.015807361266766923 1.0 obsgroup
+sin_0_35        0.017702205093882404 1.0 obsgroup
+estimate_0_35   0.0741165586754712 1.0 obsgroup
+intercept_0_36  0.09285786886981323 1.0 obsgroup
+cos_0_36        0.015807361266766923 1.0 obsgroup
+sin_0_36        0.017702205093882404 1.0 obsgroup
+estimate_0_36   0.07315983260365677 1.0 obsgroup
+intercept_0_37  0.09285786886981323 1.0 obsgroup
+cos_0_37        0.015807361266766923 1.0 obsgroup
+sin_0_37        0.017702205093882404 1.0 obsgroup
+estimate_0_37   0.07229632999483424 1.0 obsgroup
+intercept_0_38  0.09285786886981323 1.0 obsgroup
+cos_0_38        0.015807361266766923 1.0 obsgroup
+sin_0_38        0.017702205093882404 1.0 obsgroup
+estimate_0_38   0.07153013748497107 1.0 obsgroup
+intercept_0_39  0.09285786886981323 1.0 obsgroup
+cos_0_39        0.015807361266766923 1.0 obsgroup
+sin_0_39        0.017702205093882404 1.0 obsgroup
+estimate_0_39   0.07086488117761006 1.0 obsgroup
+intercept_0_40  0.09285786886981323 1.0 obsgroup
+cos_0_40        0.015807361266766923 1.0 obsgroup
+sin_0_40        0.017702205093882404 1.0 obsgroup
+estimate_0_40   0.0703037094828723 1.0 obsgroup
+intercept_0_41  0.09285786886981323 1.0 obsgroup
+cos_0_41        0.015807361266766923 1.0 obsgroup
+sin_0_41        0.017702205093882404 1.0 obsgroup
+estimate_0_41   0.06984927821720631 1.0 obsgroup
+intercept_0_42  0.09285786886981323 1.0 obsgroup
+cos_0_42        0.015807361266766923 1.0 obsgroup
+sin_0_42        0.017702205093882404 1.0 obsgroup
+estimate_0_42   0.06950373803439827 1.0 obsgroup
+intercept_0_43  0.09285786886981323 1.0 obsgroup
+cos_0_43        0.015807361266766923 1.0 obsgroup
+sin_0_43        0.017702205093882404 1.0 obsgroup
+estimate_0_43   0.0692687242473296 1.0 obsgroup
+intercept_0_44  0.09285786886981323 1.0 obsgroup
+cos_0_44        0.015807361266766923 1.0 obsgroup
+sin_0_44        0.017702205093882404 1.0 obsgroup
+estimate_0_44   0.06914534908865057 1.0 obsgroup
+intercept_0_45  0.09285786886981323 1.0 obsgroup
+cos_0_45        0.015807361266766923 1.0 obsgroup
+sin_0_45        0.017702205093882404 1.0 obsgroup
+estimate_0_45   0.06913419644699773 1.0 obsgroup
+intercept_0_46  0.09285786886981323 1.0 obsgroup
+cos_0_46        0.015807361266766923 1.0 obsgroup
+sin_0_46        0.017702205093882404 1.0 obsgroup
+estimate_0_46   0.0692353191036668 1.0 obsgroup
+intercept_0_47  0.09285786886981323 1.0 obsgroup
+cos_0_47        0.015807361266766923 1.0 obsgroup
+sin_0_47        0.017702205093882404 1.0 obsgroup
+estimate_0_47   0.06944823848281831 1.0 obsgroup
+intercept_0_48  0.09285786886981323 1.0 obsgroup
+cos_0_48        0.015807361266766923 1.0 obsgroup
+sin_0_48        0.017702205093882404 1.0 obsgroup
+estimate_0_48   0.06977194691639876 1.0 obsgroup
+intercept_0_49  0.09285786886981323 1.0 obsgroup
+cos_0_49        0.015807361266766923 1.0 obsgroup
+sin_0_49        0.017702205093882404 1.0 obsgroup
+estimate_0_49   0.07020491241305783 1.0 obsgroup
+intercept_0_50  0.09285786886981323 1.0 obsgroup
+cos_0_50        0.015807361266766923 1.0 obsgroup
+sin_0_50        0.017702205093882404 1.0 obsgroup
+estimate_0_50   0.07074508590849238 1.0 obsgroup
+* model command line
+model.bat
+* model input/output
+input.tpl  pest_input.csv
+output.ins  pest_output.csv
