@@ -63,7 +63,7 @@ def delete_existing_directory_and_create_new(directory_path):
         shutil.rmtree(directory_path)
     os.makedirs(directory_path)
 
-def run_eeek_with_custom_parameters(run_path):
+# def run_eeek_with_custom_parameters(run_path):
     eeek_runs_directory = os.path.join(run_path, "eeek runs/")
 
     delete_existing_directory_and_create_new(eeek_runs_directory)

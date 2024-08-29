@@ -16,19 +16,25 @@ import matplotlib.dates as mdates
 
 ee.Initialize(opt_url=ee.data.HIGH_VOLUME_API_BASE_URL)
 
+
 script_directory = os.path.dirname(os.path.realpath(__file__))
 
-parameters = f"{script_directory}/pest configuration/default.json"
+READ_POINTS_FROM_FILE = False
+point_set_directory_path = f"{script_directory}/points/sets/2 - 20 points"
+
+INITIAL_PARAMS_VERSION = "v2"
+
+parameters = f"{script_directory}/pest configuration/default - initial {INITIAL_PARAMS_VERSION}.json"
+pest_run_directory = f"{script_directory}/pest runs/set 2 - 20 points/initial params {INITIAL_PARAMS_VERSION}/"
+
 
 points_coordinates = f"{script_directory}/points/points-filtered.json"
-
-pest_run_directory = f"{script_directory}/pest runs/15 points/initial params v1/"
 
 if os.path.exists(pest_run_directory):
     print("Output directory already exists. Exiting to prevent overwriting.")
 
-    shutil.rmtree(pest_run_directory)
-    # exit()
+    # shutil.rmtree(pest_run_directory)
+    exit()
 
 os.makedirs(pest_run_directory)
 
@@ -330,6 +336,21 @@ def generate_measurements_and_target_fit_graphs(observations_filename, measureme
         plt.savefig(plot_filename)
         plt.close(fig)
 
+def parse_point_coordinates():
+    global point_set_directory_path
+
+    point_coordinates = []
+
+    for folder in os.listdir(point_set_directory_path):
+        folder_path = os.path.join(point_set_directory_path, folder)
+        if os.path.isdir(folder_path):
+            point_coordinates.extend([
+                (float(file.split(",")[0][1:]), float(file.split(",")[1][:-5]))
+                for file in os.listdir(folder_path)
+            ])
+    
+    return point_coordinates
+
 if __name__ == "__main__":
     control_filename = pest_run_directory + "eeek.pst"
     instructions_filename = pest_run_directory + "output.ins"
@@ -340,9 +361,13 @@ if __name__ == "__main__":
     observations_filename = pest_run_directory + "observations.csv"
 
     parameters = read_json(parameters)
-    points = read_json(points_coordinates)
 
-    fitted_coefficiets_by_point = fitted_coefficients_and_dates(points['points'], fitted_coefficiets_filename)
+    if READ_POINTS_FROM_FILE:
+        points = read_json(points_coordinates)
+    else:
+        points = parse_point_coordinates()
+
+    fitted_coefficiets_by_point = fitted_coefficients_and_dates(points, fitted_coefficiets_filename)
 
     observations = build_observations(fitted_coefficiets_by_point, observations_filename)
 
