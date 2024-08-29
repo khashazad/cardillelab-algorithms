@@ -162,18 +162,10 @@ def main(args):
 
         coords = (float(kwargs["longitude"]), float(kwargs["latitude"]))
 
-        # print(len(COLLECTIONS[args["collection"]].getInfo()['features']))
-
         col = (
             COLLECTIONS[args["collection"]]
             .filterBounds(ee.Geometry.Point(coords))
-            # .filterDate(kwargs["start_date"], kwargs["stop_date"])
         )
-
-
-        print(len(col.getInfo()['features']))
-
-        # print(col.first().getInfo())
 
         x0 = np.array(kwargs["x0"]).reshape(
             num_params, NUM_MEASURES

@@ -153,7 +153,7 @@ with open(os.path.join(analysis_directory, "analysis.csv"), "w", newline='') as 
 
             run_path = os.path.join(grouped_run_folder_path, run)
 
-            run_eeek_with_custom_parameters(run_path)
+            # run_eeek_with_custom_parameters(run_path)
 
             create_graphs_with_custom_run_output(run_path)
 

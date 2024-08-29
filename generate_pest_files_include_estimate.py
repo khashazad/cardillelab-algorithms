@@ -11,6 +11,8 @@ import csv
 import os
 import math
 import shutil
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 
 ee.Initialize(opt_url=ee.data.HIGH_VOLUME_API_BASE_URL)
 
@@ -18,9 +20,9 @@ script_directory = os.path.dirname(os.path.realpath(__file__))
 
 parameters = f"{script_directory}/pest configuration/default.json"
 
-points_coordinates = f"{script_directory}/points/points.json"
+points_coordinates = f"{script_directory}/points/points-filtered.json"
 
-pest_run_directory = f"{script_directory}/pest runs/test/inital params v2/"
+pest_run_directory = f"{script_directory}/pest runs/15 points/initial params v1/"
 
 if os.path.exists(pest_run_directory):
     print("Output directory already exists. Exiting to prevent overwriting.")
@@ -46,7 +48,7 @@ def run_eeek_with_default_parameters():
 
     for run_parameters_file in os.listdir(default_params_directory):
         run_parameters_file_path = os.path.join(default_params_directory, run_parameters_file)
-        title = run_parameters_file.replace("_", " ")
+        title = run_parameters_file.replace("_", " ").split(".")[0]
 
         run_directory = os.path.join(default_runs_directory, title)
 
@@ -186,7 +188,7 @@ def build_observations(coefficients_by_point, output_filename):
             create_observation_from_coefficients(coefficients_2022["dates"], coefficients_2022["intercept"], coefficients_2022["cos"], coefficients_2022["sin"])
             create_observation_from_coefficients(coefficients_2023["dates"], coefficients_2023["intercept"], coefficients_2023["cos"], coefficients_2023["sin"])
             
-            return observations
+        return observations
 
 def write_observations_to_control_file(observations, file_path):
     with open(file_path, 'a') as file:
@@ -248,9 +250,9 @@ def get_dates_from_image_collection(year, coords):
         timestamp for timestamp in timestamps if datetime.fromtimestamp(timestamp / 1000.0).year == year
     ]
 
-def get_fitted_coefficients_from_collection(collection, coords, year):
+def get_fitted_coefficients_for_point(collection, coords, year):
     request = utils.build_request(coords)
-    request["expression"] = get_fitted_coefficients(collection, coords)
+    request["expression"] = harmonic_trend_coefficients(collection, coords)
     coefficients = utils.compute_pixels_wrapper(request)
 
     image_dates = get_dates_from_image_collection(year, coords)
@@ -262,7 +264,7 @@ def get_fitted_coefficients_from_collection(collection, coords, year):
         "dates": image_dates
     }
 
-def get_coefficients_for_points(points, fitted_coefficiets_filename):
+def fitted_coefficients_and_dates(points, fitted_coefficiets_filename):
 
     output_list = []
     coefficients_by_point = {}
@@ -273,8 +275,8 @@ def get_coefficients_for_points(points, fitted_coefficiets_filename):
         for i, point in enumerate(points):
             coefficients_by_point[i] = {
                 "coordinates": (point[0], point[1]),
-                "2022": get_fitted_coefficients_from_collection(COLLECTIONS["L8_L9_2022"].filterBounds(ee.Geometry.Point(point[0], point[1])), (point[0], point[1]), 2022),
-                "2023": get_fitted_coefficients_from_collection(COLLECTIONS["L8_L9_2023"].filterBounds(ee.Geometry.Point(point[0], point[1])), (point[0], point[1]), 2023)
+                "2022": get_fitted_coefficients_for_point(COLLECTIONS["L8_L9_2022"].filterBounds(ee.Geometry.Point(point[0], point[1])), (point[0], point[1]), 2022),
+                "2023": get_fitted_coefficients_for_point(COLLECTIONS["L8_L9_2023"].filterBounds(ee.Geometry.Point(point[0], point[1])), (point[0], point[1]), 2023)
 
             }
 
@@ -284,7 +286,7 @@ def get_coefficients_for_points(points, fitted_coefficiets_filename):
     
     return output_list
 
-def get_fitted_coefficients(collection, coords):
+def harmonic_trend_coefficients(collection, coords):
     modality = {"constant": True, "linear": False, "unimodal": True, "bimodal": False, "trimodal": False}
 
     image_collection = ee.ImageCollection(collection.filterBounds(ee.Geometry.Point(coords)))
@@ -298,6 +300,36 @@ def get_fitted_coefficients(collection, coords):
 
     return fitted_coefficients
 
+def generate_measurements_and_target_fit_graphs(observations_filename, measurements_filename):
+    output_directory = os.path.join(pest_run_directory, "measurements and target fit")
+
+    delete_existing_directory_and_create_new(output_directory)
+
+    observations = pd.read_csv(observations_filename)
+    measurements = pd.read_csv(measurements_filename)
+
+    observations["measurement"] = measurements["z"]
+
+    observations["date"] = pd.to_datetime(observations['date'], unit='ms')
+
+    grouped_observations = observations.groupby("point")
+
+    for point, data in grouped_observations:
+        fig, axs = plt.subplots(figsize=(12, 8))
+
+        data = data[data["measurement"] != 0]
+        
+        axs.scatter(data['date'], data['measurement'], label='Measurement', color='red', s=10)
+        axs.plot(data['date'], data['estimate'], label='Target Fit', color='green', linestyle='-')
+
+        axs.xaxis.set_major_locator(mdates.AutoDateLocator())
+        axs.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+
+        plot_filename = os.path.join(output_directory, f"point_{point}.png")
+        os.makedirs(output_directory, exist_ok=True)
+        plt.savefig(plot_filename)
+        plt.close(fig)
+
 if __name__ == "__main__":
     control_filename = pest_run_directory + "eeek.pst"
     instructions_filename = pest_run_directory + "output.ins"
@@ -310,7 +342,7 @@ if __name__ == "__main__":
     parameters = read_json(parameters)
     points = read_json(points_coordinates)
 
-    fitted_coefficiets_by_point = get_coefficients_for_points(points['points'], fitted_coefficiets_filename)
+    fitted_coefficiets_by_point = fitted_coefficients_and_dates(points['points'], fitted_coefficiets_filename)
 
     observations = build_observations(fitted_coefficiets_by_point, observations_filename)
 
@@ -323,6 +355,8 @@ if __name__ == "__main__":
     create_model_bat_file(model_filename)
 
     run_eeek_with_default_parameters()
+
+    generate_measurements_and_target_fit_graphs(observations_filename, f"{pest_run_directory}/default runs/default javascript/eeek_output.csv")
 
     print(f"Pest files has been created.")
 
