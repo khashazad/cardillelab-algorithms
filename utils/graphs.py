@@ -216,5 +216,10 @@ def create_graphs(data_files, observation_file_path, output_directory, flags):
                 if flags["amplitude"]:
                     save_graph(fig_amplitude, point_index, "amplitude")
 
+            plt.close(fig_estimate_vs_target)
+            plt.close(fig_intercept_cos_sin)
+            plt.close(fig_residuals)
+            plt.close(fig_amplitude)
+
     plot_graphs()
 
