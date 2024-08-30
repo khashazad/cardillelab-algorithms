@@ -19,7 +19,6 @@ point_set = args.point_set
 
 results_directory = os.path.join(all_pest_results_directory, point_set)
 
-
 def delete_existing_directory_and_create_new(directory_path):
     if os.path.exists(directory_path):
         shutil.rmtree(directory_path)

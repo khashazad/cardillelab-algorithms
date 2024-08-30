@@ -12,3 +12,8 @@ def read_json(filename):
     with open(filename, "r") as file:
         data = json.load(file)
     return data
+
+def read_file(filename):
+    with open(filename, "r") as file:
+        data = file.readlines()
+    return data
