@@ -102,7 +102,7 @@ def create_control_file(data, output_filename, observation_count):
         # Line 2
         line2 = data["control_data"]["line2"]
         file.write(
-            f"{len(data["parameter_data"])} {observation_count} {len(data["parameter_data"])} {line2['NPRIOR']['value']} {line2['NOBSGP']['value']}\n"
+            f"{len(data["parameter_data"])} {observation_count // 4} {len(data["parameter_data"])} {line2['NPRIOR']['value']} {line2['NOBSGP']['value']}\n"
         )
 
         # Line 3
@@ -200,7 +200,7 @@ def write_observations_to_control_file(observations, file_path):
     with open(file_path, 'a') as file:
         file.write("* observation data\n")
         for observation_name, observation_value in observations:
-            if observation_name.startswith("intercept"):
+            if observation_name.startswith("estimate"):
                 file.write(f"{observation_name.ljust(15)} {str(observation_value).ljust(15)} 1.0 obsgroup\n")
 
 def create_pest_instruction_file(observations, instructions_filename):
