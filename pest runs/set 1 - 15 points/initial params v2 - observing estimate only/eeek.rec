@@ -1,0 +1,583 @@
+
+                       PEST RUN RECORD: CASE eeek
+
+
+PEST Version: 17.5
+
+
+PEST run mode:-
+
+   Parameter estimation mode
+
+
+Case dimensions:-
+
+   Number of parameters                           :     7
+   Number of adjustable parameters                :     4
+   Number of parameter groups                     :     7
+   Number of observations                         :   750
+   Number of prior estimates                      :     0
+
+
+Model command line(s):-
+
+   model.bat
+
+
+Jacobian command line:-
+
+   na
+
+
+Model interface files:-
+
+   Templates:
+      input.tpl
+   for model input files:
+      pest_input.csv
+
+   (Parameter values written using single precision protocol.)
+   (Decimal point always included.)
+
+   Instruction files:
+      output.ins
+   for reading model output files:
+      pest_output.csv
+
+
+PEST-to-model message file:-
+
+   na
+
+
+Singular value decomposition:-
+
+   Perform SVD on XtQX or Q^(1/2)X               : XtQX
+   Max. number of singular values to employ      : 3
+   Ratio of lowest/highest singular value        :  1.000000E-06
+   Record eigenvectors in SVD file               : no
+
+
+Derivatives calculation:-
+
+Param        Increment   Increment   Increment   Forward or   Multiplier  Method
+group        type                    low bound   central      (central)   (central)
+q1           relative    1.0000E-02   none         switch       2.000     parabolic
+q5           relative    1.0000E-02   none         switch       2.000     parabolic
+q9           relative    1.0000E-02   none         switch       2.000     parabolic
+r            relative    1.0000E-02   none         switch       2.000     parabolic
+p1           relative    1.0000E-02   none         switch       2.000     parabolic
+p5           relative    1.0000E-02   none         switch       2.000     parabolic
+p9           relative    1.0000E-02   none         switch       2.000     parabolic
+
+
+Parameter definitions:-
+
+This information not provided as non-verbose run record file requested.
+
+
+Prior information:-
+
+   No prior information supplied
+
+
+Observations:-
+
+This information not provided as non-verbose run record file requested.
+
+
+Control settings:-
+
+   Initial lambda                                               :  10.000    
+   Lambda adjustment factor                                     :  2.0000    
+   Sufficient new/old phi ratio per optimisation iteration      : 0.30000    
+   Limiting relative phi reduction between lambdas              : 5.00000E-02
+   Maximum trial lambdas per iteration                          :  10
+   Forgive model run failure during lamda testing               : no
+   Forgive model run failure during Jacobian runs               : no
+
+   Perform Broyden's update of Jacobian matrix                  : no
+   Undertake observation re-referencing                         : no
+
+   Maximum  factor  parameter change (factor-limited changes)   : na
+   Maximum relative parameter change (relative-limited changes) :  5.0000
+   Fraction of initial parameter values used in computing
+   change limit for near-zero parameters                        : 1.00000E-03
+   Allow bending of parameter upgrade vector                    : no
+   Allow parameters to stick to their bounds                    : no
+
+   Relative phi reduction below which to begin use of
+   central derivatives                                          : 0.10000             
+   Iteration at which to first consider derivatives switch      :   1
+
+   Relative phi reduction indicating convergence                : 0.10000E-06
+   Number of phi values required within this range              :  10
+   Maximum number of consecutive failures to lower phi          :   4
+   Minimal relative parameter change indicating convergence     : 0.50000E-02
+   Number of consecutive iterations with minimal param change   :  10
+   Maximum number of optimisation iterations                    :  50
+   Objective function termination limit                         : 0.10000E-04
+
+   Attempt automatic user intervention                          : no
+
+   Attempt reuse of parameter sensitivities                     : no
+
+   Scale parameters by their bounds                             : no
+
+
+File saving options: -
+
+   Save best JCO file                                           : no
+   Save multiple JCO files                                      : no
+   Save multiple REI files                                      : no
+   Save multiple PAR files                                      : yes
+
+
+                            OPTIMISATION RECORD
+
+
+INITIAL CONDITIONS: 
+   Sum of squared weighted residuals (ie phi) =  0.19267    
+
+
+OPTIMISATION ITERATION NO.        : 1
+   Model calls so far             : 1
+   Starting phi for this iteration:  0.19267    
+
+       Lambda =   10.000     ----->
+          Phi =  0.18613      (  0.966 of starting phi)
+
+       Lambda =   5.0000     ----->
+          Phi =  0.18618      (  0.966 of starting phi)
+
+       Lambda =   20.000     ----->
+          Phi =  0.18607      (  0.966 of starting phi)
+
+   No more lambdas: relative phi reduction between lambdas less than 0.0500
+   Lowest phi this iteration:  0.18607    
+   Relative phi reduction between optimisation iterations less than 0.1000
+   Switch to higher order derivatives calculation
+   Maximum relative change:  1.344     ["q1"]
+
+
+OPTIMISATION ITERATION NO.        : 2
+   Model calls so far             : 8
+   Starting phi for this iteration:  0.18607    
+
+       Lambda =   20.000     ----->
+          Phi =  0.18486      (  0.994 of starting phi)
+
+       Lambda =   10.000     ----->
+          Phi =  0.18477      (  0.993 of starting phi)
+
+   No more lambdas: relative phi reduction between lambdas less than 0.0500
+   Lowest phi this iteration:  0.18477    
+   Maximum relative change: 0.6718     ["q1"]
+
+
+OPTIMISATION ITERATION NO.        : 3
+   Model calls so far             : 18
+   Starting phi for this iteration:  0.18477    
+
+       Lambda =   5.0000     ----->
+          Phi =  0.18924      (  1.024 times starting phi)
+
+       Lambda =   2.5000     ----->
+          Phi =  0.19097      (  1.034 times starting phi)
+
+       Lambda =   10.000     ----->
+          Phi =  0.18606      (  1.007 times starting phi)
+
+   No more lambdas: relative phi reduction between lambdas less than 0.0500
+   Lowest phi this iteration:  0.18606    
+   Maximum relative change:  1.000     ["q1"]
+
+
+OPTIMISATION ITERATION NO.        : 4
+   Model calls so far             : 29
+   Starting phi for this iteration:  0.18606    
+
+       Lambda =   10.000     ----->
+          Phi =  0.18604      (  1.000 of starting phi)
+
+       Lambda =   5.0000     ----->
+          Phi =  0.18604      (  1.000 of starting phi)
+
+       Lambda =   20.000     ----->
+          Phi =  0.18604      (  1.000 of starting phi)
+
+   No more lambdas: relative phi reduction between lambdas less than 0.0500
+   Lowest phi this iteration:  0.18604    
+   Maximum relative change:  637.1     ["q1"]
+
+
+OPTIMISATION ITERATION NO.        : 5
+   Model calls so far             : 40
+   Starting phi for this iteration:  0.18604    
+
+       Lambda =   20.000     ----->
+          Phi =  0.18591      (  0.999 of starting phi)
+
+       Lambda =   10.000     ----->
+          Phi =  0.18594      (  0.999 of starting phi)
+
+       Lambda =   40.000     ----->
+          Phi =  0.18586      (  0.999 of starting phi)
+
+   No more lambdas: relative phi reduction between lambdas less than 0.0500
+   Lowest phi this iteration:  0.18586    
+   Maximum relative change:  5.000     ["q1"]
+
+
+OPTIMISATION ITERATION NO.        : 6
+   Model calls so far             : 51
+   Starting phi for this iteration:  0.18586    
+
+       Lambda =   40.000     ----->
+          Phi =  0.18503      (  0.996 of starting phi)
+
+       Lambda =   20.000     ----->
+          Phi =  0.18526      (  0.997 of starting phi)
+
+       Lambda =   80.000     ----->
+          Phi =  0.18468      (  0.994 of starting phi)
+
+   No more lambdas: relative phi reduction between lambdas less than 0.0500
+   Lowest phi this iteration:  0.18468    
+   Maximum relative change:  5.000     ["q1"]
+
+
+OPTIMISATION ITERATION NO.        : 7
+   Model calls so far             : 62
+   Starting phi for this iteration:  0.18468    
+
+       Lambda =   80.000     ----->
+          Phi =  0.18425      (  0.998 of starting phi)
+
+       Lambda =   40.000     ----->
+          Phi =  0.18421      (  0.997 of starting phi)
+
+   No more lambdas: relative phi reduction between lambdas less than 0.0500
+   Lowest phi this iteration:  0.18421    
+   Maximum relative change:  1.864     ["q1"]
+
+
+OPTIMISATION ITERATION NO.        : 8
+   Model calls so far             : 72
+   Starting phi for this iteration:  0.18421    
+
+       Lambda =   20.000     ----->
+          Phi =  0.18419      (  1.000 of starting phi)
+
+       Lambda =   10.000     ----->
+          Phi =  0.18419      (  1.000 of starting phi)
+
+       Lambda =   40.000     ----->
+          Phi =  0.18419      (  1.000 of starting phi)
+
+   No more lambdas: relative phi reduction between lambdas less than 0.0500
+   Lowest phi this iteration:  0.18419    
+   Maximum relative change: 0.7147     ["q1"]
+
+
+OPTIMISATION ITERATION NO.        : 9
+   Model calls so far             : 83
+   Starting phi for this iteration:  0.18419    
+
+       Lambda =   40.000     ----->
+          Phi =  0.18419      (  1.000 of starting phi)
+
+       Lambda =   20.000     ----->
+          Phi =  0.18419      (  1.000 of starting phi)
+
+       Lambda =   80.000     ----->
+          Phi =  0.18419      (  1.000 of starting phi)
+
+   No more lambdas: phi rising
+   Lowest phi this iteration:  0.18419    
+   Maximum relative change: 0.4657     ["q1"]
+
+
+OPTIMISATION ITERATION NO.        : 10
+   Model calls so far             : 94
+   Starting phi for this iteration:  0.18419    
+
+       Lambda =   40.000     ----->
+          Phi =  0.18419      (  1.000 of starting phi)
+
+       Lambda =   20.000     ----->
+          Phi =  0.18419      (  1.000 of starting phi)
+
+       Lambda =   80.000     ----->
+          Phi =  0.18419      (  1.000 of starting phi)
+
+   No more lambdas: relative phi reduction between lambdas less than 0.0500
+   Lowest phi this iteration:  0.18419    
+   Maximum relative change: 0.8533     ["q1"]
+
+
+OPTIMISATION ITERATION NO.        : 11
+   Model calls so far             : 105
+   Starting phi for this iteration:  0.18419    
+
+       Lambda =   80.000     ----->
+          Phi =  0.18419      (  1.000 of starting phi)
+
+       Lambda =   40.000     ----->
+          Phi =  0.18419      (  1.000 of starting phi)
+
+       Lambda =   160.00     ----->
+          Phi =  0.18419      (  1.000 of starting phi)
+
+   No more lambdas: relative phi reduction between lambdas less than 0.0500
+   Lowest phi this iteration:  0.18419    
+   Maximum relative change: 0.4266     ["q1"]
+
+
+OPTIMISATION ITERATION NO.        : 12
+   Model calls so far             : 116
+   Starting phi for this iteration:  0.18419    
+
+       Lambda =   160.00     ----->
+          Phi =  0.18419      (  1.000 times starting phi)
+
+       Lambda =   80.000     ----->
+          Phi =  0.18419      (  1.000 times starting phi)
+
+       Lambda =   320.00     ----->
+          Phi =  0.18419      (  1.000 times starting phi)
+
+   No more lambdas: relative phi reduction between lambdas less than 0.0500
+   Lowest phi this iteration:  0.18419    
+   Maximum relative change:  2.415     ["q1"]
+
+
+OPTIMISATION ITERATION NO.        : 13
+   Model calls so far             : 127
+   Starting phi for this iteration:  0.18419    
+
+       Lambda =   320.00     ----->
+          Phi =  0.18419      (  1.000 of starting phi)
+
+       Lambda =   160.00     ----->
+          Phi =  0.18419      (  1.000 of starting phi)
+
+   No more lambdas: relative phi reduction between lambdas less than 0.0500
+   Lowest phi this iteration:  0.18419    
+   Maximum relative change: 0.6209     ["q1"]
+
+
+OPTIMISATION ITERATION NO.        : 14
+   Model calls so far             : 137
+   Starting phi for this iteration:  0.18419    
+
+       Lambda =   80.000     ----->
+          Phi =  0.18419      (  1.000 of starting phi)
+
+       Lambda =   40.000     ----->
+          Phi =  0.18419      (  1.000 of starting phi)
+
+       Lambda =   160.00     ----->
+          Phi =  0.18419      (  1.000 of starting phi)
+
+   No more lambdas: relative phi reduction between lambdas less than 0.0500
+   Lowest phi this iteration:  0.18419    
+   Maximum relative change: 0.3105     ["q1"]
+
+
+OPTIMISATION ITERATION NO.        : 15
+   Model calls so far             : 148
+   Starting phi for this iteration:  0.18419    
+
+       Lambda =   160.00     ----->
+          Phi =  0.18419      (  1.000 times starting phi)
+
+       Lambda =   80.000     ----->
+          Phi =  0.18419      (  1.000 times starting phi)
+
+       Lambda =   320.00     ----->
+          Phi =  0.18419      (  1.000 times starting phi)
+
+   No more lambdas: relative phi reduction between lambdas less than 0.0500
+   Lowest phi this iteration:  0.18419    
+   Maximum relative change: 0.4077     ["q1"]
+
+
+OPTIMISATION ITERATION NO.        : 16
+   Model calls so far             : 159
+   Starting phi for this iteration:  0.18419    
+
+       Lambda =   320.00     ----->
+          Phi =  0.18419      (  1.000 of starting phi)
+
+       Lambda =   160.00     ----->
+          Phi =  0.18419      (  1.000 of starting phi)
+
+       Lambda =   640.00     ----->
+          Phi =  0.18419      (  1.000 of starting phi)
+
+   No more lambdas: relative phi reduction between lambdas less than 0.0500
+   Lowest phi this iteration:  0.18419    
+   Maximum relative change: 0.2017     ["q1"]
+
+
+OPTIMISATION ITERATION NO.        : 17
+   Model calls so far             : 170
+   Starting phi for this iteration:  0.18419    
+
+       Lambda =   640.00     ----->
+          Phi =  0.18419      (  1.000 of starting phi)
+
+       Lambda =   320.00     ----->
+          Phi =  0.18419      (  1.000 of starting phi)
+
+   No more lambdas: relative phi reduction between lambdas less than 0.0500
+   Lowest phi this iteration:  0.18419    
+   Maximum relative change: 0.1800     ["q1"]
+
+
+OPTIMISATION ITERATION NO.        : 18
+   Model calls so far             : 180
+   Starting phi for this iteration:  0.18419    
+
+       Lambda =   160.00     ----->
+          Phi =  0.18419      (  1.000 of starting phi)
+
+       Lambda =   80.000     ----->
+          Phi =  0.18419      (  1.000 of starting phi)
+
+   No more lambdas: relative phi reduction between lambdas less than 0.0500
+   Lowest phi this iteration:  0.18419    
+   Maximum relative change: 8.9993E-02 ["q1"]
+
+
+OPTIMISATION ITERATION NO.        : 19
+   Model calls so far             : 190
+   Starting phi for this iteration:  0.18419    
+
+       Lambda =   40.000     ----->
+          Phi =  0.18419      (  1.000 times starting phi)
+
+       Lambda =   20.000     ----->
+          Phi =  0.18419      (  1.000 times starting phi)
+
+       Lambda =   80.000     ----->
+          Phi =  0.18419      (  1.000 times starting phi)
+
+   No more lambdas: relative phi reduction between lambdas less than 0.0500
+   Lowest phi this iteration:  0.18419    
+   Maximum relative change: 2.8378E-02 ["q1"]
+
+
+OPTIMISATION ITERATION NO.        : 20
+   Model calls so far             : 201
+   Starting phi for this iteration:  0.18419    
+
+       Lambda =   80.000     ----->
+          Phi =  0.18419      (  1.000 of starting phi)
+
+       Lambda =   40.000     ----->
+          Phi =  0.18419      (  1.000 of starting phi)
+
+   No more lambdas: relative phi reduction between lambdas less than 0.0500
+   Lowest phi this iteration:  0.18419    
+   Maximum relative change: 1.4189E-02 ["q1"]
+
+
+OPTIMISATION ITERATION NO.        : 21
+   Model calls so far             : 211
+   Starting phi for this iteration:  0.18419    
+
+       Lambda =   20.000     ----->
+          Phi =  0.18419      (  1.000 times starting phi)
+
+       Lambda =   10.000     ----->
+          Phi =  0.18419      (  1.000 times starting phi)
+
+       Lambda =   40.000     ----->
+          Phi =  0.18419      (  1.000 times starting phi)
+
+   No more lambdas: relative phi reduction between lambdas less than 0.0500
+   Lowest phi this iteration:  0.18419    
+   Maximum relative change: 0.3049     ["q1"]
+
+
+OPTIMISATION ITERATION NO.        : 22
+   Model calls so far             : 222
+   Starting phi for this iteration:  0.18419    
+
+       Lambda =   40.000     ----->
+          Phi =  0.18419      (  1.000 of starting phi)
+
+       Lambda =   20.000     ----->
+          Phi =  0.18419      (  1.000 of starting phi)
+
+       Lambda =   80.000     ----->
+          Phi =  0.18419      (  1.000 of starting phi)
+
+   No more lambdas: relative phi reduction between lambdas less than 0.0500
+   Lowest phi this iteration:  0.18419    
+   Maximum relative change: 0.1525     ["q1"]
+
+   Optimisation complete:   4 optimisation iterations have elapsed since lowest
+                          phi was achieved.
+   Total model calls:    233
+
+   The model has been run one final time using best parameters. 
+   Thus all model input files contain best parameter values, and model 
+   output files contain model results based on these parameters.
+
+
+                            OPTIMISATION RESULTS
+
+
+Parameters ----->
+
+This information not provided as non-verbose run record file requested.
+
+See file eeek.sen for parameter sensitivities.
+
+
+Observations ----->
+
+This information not provided as non-verbose run record file requested.
+
+See file eeek.res for more details of residuals in graph-ready format.
+
+See file eeek.seo for composite observation sensitivities.
+
+
+Objective function ----->
+
+  Sum of squared weighted residuals (ie phi)                =  0.1842    
+
+
+Correlation Coefficient ----->
+
+  Correlation coefficient                                   =  0.98237    
+
+
+Analysis of residuals ----->
+
+  All residuals:-
+     Number of residuals with non-zero weight                       =   750
+     Mean value of non-zero weighted residuals                      =  1.3913E-03
+     Maximum weighted residual [observation "estimate_2_25"]        =  0.2448    
+     Minimum weighted residual [observation "estimate_12_25"]       = -4.9389E-02
+     Standard variance of weighted residuals                        =  2.4690E-04
+     Standard error of weighted residuals                           =  1.5713E-02
+
+     Note: the above variance was obtained by dividing the objective 
+     function by the number of system degrees of freedom (ie. number of 
+     observations with non-zero weight plus number of prior information 
+     articles with non-zero weight minus the number of adjustable parameters.)
+     If the degrees of freedom is negative the divisor becomes 
+     the number of observations with non-zero weight plus the number of 
+     prior information items with non-zero weight.
+
+
+Covariance and other statistical matrices cannot be determined:-
+Some form or regularisation was implemented so these are not applicable.
+
+Use the PREDUNC7 utility to obtain a full posterior covariance matrix.
+
