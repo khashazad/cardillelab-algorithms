@@ -76,7 +76,7 @@ def create_graphs_with_custom_run_output(run_path):
     }
 
     for eeek_run_folder in os.listdir(default_runs_directory):
-        if eeek_run_folder == "analysis":
+        if eeek_run_folder == "analysis" or eeek_run_folder == ".DS_Store":
             continue
 
         eeek_run_folder_path = os.path.join(default_runs_directory, eeek_run_folder)

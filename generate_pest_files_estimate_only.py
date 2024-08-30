@@ -20,13 +20,12 @@ ee.Initialize(opt_url=ee.data.HIGH_VOLUME_API_BASE_URL)
 script_directory = os.path.dirname(os.path.realpath(__file__))
 
 READ_POINTS_FROM_FILE = False
-point_set_directory_path = f"{script_directory}/points/sets/1 - 15 points"
+point_set_directory_path = f"{script_directory}/points/sets/2 - 20 points"
 
 INITIAL_PARAMS_VERSION = "v2"
 
 parameters = f"{script_directory}/pest configuration/default - initial {INITIAL_PARAMS_VERSION}.json"
-pest_run_directory = f"{script_directory}/pest runs/set 1 - 15 points/initial params {INITIAL_PARAMS_VERSION} - observing estimate only/"
-
+pest_run_directory = f"{script_directory}/pest runs/set 2 - 20 points/initial params {INITIAL_PARAMS_VERSION} - observing estimate only/"
 
 points_coordinates = f"{script_directory}/points/points-filtered.json"
 
@@ -352,7 +351,7 @@ def parse_point_coordinates():
                 for file in os.listdir(folder_path)
             ])
     
-    return point_coordinates
+    return sorted(point_coordinates, key=lambda x: (x[0], x[1]))
 
 if __name__ == "__main__":
     control_filename = pest_run_directory + "eeek.pst"

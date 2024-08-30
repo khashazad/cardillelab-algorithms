@@ -1,3 +1,5 @@
 title,q1_initial,q2_initial,q3_initial,r_initial,q1_optimized,q2_optimized,q3_optimized,r_optimized,initial_objective_function,final_objective_function
+15 points - initial params v2 - observing estimate only,0.0005,0.0008,0.004,0.0015,3.5770134e-06,0.00129352313,0.0045280227,0.00048491142,0.19267,0.1842
 15 points - initial params v2,0.0005,0.0008,0.004,0.0015,0.00070336486,0.00026672644,0.00422482944,0.00107482962,3.0059,2.197
 15 points - initial params v1,0.00125,0.000125,0.000125,0.003,0.12982292969,0.00624972536,4.272533e-05,0.01286076879,2.2356,1.569
+15 points - initial params v1 - observing estimate only,0.00125,0.000125,0.000125,0.003,7.1842049e-06,0.00241529678,0.00884846939,0.00092087725,0.24774,0.1842

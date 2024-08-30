@@ -349,7 +349,7 @@ def parse_point_coordinates():
                 for file in os.listdir(folder_path)
             ])
     
-    return point_coordinates
+    return sorted(point_coordinates, key=lambda x: (x[0], x[1]))
 
 if __name__ == "__main__":
     control_filename = pest_run_directory + "eeek.pst"
