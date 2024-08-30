@@ -167,10 +167,6 @@ def save_graph(fig, point_index, name):
     os.makedirs(directory, exist_ok=True)
     fig.savefig(f"{directory}/{point_index}.png")
 
-
-def create_graphs_include_fixed_scale_version(data_files, observation_file_path, output_directory, flags):
-
-
 def create_graphs(data_files, observation_file_path, output_directory, flags):
     if os.path.exists(output_directory):
         shutil.rmtree(output_directory)
