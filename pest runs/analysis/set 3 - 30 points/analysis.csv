@@ -1,0 +1,4 @@
+title,q1_initial,q1_optimized,q5_initial,q5_optimized,q9_initial,q9_optimized,r_initial,r_optimized,initial_objective_function,final_objective_function
+30 points - initial params v3,0.0007,0.0006209669,0.00027,0.00028904344,0.0042,0.00448251294,0.00125,4.8032318e-05,13.557,13.34
+30 points - initial params v2,0.0005,0.00061682959,0.0008,0.00028706492,0.004,0.00445482861,0.0015,4.770617e-05,17.023,13.34
+30 points - initial params v1,0.00125,5.0,0.000125,0.31015695227,0.000125,1e-09,0.003,0.77355044118,14.604,10.76

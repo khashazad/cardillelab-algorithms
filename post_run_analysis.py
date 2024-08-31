@@ -19,7 +19,7 @@ all_pest_results_directory = os.path.join(script_directory, "pest runs")
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    "--point_set", default="set 1 - 15 points", help="Specify the pest run directory."
+    "--point_set", default="set 3 - 30 points", help="Specify the pest run directory."
 )
 args = parser.parse_args()
 
@@ -42,7 +42,7 @@ graph_flags = {
 
 
 def compare_run_to_default_runs(run_path):
-    run_title = f"{run_path.split('/')[-1]}"
+    run_title = os.path.basename(run_path)
     analysis_directory = os.path.join(
         script_directory, "pest runs", "analysis", point_set, "runs", run_title
     )
