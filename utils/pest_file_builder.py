@@ -106,7 +106,11 @@ def create_instructions_file(observations, instructions_filename, observation_fl
             sin = obs[2][0]
             estimate = obs[3][0]
 
-            file.write(f"l1 *,* {intercept if observation_flags["intercept"] else ""} *,* {cos if observation_flags["cos"] else ""} *,* {sin if observation_flags["sin"] else ""} *,* {estimate if observation_flags["estimate"] else ""}\n")
+            intercept_value = f"!{intercept}!" if observation_flags["intercept"] else ""
+            cos_value = f"!{cos}!" if observation_flags["cos"] else ""
+            sin_value = f"!{sin}!" if observation_flags["sin"] else ""
+            estimate_value = f"!{estimate}!" if observation_flags["estimate"] else ""
+            file.write(f"l1 *,* {intercept_value} *,* {cos_value} *,* {sin_value} *,* {estimate_value}\n")
 
 
 def create_template_file(template_filename):
