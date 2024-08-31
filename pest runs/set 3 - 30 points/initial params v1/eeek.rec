@@ -1,0 +1,467 @@
+
+                       PEST RUN RECORD: CASE eeek
+
+
+PEST Version: 17.5
+
+
+PEST run mode:-
+
+   Parameter estimation mode
+
+
+Case dimensions:-
+
+   Number of parameters                           :     7
+   Number of adjustable parameters                :     4
+   Number of parameter groups                     :     7
+   Number of observations                         :  6000
+   Number of prior estimates                      :     0
+
+
+Model command line(s):-
+
+   model.bat
+
+
+Jacobian command line:-
+
+   na
+
+
+Model interface files:-
+
+   Templates:
+      input.tpl
+   for model input files:
+      pest_input.csv
+
+   (Parameter values written using single precision protocol.)
+   (Decimal point always included.)
+
+   Instruction files:
+      output.ins
+   for reading model output files:
+      pest_output.csv
+
+
+PEST-to-model message file:-
+
+   na
+
+
+Singular value decomposition:-
+
+   Perform SVD on XtQX or Q^(1/2)X               : XtQX
+   Max. number of singular values to employ      : 3
+   Ratio of lowest/highest singular value        :  1.000000E-06
+   Record eigenvectors in SVD file               : no
+
+
+Derivatives calculation:-
+
+Param        Increment   Increment   Increment   Forward or   Multiplier  Method
+group        type                    low bound   central      (central)   (central)
+q1           relative    1.0000E-02   none         switch       2.000     parabolic
+q5           relative    1.0000E-02   none         switch       2.000     parabolic
+q9           relative    1.0000E-02   none         switch       2.000     parabolic
+r            relative    1.0000E-02   none         switch       2.000     parabolic
+p1           relative    1.0000E-02   none         switch       2.000     parabolic
+p5           relative    1.0000E-02   none         switch       2.000     parabolic
+p9           relative    1.0000E-02   none         switch       2.000     parabolic
+
+
+Parameter definitions:-
+
+This information not provided as non-verbose run record file requested.
+
+
+Prior information:-
+
+   No prior information supplied
+
+
+Observations:-
+
+This information not provided as non-verbose run record file requested.
+
+
+Control settings:-
+
+   Initial lambda                                               :  10.000    
+   Lambda adjustment factor                                     :  2.0000    
+   Sufficient new/old phi ratio per optimisation iteration      : 0.30000    
+   Limiting relative phi reduction between lambdas              : 5.00000E-02
+   Maximum trial lambdas per iteration                          :  10
+   Forgive model run failure during lamda testing               : no
+   Forgive model run failure during Jacobian runs               : no
+
+   Perform Broyden's update of Jacobian matrix                  : no
+   Undertake observation re-referencing                         : no
+
+   Maximum  factor  parameter change (factor-limited changes)   : na
+   Maximum relative parameter change (relative-limited changes) :  5.0000
+   Fraction of initial parameter values used in computing
+   change limit for near-zero parameters                        : 1.00000E-03
+   Allow bending of parameter upgrade vector                    : no
+   Allow parameters to stick to their bounds                    : no
+
+   Relative phi reduction below which to begin use of
+   central derivatives                                          : 0.10000             
+   Iteration at which to first consider derivatives switch      :   1
+
+   Relative phi reduction indicating convergence                : 0.10000E-06
+   Number of phi values required within this range              :  10
+   Maximum number of consecutive failures to lower phi          :   4
+   Minimal relative parameter change indicating convergence     : 0.50000E-02
+   Number of consecutive iterations with minimal param change   :  10
+   Maximum number of optimisation iterations                    :  50
+   Objective function termination limit                         : 0.10000E-04
+
+   Attempt automatic user intervention                          : no
+
+   Attempt reuse of parameter sensitivities                     : no
+
+   Scale parameters by their bounds                             : no
+
+
+File saving options: -
+
+   Save best JCO file                                           : no
+   Save multiple JCO files                                      : no
+   Save multiple REI files                                      : no
+   Save multiple PAR files                                      : yes
+
+
+                            OPTIMISATION RECORD
+
+
+INITIAL CONDITIONS: 
+   Sum of squared weighted residuals (ie phi) =   14.604    
+
+
+OPTIMISATION ITERATION NO.        : 1
+   Model calls so far             : 1
+   Starting phi for this iteration:   14.604    
+
+       Lambda =   10.000     ----->
+          Phi =   13.179      (  0.902 of starting phi)
+
+       Lambda =   5.0000     ----->
+          Phi =   13.136      (  0.900 of starting phi)
+
+   No more lambdas: relative phi reduction between lambdas less than 0.0500
+   Lowest phi this iteration:   13.136    
+   Maximum relative change:  1.239     ["q5"]
+
+
+OPTIMISATION ITERATION NO.        : 2
+   Model calls so far             : 7
+   Starting phi for this iteration:   13.136    
+       param "q9" frozen: gradient and update vectors out of bounds
+
+       Lambda =   2.5000     ----->
+          Phi =   11.826      (  0.900 of starting phi)
+
+       Lambda =   1.2500     ----->
+          Phi =   11.688      (  0.890 of starting phi)
+
+   No more lambdas: relative phi reduction between lambdas less than 0.0500
+   Lowest phi this iteration:   11.688    
+   Maximum relative change:  2.720     ["q1"]
+
+
+OPTIMISATION ITERATION NO.        : 3
+   Model calls so far             : 13
+   Starting phi for this iteration:   11.688    
+   All frozen parameters freed.
+       param "q9" frozen: gradient and update vectors out of bounds
+
+       Lambda =  0.62500     ----->
+          Phi =   11.117      (  0.951 of starting phi)
+
+       Lambda =  0.31250     ----->
+          Phi =   11.114      (  0.951 of starting phi)
+
+   No more lambdas: relative phi reduction between lambdas less than 0.0500
+   Lowest phi this iteration:   11.114    
+   Relative phi reduction between optimisation iterations less than 0.1000
+   Switch to higher order derivatives calculation
+   Maximum relative change:  2.027     ["q1"]
+
+
+OPTIMISATION ITERATION NO.        : 4
+   Model calls so far             : 19
+   Starting phi for this iteration:   11.114    
+   All frozen parameters freed.
+       param "q9" frozen: gradient and update vectors out of bounds
+
+       Lambda =  0.15625     ----->
+          Phi =   10.891      (  0.980 of starting phi)
+
+       Lambda =  7.81250E-02 ----->
+          Phi =   10.889      (  0.980 of starting phi)
+
+   No more lambdas: relative phi reduction between lambdas less than 0.0500
+   Lowest phi this iteration:   10.889    
+   Maximum relative change:  1.864     ["q1"]
+
+
+OPTIMISATION ITERATION NO.        : 5
+   Model calls so far             : 29
+   Starting phi for this iteration:   10.889    
+   All frozen parameters freed.
+       param "q9" frozen: gradient and update vectors out of bounds
+
+       Lambda =  3.90625E-02 ----->
+          Phi =   10.804      (  0.992 of starting phi)
+
+       Lambda =  1.95313E-02 ----->
+          Phi =   10.803      (  0.992 of starting phi)
+
+   No more lambdas: relative phi reduction between lambdas less than 0.0500
+   Lowest phi this iteration:   10.803    
+   Maximum relative change:  2.137     ["q1"]
+
+
+OPTIMISATION ITERATION NO.        : 6
+   Model calls so far             : 39
+   Starting phi for this iteration:   10.803    
+   All frozen parameters freed.
+       param "q9" frozen: gradient and update vectors out of bounds
+
+       Lambda =  9.76563E-03 ----->
+          Phi =   10.773      (  0.997 of starting phi)
+
+       Lambda =  4.88281E-03 ----->
+          Phi =   10.773      (  0.997 of starting phi)
+
+       Lambda =  1.95313E-02 ----->
+          Phi =   10.775      (  0.997 of starting phi)
+
+   No more lambdas: phi rising
+   Lowest phi this iteration:   10.773    
+   Maximum relative change:  2.158     ["q1"]
+
+
+OPTIMISATION ITERATION NO.        : 7
+   Model calls so far             : 50
+   Starting phi for this iteration:   10.773    
+   All frozen parameters freed.
+       param "q9" frozen: gradient and update vectors out of bounds
+
+       Lambda =  9.76563E-03 ----->
+          Phi =   10.765      (  0.999 of starting phi)
+
+       Lambda =  4.88281E-03 ----->
+          Phi =   10.763      (  0.999 of starting phi)
+
+   No more lambdas: relative phi reduction between lambdas less than 0.0500
+   Lowest phi this iteration:   10.763    
+   Maximum relative change:  1.728     ["q1"]
+
+
+OPTIMISATION ITERATION NO.        : 8
+   Model calls so far             : 60
+   Starting phi for this iteration:   10.763    
+   All frozen parameters freed.
+       param "q9" frozen: gradient and update vectors out of bounds
+
+       Lambda =  2.44141E-03 ----->
+          Phi =   10.775      (  1.001 times starting phi)
+
+       Lambda =  1.22070E-03 ----->
+          Phi =   11.359      (  1.055 times starting phi)
+
+       Lambda =  4.88281E-03 ----->
+          Phi =   10.761      (  1.000 of starting phi)
+
+   No more lambdas: relative phi reduction between lambdas less than 0.0500
+   Lowest phi this iteration:   10.761    
+   Maximum relative change: 0.8004     ["q1"]
+
+
+OPTIMISATION ITERATION NO.        : 9
+   Model calls so far             : 71
+   Starting phi for this iteration:   10.761    
+   All frozen parameters freed.
+       param "q9" frozen: gradient and update vectors out of bounds
+
+       Lambda =  4.88281E-03 ----->
+          Phi =   11.196      (  1.040 times starting phi)
+
+       Lambda =  2.44141E-03 ----->
+          Phi =   12.826      (  1.192 times starting phi)
+
+       Lambda =  9.76563E-03 ----->
+          Phi =   10.761      (  1.000 of starting phi)
+
+   No more lambdas: relative phi reduction between lambdas less than 0.0500
+   Lowest phi this iteration:   10.761    
+   Maximum relative change: 0.7004     ["r"]
+
+
+OPTIMISATION ITERATION NO.        : 10
+   Model calls so far             : 82
+   Starting phi for this iteration:   10.761    
+   All frozen parameters freed.
+       param "q9" frozen: gradient and update vectors out of bounds
+
+       Lambda =  9.76563E-03 ----->
+          Phi =   10.761      (  1.000 of starting phi)
+
+       Lambda =  4.88281E-03 ----->
+          Phi =   10.770      (  1.001 times starting phi)
+
+       Lambda =  1.95313E-02 ----->
+          Phi =   10.761      (  1.000 of starting phi)
+
+   No more lambdas: relative phi reduction between lambdas less than 0.0500
+   Lowest phi this iteration:   10.761    
+   Maximum relative change: 3.4386E-02 ["q1"]
+
+
+OPTIMISATION ITERATION NO.        : 11
+   Model calls so far             : 93
+   Starting phi for this iteration:   10.761    
+   All frozen parameters freed.
+       param "q9" frozen: gradient and update vectors out of bounds
+
+       Lambda =  1.95313E-02 ----->
+          Phi =   10.843      (  1.008 times starting phi)
+
+       Lambda =  9.76563E-03 ----->
+          Phi =   11.612      (  1.079 times starting phi)
+
+       Lambda =  3.90625E-02 ----->
+          Phi =   10.764      (  1.000 times starting phi)
+
+   No more lambdas: relative phi reduction between lambdas less than 0.0500
+   Lowest phi this iteration:   10.764    
+   Maximum relative change: 0.1381     ["r"]
+
+
+OPTIMISATION ITERATION NO.        : 12
+   Model calls so far             : 104
+   Starting phi for this iteration:   10.764    
+   All frozen parameters freed.
+       param "q1" frozen: gradient and update vectors out of bounds
+       param "q9" frozen: gradient and update vectors out of bounds
+
+       Lambda =  3.90625E-02 ----->
+          Phi =   10.761      (  1.000 of starting phi)
+
+       Lambda =  1.95313E-02 ----->
+          Phi =   10.761      (  1.000 of starting phi)
+
+       Lambda =  7.81250E-02 ----->
+          Phi =   10.761      (  1.000 of starting phi)
+
+   No more lambdas: relative phi reduction between lambdas less than 0.0500
+   Lowest phi this iteration:   10.761    
+   Maximum relative change: 5.7129E-02 ["q5"]
+
+
+OPTIMISATION ITERATION NO.        : 13
+   Model calls so far             : 115
+   Starting phi for this iteration:   10.761    
+   All frozen parameters freed.
+       param "q1" frozen: gradient and update vectors out of bounds
+       param "q9" frozen: gradient and update vectors out of bounds
+
+       Lambda =  7.81250E-02 ----->
+          Phi =   10.760      (  1.000 of starting phi)
+
+       Lambda =  3.90625E-02 ----->
+          Phi =   10.760      (  1.000 of starting phi)
+
+       Lambda =  0.15625     ----->
+          Phi =   10.760      (  1.000 of starting phi)
+
+   No more lambdas: relative phi reduction between lambdas less than 0.0500
+   Lowest phi this iteration:   10.760    
+   Maximum relative change: 3.9189E-02 ["r"]
+
+
+OPTIMISATION ITERATION NO.        : 14
+   Model calls so far             : 126
+   Starting phi for this iteration:   10.760    
+   All frozen parameters freed.
+       param "q9" frozen: gradient and update vectors out of bounds
+       param "q1" frozen: gradient and update vectors out of bounds
+
+       Lambda =  0.15625     ----->
+          Phi =   10.760      (  1.000 of starting phi)
+
+       Lambda =  7.81250E-02 ----->
+          Phi =   10.760      (  1.000 of starting phi)
+
+   No more lambdas: relative phi reduction between lambdas less than 0.0500
+   Lowest phi this iteration:   10.760    
+   Maximum relative change: 1.7951E-03 ["r"]
+
+
+OPTIMISATION ITERATION NO.        : 15
+   Model calls so far             : 136
+   Starting phi for this iteration:   10.760    
+   All frozen parameters freed.
+       param "q9" frozen: gradient and update vectors out of bounds
+       param "q1" frozen: gradient and update vectors out of bounds
+
+       Lambda =  3.90625E-02 ----->
+          Phi =   10.760      (  1.000 of starting phi)
+
+       Lambda =  1.95313E-02 ----->
+          Phi =   10.760      (  1.000 of starting phi)
+
+   No more lambdas: relative phi reduction between lambdas less than 0.0500
+   Lowest phi this iteration:   10.760    
+   Maximum relative change: 1.2543E-04 ["r"]
+
+
+OPTIMISATION ITERATION NO.        : 16
+   Model calls so far             : 146
+   Starting phi for this iteration:   10.760    
+   All frozen parameters freed.
+       param "q9" frozen: gradient and update vectors out of bounds
+       param "q1" frozen: gradient and update vectors out of bounds
+
+       Lambda =  9.76563E-03 ----->
+          Phi =   10.760      (  1.000 times starting phi)
+
+       Lambda =  4.88281E-03 ----->
+          Phi =   10.760      (  1.000 times starting phi)
+
+       Lambda =  1.95313E-02 ----->
+          Phi =   10.760      (  1.000 times starting phi)
+
+   No more lambdas: relative phi reduction between lambdas less than 0.0500
+   Lowest phi this iteration:   10.760    
+   Maximum relative change: 8.2190E-06 ["r"]
+
+
+OPTIMISATION ITERATION NO.        : 17
+   Model calls so far             : 157
+   Starting phi for this iteration:   10.760    
+   All frozen parameters freed.
+       param "q9" frozen: gradient and update vectors out of bounds
+       param "q1" frozen: gradient and update vectors out of bounds
+
+       Lambda =  1.95313E-02 ----->
+          Phi =   10.760      (  1.000 of starting phi)
+
+       Lambda =  9.76563E-03 ----->
+          Phi =   10.760      (  1.000 of starting phi)
+
+       Lambda =  3.90625E-02 ----->
+          Phi =   10.760      (  1.000 of starting phi)
+
+   No more lambdas: phi rising
+   Lowest phi this iteration:   10.760    
+   Maximum relative change: 4.8528E-07 ["r"]
+
+
+OPTIMISATION ITERATION NO.        : 18
+   Model calls so far             : 168
+   Starting phi for this iteration:   10.760    
+   All frozen parameters freed.
