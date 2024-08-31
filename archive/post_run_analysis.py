@@ -3,8 +3,8 @@ import json
 import shutil
 import csv
 import argparse
-from utils.graphs import create_graphs, generate_graphs_comparing_to_default_runs
-from utils.rmse import calculate_rmse
+from utils.charts import create_graphs, generate_charts_comparing_runs
+from utils.root_mean_squared_e import calculate_rmse
 from pest_eeek import main as run_eeek
 from utils.filesystem import delete_existing_directory_and_create_new
 from utils.pest_output_analysis import parse_initial_parameters, parse_optimized_parameters, parse_initial_and_final_objective_function
@@ -53,7 +53,7 @@ def compare_run_to_default_runs(run_path):
 
         data_files[default_run.split(".")[0]] =  os.path.join(default_run_directory, "eeek_output.csv")
 
-    generate_graphs_comparing_to_default_runs(data_files, observations_file_path, analysis_directory, graph_flags)
+    generate_charts_comparing_runs(data_files, observations_file_path, analysis_directory, graph_flags)
 with open(os.path.join(analysis_directory, "analysis.csv"), "w", newline='') as file:
     analysis_writer = csv.writer(file)
 

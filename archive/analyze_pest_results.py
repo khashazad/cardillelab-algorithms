@@ -3,8 +3,8 @@ import json
 import shutil
 import csv
 import argparse
-from utils.graphs import create_graphs
-from utils.rmse import calculate_rmse
+from utils.charts import create_graphs
+from utils.root_mean_squared_e import calculate_rmse
 from pest_eeek import main as run_eeek
 
 script_directory = os.path.dirname(os.path.abspath(__file__))
