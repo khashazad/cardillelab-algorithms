@@ -24,7 +24,7 @@ point_set_title = [
     directory
     for directory in os.listdir(all_pest_results_directory)
     if f"set {point_set}" in directory
-]
+][0]
 
 results_directory = os.path.join(all_pest_results_directory, point_set_title)
 analysis_directory = os.path.join(
@@ -131,8 +131,7 @@ if __name__ == "__main__":
         results = executor.map(compare_run_to_default_runs, run_paths)
 
     for run_path in run_paths:
-        run = os.path.basename(run_path)
-        run_title = f"{point_set_title.split(' - ')[1]} - {run}"
+        run_title = os.path.basename(run_path)
 
         run_outputs[run_title] = os.path.join(run_path, "pest_output.csv")
 
@@ -171,9 +170,17 @@ if __name__ == "__main__":
 
     calculate_and_write_rmse(run_paths, observation_file_path, analysis_directory)
 
-    generate_charts_comparing_runs(
-        run_outputs,
-        observation_file_path,
-        os.path.join(analysis_directory, "charts"),
-        graph_flags,
-    )
+    grouped_run_outputs = {}
+    for title, path in run_outputs.items():
+        prefix = title.split(' - ')[0]
+        if prefix not in grouped_run_outputs:
+            grouped_run_outputs[prefix] = {}
+        grouped_run_outputs[prefix][title] = path
+
+    for prefix, runs in grouped_run_outputs.items():
+        generate_charts_comparing_runs(
+            runs,
+            observation_file_path,
+            os.path.join(analysis_directory, "charts", prefix),
+            graph_flags,
+        )
