@@ -150,7 +150,6 @@ def build_observations(coefficients_by_point, output_filename):
 
         return observations
 
-
 def create_points_file(points_filename, coefficients_by_point):
     with open(points_filename, "w", newline="") as file:
         for idx, point in enumerate(coefficients_by_point):
