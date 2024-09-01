@@ -239,7 +239,7 @@
       "inctyp": "relative",
       "parval1": 0.0042,
       "parlbnd": 1e-15,
-      "parubnd": 5,
+      "parubnd": 1,
       "pargp": "q9",
       "scale": 1.0,
       "offset": 0.0,
