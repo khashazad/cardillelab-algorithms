@@ -43,8 +43,8 @@ INITIAL_PARAMS_VERSION = args.initial_params
 
 OBSERVATIONS_FLAGS = {"intercept": True, "cos": True, "sin": True, "estimate": True}
 
-parameters = f"{script_directory}/pest configuration/only optimizing q9 - initial {INITIAL_PARAMS_VERSION}.json"
-pest_run_directory = f"{script_directory}/pest runs/set {POINT_SET} - {POINTS_COUNT} points/only optimizing q9 - initial params {INITIAL_PARAMS_VERSION}/"
+parameters = f"{script_directory}/pest configuration/only optimizing q5 - initial {INITIAL_PARAMS_VERSION}.json"
+pest_run_directory = f"{script_directory}/pest runs/set {POINT_SET} - {POINTS_COUNT} points/only optimizing q5 - initial params {INITIAL_PARAMS_VERSION}/"
 
 point_set_directory_path = f"{script_directory}/points/sets/{POINT_SET}"
 
