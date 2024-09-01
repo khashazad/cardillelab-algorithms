@@ -1,4 +1,3 @@
-import json
 import ee.geometry, ee
 import pandas as pd
 from eeek.image_collections import COLLECTIONS
@@ -32,24 +31,21 @@ ee.Initialize(opt_url=ee.data.HIGH_VOLUME_API_BASE_URL)
 
 script_directory = os.path.dirname(os.path.realpath(__file__))
 
-READ_POINTS_FROM_FILE = False
-POINT_SET = 3
-POINTS_COUNT = 30
-
+POINT_SET = 4
+POINTS_COUNT = 40
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    "--initial_params", default="v1", help="Version of the initial parameters."
+    "--initial_params", default="v3", help="Version of the initial parameters."
 )
 args = parser.parse_args()
 INITIAL_PARAMS_VERSION = args.initial_params
 
 OBSERVATIONS_FLAGS = {"intercept": True, "cos": True, "sin": True, "estimate": True}
 
-parameters = f"{script_directory}/pest configuration/default - initial {INITIAL_PARAMS_VERSION}.json"
-pest_run_directory = f"{script_directory}/pest runs/set {POINT_SET} - {POINTS_COUNT} points/initial params {INITIAL_PARAMS_VERSION}/"
+parameters = f"{script_directory}/pest configuration/only optimizing q9 - initial {INITIAL_PARAMS_VERSION}.json"
+pest_run_directory = f"{script_directory}/pest runs/set {POINT_SET} - {POINTS_COUNT} points/only optimizing q9 - initial params {INITIAL_PARAMS_VERSION}/"
 
-points_coordinates = f"{script_directory}/points/points-filtered.json"
 point_set_directory_path = f"{script_directory}/points/sets/{POINT_SET}"
 
 if os.path.exists(pest_run_directory):
@@ -149,6 +145,7 @@ def build_observations(coefficients_by_point, output_filename):
             )
 
         return observations
+
 
 def create_points_file(points_filename, coefficients_by_point):
     with open(points_filename, "w", newline="") as file:
@@ -348,10 +345,7 @@ if __name__ == "__main__":
     fitted_coefficiets_filename = pest_run_directory + "fitted_coefficients.csv"
     observations_filename = pest_run_directory + "observations.csv"
 
-    if READ_POINTS_FROM_FILE:
-        points = read_json(points_coordinates)
-    else:
-        points = parse_point_coordinates()
+    points = parse_point_coordinates()
 
     fitted_coefficiets_by_point = fitted_coefficients_and_dates(
         points, fitted_coefficiets_filename

@@ -1,11 +1,8 @@
 import os
-import json
-import shutil
 import csv
 import argparse
 from utils.charts import generate_charts_comparing_runs
 from utils.root_mean_squared_error import calculate_rmse
-from pest_eeek import main as run_eeek
 from utils.filesystem import delete_existing_directory_and_create_new
 from utils.pest_output_analysis import (
     parse_initial_parameters,
@@ -18,15 +15,21 @@ script_directory = os.path.dirname(os.path.abspath(__file__))
 all_pest_results_directory = os.path.join(script_directory, "pest runs")
 
 parser = argparse.ArgumentParser()
-parser.add_argument(
-    "--point_set", default="set 3 - 30 points", help="Specify the pest run directory."
-)
+parser.add_argument("--point_set", default="3", help="Specify the pest run directory.")
 args = parser.parse_args()
 
 point_set = args.point_set
 
-results_directory = os.path.join(all_pest_results_directory, point_set)
-analysis_directory = os.path.join(all_pest_results_directory, "analysis", point_set)
+point_set_title = [
+    directory
+    for directory in os.listdir(all_pest_results_directory)
+    if f"set {point_set}" in directory
+]
+
+results_directory = os.path.join(all_pest_results_directory, point_set_title)
+analysis_directory = os.path.join(
+    all_pest_results_directory, "analysis", point_set_title
+)
 
 delete_existing_directory_and_create_new(analysis_directory)
 observation_file_path = None
@@ -44,7 +47,7 @@ graph_flags = {
 def compare_run_to_default_runs(run_path):
     run_title = os.path.basename(run_path)
     analysis_directory = os.path.join(
-        script_directory, "pest runs", "analysis", point_set, "runs", run_title
+        script_directory, "pest runs", "analysis", point_set_title, "runs", run_title
     )
     delete_existing_directory_and_create_new(analysis_directory)
 
@@ -89,7 +92,7 @@ def calculate_and_write_rmse(run_paths, observation_file_path, analysis_director
             rmse_writer.writerows(rmses)
 
 
-def write_results_to_csv(run_analysis_results):
+def write_initial_and_final_param_values(run_analysis_results):
     with open(
         os.path.join(analysis_directory, "analysis.csv"), "w", newline=""
     ) as file:
@@ -98,12 +101,12 @@ def write_results_to_csv(run_analysis_results):
         headers = [
             "title",
             "q1_initial",
-            "q1_optimized",
             "q5_initial",
-            "q5_optimized",
             "q9_initial",
-            "q9_optimized",
             "r_initial",
+            "q1_optimized",
+            "q5_optimized",
+            "q9_optimized",
             "r_optimized",
             "initial_objective_function",
             "final_objective_function",
@@ -122,14 +125,14 @@ if __name__ == "__main__":
         if run not in [".DS_Store", "analysis"]
     ]
 
-    run_analysis_results = []
+    initial_vs_final_params = []
 
     with ProcessPoolExecutor() as executor:
         results = executor.map(compare_run_to_default_runs, run_paths)
 
     for run_path in run_paths:
         run = os.path.basename(run_path)
-        run_title = f"{point_set.split(' - ')[1]} - {run}"
+        run_title = f"{point_set_title.split(' - ')[1]} - {run}"
 
         run_outputs[run_title] = os.path.join(run_path, "pest_output.csv")
 
@@ -148,23 +151,23 @@ if __name__ == "__main__":
             )
         )
 
-        run_analysis_results.append(
+        initial_vs_final_params.append(
             [
                 run_title,
                 initial_q1,
-                optimized_q1,
                 initial_q5,
-                optimized_q5,
                 initial_q9,
-                optimized_q9,
                 initial_r,
+                optimized_q1,
+                optimized_q5,
+                optimized_q9,
                 optimized_r,
                 initial_objective_function,
                 final_objective_function,
             ]
         )
 
-    write_results_to_csv(run_analysis_results)
+    write_initial_and_final_param_values(initial_vs_final_params)
 
     calculate_and_write_rmse(run_paths, observation_file_path, analysis_directory)
 
