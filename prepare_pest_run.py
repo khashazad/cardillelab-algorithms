@@ -31,20 +31,20 @@ ee.Initialize(opt_url=ee.data.HIGH_VOLUME_API_BASE_URL)
 
 script_directory = os.path.dirname(os.path.realpath(__file__))
 
-POINT_SET = 4
-POINTS_COUNT = 40
+POINT_SET = 5
+POINTS_COUNT = 5
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    "--initial_params", default="v3", help="Version of the initial parameters."
+    "--initial_params", default="v1", help="Version of the initial parameters."
 )
 args = parser.parse_args()
 INITIAL_PARAMS_VERSION = args.initial_params
 
-OBSERVATIONS_FLAGS = {"intercept": True, "cos": True, "sin": True, "estimate": True}
+OBSERVATIONS_FLAGS = {"intercept": True, "cos": True, "sin": True, "estimate": False}
 
-parameters = f"{script_directory}/pest configuration/only optimizing r - initial {INITIAL_PARAMS_VERSION}.json"
-pest_run_directory = f"{script_directory}/pest runs/set {POINT_SET} - {POINTS_COUNT} points/only optimizing r - initial params {INITIAL_PARAMS_VERSION}/"
+parameters = f"{script_directory}/pest configuration/default - initial {INITIAL_PARAMS_VERSION}.json"
+pest_run_directory = f"{script_directory}/pest runs/set {POINT_SET} - {POINTS_COUNT} points/ICS - initial params {INITIAL_PARAMS_VERSION}/"
 
 point_set_directory_path = f"{script_directory}/points/sets/{POINT_SET}"
 

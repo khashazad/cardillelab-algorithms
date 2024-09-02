@@ -15,15 +15,16 @@ class Stability(Enum):
     STABLE = "stable"
     UNSTABLE = "unstable"
 
-MODE = Stability(sys.argv[1]) if len(sys.argv) > 1 else Stability.UNSTABLE
+MODE = Stability(sys.argv[1]) if len(sys.argv) > 1 else Stability.STABLE
 
-NUMBER_OF_POINTS = 5
+NUMBER_OF_POINTS = 20
 POLYGON_COORDINATES = [(-126.04, 49.59), (-126.04, 40.76), (-118.93, 40.76), (-118.93, 49.59)]
 
+MINIMUM_NUMBER_OF_MEASUREMENTS = 15
 if MODE == Stability.UNSTABLE:
     MEAN_SWIR_THRESHOLD = 0.15
 else:
-    MEAN_SWIR_THRESHOLD = 0.1
+    MEAN_SWIR_THRESHOLD = 0.01
 
 image_collection = COLLECTIONS["L8_L9_2022_2023"]
 
@@ -98,7 +99,7 @@ while valid_points_counter < NUMBER_OF_POINTS:
         if valid_points_counter > NUMBER_OF_POINTS:
             break
 
-        if (len(data) < 10):
+        if (len(data) < MINIMUM_NUMBER_OF_MEASUREMENTS):
             continue
 
         data['year'] = pd.to_datetime(data['date'], unit='ms').dt.year
