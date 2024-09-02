@@ -31,8 +31,8 @@ ee.Initialize(opt_url=ee.data.HIGH_VOLUME_API_BASE_URL)
 
 script_directory = os.path.dirname(os.path.realpath(__file__))
 
-POINT_SET = 5
-POINTS_COUNT = 5
+POINT_SET = 6
+POINTS_COUNT = 10
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -358,7 +358,7 @@ if __name__ == "__main__":
     create_control_file(
         read_json(parameters),
         control_filename,
-        len(observations) * (len([flag for flag in OBSERVATIONS_FLAGS.values() if flag]) / len(OBSERVATIONS_FLAGS.values())),
+        int(len(observations) * (len([flag for flag in OBSERVATIONS_FLAGS.values() if flag]) / len(OBSERVATIONS_FLAGS.values()))),
     )
     append_observations_to_control_file(
         observations, control_filename, OBSERVATIONS_FLAGS
