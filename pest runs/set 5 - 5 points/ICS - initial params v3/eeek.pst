@@ -1,7 +1,7 @@
 pcf
 * control data
 restart estimation
-7 750.0 7 0 1
+7 750 7 0 1
 1 1 single point
 10 2.0 0.3 0.05 10
 5.0 5.0 0.001
@@ -21,10 +21,10 @@ p1 relative 0.01 0.0 switch 2.0 parabolic
 p5 relative 0.01 0.0 switch 2.0 parabolic
 p9 relative 0.01 0.0 switch 2.0 parabolic
 * parameter data
-q1 none relative 0.0007 1e-50 1 q1 1.0 0.0
-q5 none relative 0.00027 1e-50 1 q5 1.0 0.0
-q9 none relative 0.0042 1e-50 1 q9 1.0 0.0
-r none relative 0.00125 1e-50 1 r 1.0 0.0
+q1 none relative 0.0007 1e-38 1 q1 1.0 0.0
+q5 none relative 0.00027 1e-38 1 q5 1.0 0.0
+q9 none relative 0.0042 1e-38 1 q9 1.0 0.0
+r none relative 0.00125 1e-38 1 r 1.0 0.0
 p1 fixed relative 0.00101 -5 5 p1 1.0 0.0
 p5 fixed relative 0.00222 -5 5 p5 1.0 0.0
 p9 fixed relative 0.00333 -5 5 p9 1.0 0.0
