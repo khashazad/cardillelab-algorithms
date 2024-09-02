@@ -85,6 +85,13 @@ def estimate(
 
     axes.xaxis.set_major_locator(mdates.AutoDateLocator())
     axes.xaxis.set_major_formatter(mdates.DateFormatter("%b %Y"))
+    axes.tick_params(axis='x', labelsize=8)
+
+    max_estimate = max(filtered_data["estimate"])
+    min_estimate = min(filtered_data["estimate"])
+
+    # if max_estimate < 0.23:
+    #     axes.set_ylim(min_estimate - 0.1, 0.25)
 
     if fixed_y_axis:
         axes.set_ylim(0, FIXED_Y_AXIS_LIMIT)
@@ -122,6 +129,7 @@ def intercept_cos_sin(axes, actual, expected, point_index, title, fixed_y_axis=F
 
     axes.xaxis.set_major_locator(mdates.AutoDateLocator())
     axes.xaxis.set_major_formatter(mdates.DateFormatter("%b %Y"))
+    axes.tick_params(axis='x', labelsize=8)
 
     if fixed_y_axis:
         axes.set_ylim(0, FIXED_Y_AXIS_LIMIT)
@@ -153,6 +161,7 @@ def residuals_over_time(axes, actual, expected, point_index, title, fixed_y_axis
 
     axes.xaxis.set_major_locator(mdates.AutoDateLocator())
     axes.xaxis.set_major_formatter(mdates.DateFormatter("%b %Y"))
+    axes.tick_params(axis='x', labelsize=8)
 
     axes.set_title(title)
 
@@ -189,19 +198,20 @@ def amplitude(axes, actual, expected, point_index, title, fixed_y_axis=False):
 
     axes.xaxis.set_major_locator(mdates.AutoDateLocator())
     axes.xaxis.set_major_formatter(mdates.DateFormatter("%b %Y"))
+    axes.tick_params(axis='x', labelsize=8)
 
     axes.set_title(title)
 
 
 def get_labels_and_handles(axs):
     handles, labels = axs.get_legend_handles_labels()
-    unique_labels = set()
+    unique_labels = []
     unique_handles = []
 
     for handle, label in zip(handles, labels):
         if label not in unique_labels:
             unique_handles.append(handle)
-        unique_labels.add(label)
+            unique_labels.append(label)
 
     return unique_labels, unique_handles
 
@@ -290,7 +300,8 @@ def generate_charts_comparing_runs(
 
         for fig, axs, graph_type in plots:
             labels, handles = get_labels_and_handles(axs[0, 0])
-            fig.legend(handles, labels, loc="upper center", ncol=3)
+            fig.legend(handles, labels, loc="upper center", ncol=5)
+
             plt.tight_layout()
             save_chart(fig, point_index, graph_type, output_directory)
             plt.close(fig)
