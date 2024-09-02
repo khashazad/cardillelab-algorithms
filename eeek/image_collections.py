@@ -107,6 +107,40 @@ L8_L9_2022_2023 = afn_gather_collections_and_reduce({
     "verbose": False
 })
 
+L8_L9_2022_2023_DSS_1 = afn_gather_collections_and_reduce({
+    "L8dictionary": {
+        "years_list": [2022, 2023],
+        "first_doy": 150,
+        "last_doy": 250,
+        "cloud_cover_threshold": 20
+    },
+    "L9dictionary": {
+        "years_list": [2022, 2023],
+        "first_doy": 150,
+        "last_doy": 250,
+        "cloud_cover_threshold": 20
+    },
+    "default_study_area": (
+        ee.Geometry.Polygon([(-126.04, 49.59),(-126.04, 40.76),(-118.93, 40.76),(-118.93, 49.59)])
+    ),
+    "band_name_reduction": "swir",
+    "which_reduction": "SWIR",
+    "day_step_size": 1,
+    "verbose": False,
+    "dataset_selection": {
+        "L5": False,
+        "L7": False,
+        "L8": True,
+        "L9": True,
+        "MO": False,
+        "S2": False,
+        "S1": False,
+        "DW": False
+    },
+    "first_expectation_year": 2022,
+    "verbose": False
+})
+
 L8_L9_2022 = afn_gather_collections_and_reduce({
     "L8dictionary": {
         "years_list": [2022],
@@ -177,6 +211,7 @@ L8_L9_2023 = afn_gather_collections_and_reduce({
 
 COLLECTIONS = {
     "L8_L9_2022_2023": L8_L9_2022_2023,
+    "L8_L9_2022_2023_DSS_1": L8_L9_2022_2023_DSS_1,
     "L8_L9_2022": L8_L9_2022,
     "L8_L9_2023": L8_L9_2023,
 }

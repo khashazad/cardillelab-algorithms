@@ -28,3 +28,20 @@ def parse_optimized_parameters(json_file_path):
     r = data["measurement noise (R)"][0][0]
 
     return q1, q5, q9, r
+
+def parse_initial_and_final_parameter_sensetivity(parameter_sensetivity_file_path):
+    lines = read_file(parameter_sensetivity_file_path)
+
+    initial_q1_sens = [sen.split(" ")[-1].strip() for sen in lines if "q1" in sen][0]       
+    final_q1_sens = [sen.split(" ")[-1].strip() for sen in lines if "q1" in sen][-1]
+
+    initial_q5_sens = [sen.split(" ")[-1].strip() for sen in lines if "q5" in sen][0]       
+    final_q5_sens = [sen.split(" ")[-1].strip() for sen in lines if "q5" in sen][-1]
+
+    initial_q9_sens = [sen.split(" ")[-1].strip() for sen in lines if "q9" in sen][0]       
+    final_q9_sens = [sen.split(" ")[-1].strip() for sen in lines if "q9" in sen][-1]
+    
+    initial_r_sens = [sen.split(" ")[-1].strip() for sen in lines if "r" in sen][0]       
+    final_r_sens = [sen.split(" ")[-1].strip() for sen in lines if "r" in sen][-1]
+
+    return [initial_q1_sens, initial_q5_sens, initial_q9_sens, initial_r_sens, final_q1_sens, final_q5_sens, final_q9_sens, final_r_sens]

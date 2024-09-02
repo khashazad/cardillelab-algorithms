@@ -33,7 +33,7 @@ def estimate(
 
     actual["date"] = pd.to_datetime(actual["date"], unit="ms")
 
-    filtered_data = actual[(actual["z"] != 0) & (actual["point"] == point_index)]
+    filtered_data = actual[(actual["point"] == point_index)]
 
     if include_2022_fit:
         filtered_data_2022 = filtered_data[filtered_data["date"].dt.year == 2022]
@@ -80,7 +80,7 @@ def estimate(
         color="green",
     )
     axes.scatter(
-        filtered_data["date"], filtered_data["z"], label="Observed", s=13, color="red"
+        filtered_data[(filtered_data["z"] != 0)]["date"], filtered_data[(filtered_data["z"] != 0)]["z"], label="Observed", s=13, color="red"
     )
 
     axes.xaxis.set_major_locator(mdates.AutoDateLocator())

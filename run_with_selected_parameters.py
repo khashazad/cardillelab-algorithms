@@ -17,14 +17,14 @@ from pest_eeek import main as run_eeek
 import csv
 import concurrent.futures
 
-VERSION = 3
+VERSION = 1
 
-POINT_SET = 4
-POINTS_COUNT = 40
+POINT_SET = 5
+POINTS_COUNT = 5
 
 graph_flags = {
     "estimate": True,
-    "final_2022_fit": True,
+    "final_2022_fit": False,
     "final_2023_fit": True,
     "intercept_cos_sin": True,
     "residuals": True,

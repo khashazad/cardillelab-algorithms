@@ -8,6 +8,7 @@ from utils.pest_output_analysis import (
     parse_initial_parameters,
     parse_optimized_parameters,
     parse_initial_and_final_objective_function,
+    parse_initial_and_final_parameter_sensetivity,
 )
 from concurrent.futures import ProcessPoolExecutor
 
@@ -127,6 +128,8 @@ if __name__ == "__main__":
 
     initial_vs_final_params = []
 
+    initial_vs_final_parameter_sensetivity = []
+
     with ProcessPoolExecutor() as executor:
         results = executor.map(compare_run_to_default_runs, run_paths)
 
@@ -165,6 +168,16 @@ if __name__ == "__main__":
                 final_objective_function,
             ]
         )
+
+        initial_vs_final_parameter_sensetivity.append(
+            parse_initial_and_final_parameter_sensetivity(
+                os.path.join(run_path, "eeek.sen")
+            )
+        )
+
+    with open(os.path.join(analysis_directory, "parameter sensetivity.csv"), "w", newline="") as file:
+        analysis_writer = csv.writer(file)
+        analysis_writer.writerows(initial_vs_final_parameter_sensetivity)
 
     write_initial_and_final_param_values(initial_vs_final_params)
 
