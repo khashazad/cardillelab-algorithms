@@ -175,3 +175,124 @@ OPTIMISATION ITERATION NO.        : 2
 OPTIMISATION ITERATION NO.        : 3
    Model calls so far             : 17
    Starting phi for this iteration:  0.32255    
+
+       Lambda =  0.62500     ----->
+          Phi =  0.33601      (  1.042 times starting phi)
+
+       Lambda =  0.31250     ----->
+          Phi =  0.33725      (  1.046 times starting phi)
+
+       Lambda =   1.2500     ----->
+          Phi =  0.33412      (  1.036 times starting phi)
+
+   No more lambdas: relative phi reduction between lambdas less than 0.0500
+   Lowest phi this iteration:  0.33412    
+   Maximum relative change: 0.9300     ["q9"]
+
+
+OPTIMISATION ITERATION NO.        : 4
+   Model calls so far             : 28
+   Starting phi for this iteration:  0.33412    
+
+       Lambda =   1.2500     ----->
+          Phi =  0.32529      (  0.974 of starting phi)
+
+       Lambda =  0.62500     ----->
+          Phi =  0.32529      (  0.974 of starting phi)
+
+   No more lambdas: relative phi reduction between lambdas less than 0.0500
+   Lowest phi this iteration:  0.32529    
+   Maximum relative change:  3.344     ["q1"]
+
+
+OPTIMISATION ITERATION NO.        : 5
+   Model calls so far             : 38
+   Starting phi for this iteration:  0.32529    
+
+       Lambda =  0.31250     ----->
+          Phi =  0.35872      (  1.103 times starting phi)
+
+       Lambda =  0.15625     ----->
+          Phi =  0.35872      (  1.103 times starting phi)
+
+   No more lambdas: relative phi reduction between lambdas less than 0.0500
+   Lowest phi this iteration:  0.35872    
+   Maximum relative change: 0.8893     ["q1"]
+
+
+OPTIMISATION ITERATION NO.        : 6
+   Model calls so far             : 48
+   Starting phi for this iteration:  0.35872    
+
+       Lambda =  7.81250E-02 ----->
+          Phi =  0.35119      (  0.979 of starting phi)
+
+       Lambda =  3.90625E-02 ----->
+          Phi =  0.35119      (  0.979 of starting phi)
+
+   No more lambdas: relative phi reduction between lambdas less than 0.0500
+   Lowest phi this iteration:  0.35119    
+   Maximum relative change: 0.4447     ["q1"]
+
+   Optimisation complete:   4 optimisation iterations have elapsed since lowest
+                          phi was achieved.
+   Total model calls:     58
+
+   The model has been run one final time using best parameters. 
+   Thus all model input files contain best parameter values, and model 
+   output files contain model results based on these parameters.
+
+
+                            OPTIMISATION RESULTS
+
+
+Parameters ----->
+
+This information not provided as non-verbose run record file requested.
+
+See file eeek.sen for parameter sensitivities.
+
+
+Observations ----->
+
+This information not provided as non-verbose run record file requested.
+
+See file eeek.res for more details of residuals in graph-ready format.
+
+See file eeek.seo for composite observation sensitivities.
+
+
+Objective function ----->
+
+  Sum of squared weighted residuals (ie phi)                =  0.3225    
+
+
+Correlation Coefficient ----->
+
+  Correlation coefficient                                   =  0.97549    
+
+
+Analysis of residuals ----->
+
+  All residuals:-
+     Number of residuals with non-zero weight                       =  1500
+     Mean value of non-zero weighted residuals                      = -2.9610E-03
+     Maximum weighted residual [observation "cos_1_30"]             =  3.2747E-02
+     Minimum weighted residual [observation "cos_2_30"]             = -5.7787E-02
+     Standard variance of weighted residuals                        =  2.1561E-04
+     Standard error of weighted residuals                           =  1.4684E-02
+
+     Note: the above variance was obtained by dividing the objective 
+     function by the number of system degrees of freedom (ie. number of 
+     observations with non-zero weight plus number of prior information 
+     articles with non-zero weight minus the number of adjustable parameters.)
+     If the degrees of freedom is negative the divisor becomes 
+     the number of observations with non-zero weight plus the number of 
+     prior information items with non-zero weight.
+
+
+Covariance and other statistical matrices cannot be determined:-
+Some form or regularisation was implemented so these are not applicable.
+
+Use the PREDUNC7 utility to obtain a full posterior covariance matrix.
+
