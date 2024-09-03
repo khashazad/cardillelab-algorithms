@@ -101,7 +101,7 @@ def create_instructions_file(observations, instructions_filename, observation_fl
     with open(instructions_filename, "w") as file:
         file.write("pif *\n")
         file.write(f"l1\n")
-        observation_type_count = len(observations)
+        observation_type_count = len(observation_flags.keys())
         grouped_observation = [observations[i:i+observation_type_count] for i in range(0, len(observations), observation_type_count)]
         for obs in grouped_observation:
             intercept = obs[0][0]
