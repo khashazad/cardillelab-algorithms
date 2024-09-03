@@ -31,8 +31,8 @@ ee.Initialize(opt_url=ee.data.HIGH_VOLUME_API_BASE_URL)
 
 script_directory = os.path.dirname(os.path.realpath(__file__))
 
-POINT_SET = 7
-POINTS_COUNT = 11
+POINT_SET = 8
+POINTS_COUNT = 12
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
