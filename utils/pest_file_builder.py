@@ -86,6 +86,8 @@ def append_observations_to_control_file(observations, file_path, observation_fla
                 file.write(f"{observation_name.ljust(15)} {str(observation_value).ljust(15)} 1.0 obsgroup\n")
             elif observation_name.startswith("estimate") and observation_flags["estimate"]:
                 file.write(f"{observation_name.ljust(15)} {str(observation_value).ljust(15)} 1.0 obsgroup\n")
+            elif observation_name.startswith("amplitude") and observation_flags["amplitude"]:
+                file.write(f"{observation_name.ljust(15)} {str(observation_value).ljust(15)} 1.0 obsgroup\n")
 
 def append_model_and_io_sections_to_control_file(control_filename):
     with open(control_filename, 'a') as file:
@@ -99,19 +101,21 @@ def create_instructions_file(observations, instructions_filename, observation_fl
     with open(instructions_filename, "w") as file:
         file.write("pif *\n")
         file.write(f"l1\n")
-        grouped_observation = [observations[i:i+4] for i in range(0, len(observations), 4)]
+        observation_type_count = len(observations)
+        grouped_observation = [observations[i:i+observation_type_count] for i in range(0, len(observations), observation_type_count)]
         for obs in grouped_observation:
             intercept = obs[0][0]
             cos = obs[1][0]
             sin = obs[2][0]
             estimate = obs[3][0]
+            amplitude = obs[4][0]
 
             intercept_value = f"!{intercept}!" if observation_flags["intercept"] else ""
             cos_value = f"!{cos}!" if observation_flags["cos"] else ""
             sin_value = f"!{sin}!" if observation_flags["sin"] else ""
             estimate_value = f"!{estimate}!" if observation_flags["estimate"] else ""
-            file.write(f"l1 *,* {intercept_value} *,* {cos_value} *,* {sin_value} *,* {estimate_value}\n")
-
+            amplitude_value = f"!{amplitude}!" if observation_flags["amplitude"] else ""
+            file.write(f"l1 *,* {intercept_value} *,* {cos_value} *,* {sin_value} *,* {estimate_value} *,* {amplitude_value}\n")
 
 def create_template_file(template_filename):
     with open(template_filename, "w") as file:
@@ -122,4 +126,4 @@ def create_template_file(template_filename):
 
 def create_model_file(file_path):
     with open(file_path, "w") as file:
-        file.write(r"python C:\Users\kazad\OneDrive\Documents\GitHub\eeek\pest_eeek.py --input=pest_input.csv --output=pest_output.csv --points=points.csv --num_sinusoid_pairs=1 --include_intercept --store_measurement --collection=L8_L9_2022_2023 --store_estimate --store_date")
+        file.write(r"python C:\Users\kazad\OneDrive\Documents\GitHub\eeek\pest_eeek.py --input=pest_input.csv --output=pest_output.csv --points=points.csv --num_sinusoid_pairs=1 --include_intercept --store_measurement --collection=L8_L9_2022_2023 --store_estimate --store_date --store_amplitude")

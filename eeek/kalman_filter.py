@@ -161,11 +161,14 @@ def kalman_filter(
         phi = t.multiply(FREQUENCY)
         estimate = intp.add(cos.multiply(phi.cos())).add(sin.multiply(phi.sin()))
 
+        amplitude = cos.pow(2).add(sin.pow(2)).sqrt()
+
         outputs = [
             z.rename(constants.MEASUREMENT),
             x.rename(constants.STATE),
             P.rename(constants.COV),
             estimate.rename(constants.ESTIMATE),
+            amplitude.rename(constants.AMPLITUDE),
             ee.Image(curr.date().millis()).rename(constants.DATE)
         ]
         outputs.extend(preprocess_results)

@@ -84,6 +84,8 @@ def main(args):
         request_band_names.append("z")
     if args["store_date"]:
         request_band_names.append("date")
+    if args["store_amplitude"]:
+        request_band_names.append("amplitude")
     num_request_bands = len(request_band_names)
 
     #################################################
@@ -93,7 +95,6 @@ def main(args):
         lines = f.readlines()
         # assert len(lines) == 4, "PEST parameter file must specify Q, R, P, and x0"
         assert len(lines) == 3, "PEST parameter file must specify Q, R, P"
-
 
         parameters = {}
 
@@ -312,6 +313,11 @@ if __name__ == "__main__":
         "--store_date",
         action="store_true",
         help="if set the measurement date at each time step will be saved",
+    )
+    parser.add_argument(
+        "--store_amplitude",
+        action="store_true",
+        help="if set the amplitude at each time step will be saved",
     )
 
     args = vars(parser.parse_args())

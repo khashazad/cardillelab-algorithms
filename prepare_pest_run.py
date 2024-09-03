@@ -31,20 +31,20 @@ ee.Initialize(opt_url=ee.data.HIGH_VOLUME_API_BASE_URL)
 
 script_directory = os.path.dirname(os.path.realpath(__file__))
 
-POINT_SET = 9
-POINTS_COUNT = 6
+POINT_SET = 5
+POINTS_COUNT = 5
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    "--initial_params", default="v4", help="Version of the initial parameters."
+    "--initial_params", default="v1", help="Version of the initial parameters."
 )
 args = parser.parse_args()
 INITIAL_PARAMS_VERSION = args.initial_params
 
-OBSERVATIONS_FLAGS = {"intercept": True, "cos": True, "sin": True, "estimate": False}
+OBSERVATIONS_FLAGS = {"intercept": True, "cos": False, "sin": False, "estimate": False, "amplitude": True}
 
 parameters = f"{script_directory}/pest configuration/default - initial {INITIAL_PARAMS_VERSION}.json"
-pest_run_directory = f"{script_directory}/pest runs/set {POINT_SET} - {POINTS_COUNT} points/ICS - initial params {INITIAL_PARAMS_VERSION}/"
+pest_run_directory = f"{script_directory}/pest runs/set {POINT_SET} - {POINTS_COUNT} points/IA - initial params {INITIAL_PARAMS_VERSION}/"
 
 point_set_directory_path = f"{script_directory}/points/sets/{POINT_SET}"
 
@@ -90,6 +90,7 @@ def run_eeek_with_default_parameters():
             "include_intercept": True,
             "store_measurement": True,
             "store_estimate": True,
+            "store_amplitude": True,
             "store_date": True,
             "include_slope": False,
         }
@@ -102,7 +103,7 @@ def build_observations(coefficients_by_point, output_filename):
 
     with open(output_filename, "w", newline="") as file:
         csv_writer = csv.writer(file)
-        csv_writer.writerow(["point", "date", "intercept", "cos", "sin", "estimate"])
+        csv_writer.writerow(["point", "date", "intercept", "cos", "sin", "estimate", "amplitude"])
         for index, dic in enumerate(coefficients_by_point):
             observation_index = 1
 
@@ -116,6 +117,7 @@ def build_observations(coefficients_by_point, output_filename):
                     phi_cos = math.cos(phi)
                     phi_sin = math.sin(phi)
                     estimate = intercept + cos * phi_cos + sin * phi_sin
+                    amplitude = math.sqrt(cos**2 + sin**2)
 
                     observations.append(
                         (f"intercept_{int(index)}_{observation_index}", intercept)
@@ -125,7 +127,10 @@ def build_observations(coefficients_by_point, output_filename):
                     observations.append(
                         (f"estimate_{int(index)}_{observation_index}", estimate)
                     )
-                    csv_writer.writerow([index, date, intercept, cos, sin, estimate])
+                    observations.append(
+                        (f"amplitude_{int(index)}_{observation_index}", amplitude)
+                    )
+                    csv_writer.writerow([index, date, intercept, cos, sin, estimate, amplitude])
                     observation_index += 1
 
             coefficients_2022 = dic["2022"]
