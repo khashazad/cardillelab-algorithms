@@ -177,7 +177,22 @@ if __name__ == "__main__":
 
     with open(os.path.join(analysis_directory, "parameter sensetivity.csv"), "w", newline="") as file:
         analysis_writer = csv.writer(file)
-        analysis_writer.writerows(initial_vs_final_parameter_sensetivity)
+        analysis_writer.writerow(
+            [
+                "title",
+                "q1_initial",
+                "q5_initial",
+                "q9_initial",
+                "r_initial",
+                "q1_final",
+                "q5_final",
+                "q9_final",
+                "r_final",
+            ]
+        )
+
+        for row in initial_vs_final_parameter_sensetivity:
+            analysis_writer.writerow(row)
 
     write_initial_and_final_param_values(initial_vs_final_params)
 

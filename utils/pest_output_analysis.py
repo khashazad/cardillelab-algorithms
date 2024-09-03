@@ -1,3 +1,4 @@
+from collections import defaultdict
 from utils.filesystem import read_json, read_file
 
 def parse_initial_parameters(pest_file_path):
@@ -30,18 +31,37 @@ def parse_optimized_parameters(json_file_path):
     return q1, q5, q9, r
 
 def parse_initial_and_final_parameter_sensetivity(parameter_sensetivity_file_path):
+    parameter_data = defaultdict(lambda: {'first': None, 'last': None})
+    current_iteration = None
     lines = read_file(parameter_sensetivity_file_path)
 
-    initial_q1_sens = [sen.split(" ")[-1].strip() for sen in lines if "q1" in sen][0]       
-    final_q1_sens = [sen.split(" ")[-1].strip() for sen in lines if "q1" in sen][-1]
+    for line in lines:
+        line = line.strip()
+        if "OPTIMISATION ITERATION NO." in line:
+            try:
+                current_iteration = int(line.split()[-1].replace('----->', '').strip())
+            except ValueError:
+                current_iteration = None
+        elif line and not line.startswith("Parameter name") and not line.startswith("Group"):
+            parts = line.split()
+            if len(parts) >= 4:
+                try:
+                    parameter_name = parts[0]
+                    sensitivity_value = float(parts[-1])
 
-    initial_q5_sens = [sen.split(" ")[-1].strip() for sen in lines if "q5" in sen][0]       
-    final_q5_sens = [sen.split(" ")[-1].strip() for sen in lines if "q5" in sen][-1]
+                    if parameter_data[parameter_name]['first'] is None:
+                        parameter_data[parameter_name]['first'] = sensitivity_value
+                    parameter_data[parameter_name]['last'] = sensitivity_value
+                except ValueError:
+                    continue
 
-    initial_q9_sens = [sen.split(" ")[-1].strip() for sen in lines if "q9" in sen][0]       
-    final_q9_sens = [sen.split(" ")[-1].strip() for sen in lines if "q9" in sen][-1]
-    
-    initial_r_sens = [sen.split(" ")[-1].strip() for sen in lines if "r" in sen][0]       
-    final_r_sens = [sen.split(" ")[-1].strip() for sen in lines if "r" in sen][-1]
-
-    return [initial_q1_sens, initial_q5_sens, initial_q9_sens, initial_r_sens, final_q1_sens, final_q5_sens, final_q9_sens, final_r_sens]
+    return [
+        float(parameter_data["q1"]["first"]),
+        float(parameter_data["q5"]["first"]),
+        float(parameter_data["q9"]["first"]),
+        float(parameter_data["r"]["first"]),
+        float(parameter_data["q1"]["last"]),
+        float(parameter_data["q5"]["last"]),
+        float(parameter_data["q9"]["last"]),
+        float(parameter_data["r"]["last"])
+    ]
