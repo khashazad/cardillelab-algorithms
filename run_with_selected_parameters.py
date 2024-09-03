@@ -19,8 +19,8 @@ import concurrent.futures
 
 VERSION = 1
 
-POINT_SET = 5
-POINTS_COUNT = 5
+POINT_SET = 8
+POINTS_COUNT = 12
 
 graph_flags = {
     "estimate": True,
