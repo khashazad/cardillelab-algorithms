@@ -36,7 +36,7 @@ POINTS_COUNT = 6
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    "--initial_params", default="v1", help="Version of the initial parameters."
+    "--initial_params", default="v4", help="Version of the initial parameters."
 )
 args = parser.parse_args()
 INITIAL_PARAMS_VERSION = args.initial_params
