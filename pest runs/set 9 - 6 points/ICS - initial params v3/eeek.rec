@@ -1,0 +1,162 @@
+
+                       PEST RUN RECORD: CASE eeek
+
+
+PEST Version: 17.5
+
+
+PEST run mode:-
+
+   Parameter estimation mode
+
+
+Case dimensions:-
+
+   Number of parameters                           :     7
+   Number of adjustable parameters                :     4
+   Number of parameter groups                     :     7
+   Number of observations                         :   900
+   Number of prior estimates                      :     0
+
+
+Model command line(s):-
+
+   model.bat
+
+
+Jacobian command line:-
+
+   na
+
+
+Model interface files:-
+
+   Templates:
+      input.tpl
+   for model input files:
+      pest_input.csv
+
+   (Parameter values written using single precision protocol.)
+   (Decimal point always included.)
+
+   Instruction files:
+      output.ins
+   for reading model output files:
+      pest_output.csv
+
+
+PEST-to-model message file:-
+
+   na
+
+
+Singular value decomposition:-
+
+   Perform SVD on XtQX or Q^(1/2)X               : XtQX
+   Max. number of singular values to employ      : 3
+   Ratio of lowest/highest singular value        :  1.000000E-06
+   Record eigenvectors in SVD file               : no
+
+
+Derivatives calculation:-
+
+Param        Increment   Increment   Increment   Forward or   Multiplier  Method
+group        type                    low bound   central      (central)   (central)
+q1           relative    1.0000E-02   none         switch       2.000     parabolic
+q5           relative    1.0000E-02   none         switch       2.000     parabolic
+q9           relative    1.0000E-02   none         switch       2.000     parabolic
+r            relative    1.0000E-02   none         switch       2.000     parabolic
+p1           relative    1.0000E-02   none         switch       2.000     parabolic
+p5           relative    1.0000E-02   none         switch       2.000     parabolic
+p9           relative    1.0000E-02   none         switch       2.000     parabolic
+
+
+Parameter definitions:-
+
+This information not provided as non-verbose run record file requested.
+
+
+Prior information:-
+
+   No prior information supplied
+
+
+Observations:-
+
+This information not provided as non-verbose run record file requested.
+
+
+Control settings:-
+
+   Initial lambda                                               :  10.000    
+   Lambda adjustment factor                                     :  2.0000    
+   Sufficient new/old phi ratio per optimisation iteration      : 0.30000    
+   Limiting relative phi reduction between lambdas              : 5.00000E-02
+   Maximum trial lambdas per iteration                          :  10
+   Forgive model run failure during lamda testing               : no
+   Forgive model run failure during Jacobian runs               : no
+
+   Perform Broyden's update of Jacobian matrix                  : no
+   Undertake observation re-referencing                         : no
+
+   Maximum  factor  parameter change (factor-limited changes)   : na
+   Maximum relative parameter change (relative-limited changes) :  5.0000
+   Fraction of initial parameter values used in computing
+   change limit for near-zero parameters                        : 1.00000E-03
+   Allow bending of parameter upgrade vector                    : no
+   Allow parameters to stick to their bounds                    : no
+
+   Relative phi reduction below which to begin use of
+   central derivatives                                          : 0.10000             
+   Iteration at which to first consider derivatives switch      :   1
+
+   Relative phi reduction indicating convergence                : 0.10000E-06
+   Number of phi values required within this range              :  10
+   Maximum number of consecutive failures to lower phi          :   4
+   Minimal relative parameter change indicating convergence     : 0.50000E-02
+   Number of consecutive iterations with minimal param change   :  10
+   Maximum number of optimisation iterations                    :  50
+   Objective function termination limit                         : 0.10000E-04
+
+   Attempt automatic user intervention                          : no
+
+   Attempt reuse of parameter sensitivities                     : no
+
+   Scale parameters by their bounds                             : no
+
+
+File saving options: -
+
+   Save best JCO file                                           : no
+   Save multiple JCO files                                      : no
+   Save multiple REI files                                      : no
+   Save multiple PAR files                                      : yes
+
+
+                            OPTIMISATION RECORD
+
+
+INITIAL CONDITIONS: 
+   Sum of squared weighted residuals (ie phi) =  0.53557    
+
+
+OPTIMISATION ITERATION NO.        : 1
+   Model calls so far             : 1
+   Starting phi for this iteration:  0.53557    
+
+       Lambda =   10.000     ----->
+          Phi =  0.49710      (  0.928 of starting phi)
+
+       Lambda =   5.0000     ----->
+          Phi =  0.49456      (  0.923 of starting phi)
+
+   No more lambdas: relative phi reduction between lambdas less than 0.0500
+   Lowest phi this iteration:  0.49456    
+   Relative phi reduction between optimisation iterations less than 0.1000
+   Switch to higher order derivatives calculation
+   Maximum relative change:  1.000     ["q5"]
+
+
+OPTIMISATION ITERATION NO.        : 2
+   Model calls so far             : 7
+   Starting phi for this iteration:  0.49456    

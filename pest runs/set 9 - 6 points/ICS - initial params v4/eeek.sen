@@ -1,0 +1,49 @@
+                        PARAMETER SENSITIVITIES: CASE eeek
+
+
+ OPTIMISATION ITERATION NO.  1 ----->
+ Parameter name    Group          Current value    Sensitivity
+   q1              q1              1.000000E-37      0.00000    
+   q5              q5              3.185832E-03     3.270998E-02
+   q9              q9              1.000000E-37      0.00000    
+   r               r               2.886940E-03     5.129060E-02
+
+
+ OPTIMISATION ITERATION NO.  2 ----->
+ Parameter name    Group          Current value    Sensitivity
+   q1              q1              1.000000E-37      0.00000    
+   q5              q5              1.000000E-38      0.00000    
+   q9              q9              1.000000E-37      0.00000    
+   r               r               1.732164E-02     8.600198E-03
+
+
+ OPTIMISATION ITERATION NO.  3 ----->
+ Parameter name    Group          Current value    Sensitivity
+   q1              q1              1.000000E-37      0.00000    
+   q5              q5              1.000000E-38     9.371983E+17
+   q9              q9              1.000000E-37      0.00000    
+   r               r               1.089182E-02     1.464407E-02
+
+
+ OPTIMISATION ITERATION NO.  4 ----->
+ Parameter name    Group          Current value    Sensitivity
+   q1              q1              1.000000E-37      0.00000    
+   q5              q5              6.262804E-23      60.0291    
+   q9              q9              1.000000E-37      0.00000    
+   r               r               1.089182E-02     1.464407E-02
+
+
+ OPTIMISATION ITERATION NO.  5 ----->
+ Parameter name    Group          Current value    Sensitivity
+   q1              q1              1.000000E-37      0.00000    
+   q5              q5              1.828666E-06      4.23189    
+   q9              q9              1.000000E-37      0.00000    
+   r               r               1.089182E-02     1.486836E-02
+
+
+ OPTIMISATION ITERATION NO.  6 ----->
+ Parameter name    Group          Current value    Sensitivity
+   q1              q1              1.000000E-37      0.00000    
+   q5              q5              9.143332E-07      4.28310    
+   q9              q9              1.000000E-37      0.00000    
+   r               r               1.084474E-02     1.482136E-02
