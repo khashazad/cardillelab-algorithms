@@ -80,12 +80,13 @@ def main(args):
     request_band_names = param_names.copy()
     if args["store_estimate"]:
         request_band_names.append("estimate")
+    if args["store_amplitude"]:
+        request_band_names.append("amplitude")
     if args["store_measurement"]:
         request_band_names.append("z")
     if args["store_date"]:
         request_band_names.append("date")
-    if args["store_amplitude"]:
-        request_band_names.append("amplitude")
+
     num_request_bands = len(request_band_names)
 
     #################################################

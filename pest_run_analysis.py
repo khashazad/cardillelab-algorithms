@@ -16,7 +16,7 @@ script_directory = os.path.dirname(os.path.abspath(__file__))
 all_pest_results_directory = os.path.join(script_directory, "pest runs")
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--point_set", default="9", help="Specify the pest run directory.")
+parser.add_argument("--point_set", default="5", help="Specify the pest run directory.")
 args = parser.parse_args()
 
 point_set = args.point_set
