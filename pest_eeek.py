@@ -78,13 +78,13 @@ def main(args):
     num_params = len(param_names)
 
     request_band_names = param_names.copy()
-    if args["store_estimate"]:
+    if "store_estimate" in args and args["store_estimate"]:
         request_band_names.append("estimate")
-    if args["store_amplitude"]:
+    if "store_amplitude" in args and args["store_amplitude"]:
         request_band_names.append("amplitude")
-    if args["store_measurement"]:
+    if "store_measurement" in args and args["store_measurement"]:
         request_band_names.append("z")
-    if args["store_date"]:
+    if "store_date" in args and args["store_date"]:
         request_band_names.append("date")
 
     num_request_bands = len(request_band_names)
@@ -221,41 +221,9 @@ def main(args):
     # new_df = pd.DataFrame([last_row])
     # new_df.to_csv(args.output, index=False)
     
-    # generate_graph(args.output)
-
     # delete intermediate files
     for f in all_output_files:
         os.remove(f)
-
-def generate_graph(output):
-
-    data = pd.read_csv(output)
-
-    data['date'] = pd.to_datetime(data['date'], unit='ms')
-
-    filtered_data = data[data['z'] != 0]
-
-    dates = filtered_data['date']
-    estimate = filtered_data['estimate']
-    z = filtered_data['z']
-
-    plt.figure(figsize=(10, 6))
-
-    plt.plot(dates, estimate, label='Estimate', color='blue', linestyle='-')
-
-    plt.scatter(dates, z, label='Z', color='red', s=10)
-
-    plt.gca().xaxis.set_major_locator(mdates.AutoDateLocator())
-    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%b %Y'))
-
-    plt.title('Estimate and Z Values Over Time (Excluding Zero Values)')
-    plt.xlabel('Date')
-    plt.ylabel('Values')
-    plt.legend()
-
-    # plt.xticks(rotation=45)    
-    plt.savefig("estimate_vs_observed_graph")
-    plt.show()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(

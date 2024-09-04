@@ -17,10 +17,10 @@ from pest_eeek import main as run_eeek
 import csv
 import concurrent.futures
 
-VERSION = 1
+VERSION = 2
 
-POINT_SET = 8
-POINTS_COUNT = 12
+POINT_SET = 9
+POINTS_COUNT = 6
 
 graph_flags = {
     "estimate": True,
@@ -66,6 +66,7 @@ def run_eeek_with_selected_parameters(parameter_file_path):
         "store_estimate": True,
         "store_date": True,
         "include_slope": False,
+        "store_amplitude": False,
     }
 
     run_eeek(args)
@@ -107,10 +108,13 @@ def run_eeek_with_default_parameters():
             "store_estimate": True,
             "store_date": True,
             "include_slope": False,
+            "store_amplitude": False,
         }
 
         run_eeek(args)
 
+    # for parameter_file in os.listdir(default_params_directory):
+    #     process_parameter_file(os.path.join(default_params_directory, parameter_file))
     with concurrent.futures.ThreadPoolExecutor() as executor:
         executor.map(process_parameter_file, [os.path.join(default_params_directory, parameter_file) for parameter_file in os.listdir(default_params_directory)])
 
