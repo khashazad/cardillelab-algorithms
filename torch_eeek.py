@@ -70,11 +70,6 @@ band_names = [
     # "amplitude",
 ]
 
-q1 = 0.00125
-q5 = 0.000125
-q9 = 0.000125
-r = 0.003
-
 
 def sinusoidal(num_sinusoid_pairs, include_slope=True, include_intercept=True):
     """Creates sinusoid function of the form a+b*t+c*cos(2pi*t)+d*sin(2pi*t)...
@@ -163,7 +158,7 @@ def main(args, q1, q5, q9, r):
         "num_params": num_params,
     }
 
-    with open("eeek_params.json", "w") as f:
+    with open(args["parameters_output"], "w") as f:
         json.dump(parameters, f, indent=4)
 
     #################################################
@@ -201,24 +196,18 @@ def main(args, q1, q5, q9, r):
 
         kalman_result = kalman_filter(measurements, x0, P, **kalman_init)
 
-        # pprint(kalman_result[0])
-        # input("Press Enter to continue...")
-
         output = [
             [
                 index,
-                row[0],
-                row[1][0].item(),
-                row[1][1].item(),
-                row[1][2].item(),
-                row[2].item(),
-                # row[3].item(),
-                pd.to_datetime(row[3], unit="ms").timestamp(),
+                row[0][0].item(),
+                row[0][1].item(),
+                row[0][2].item(),
+                row[1].item(),
+                row[2],
+                row[3],
             ]
             for row in kalman_result
         ]
-
-        pprint(output)
 
         df = pd.DataFrame(output, columns=band_names)
 
@@ -245,7 +234,7 @@ def main(args, q1, q5, q9, r):
     for f in all_output_files:
         os.remove(f)
 
-    return all_results
+    return all_results[["INTP", "COS0", "SIN0"]].values.tolist()
 
 
 if __name__ == "__main__":
@@ -263,6 +252,11 @@ if __name__ == "__main__":
         "--output",
         required=True,
         help="file to write results to",
+    )
+    parser.add_argument(
+        "--parameters_output",
+        required=True,
+        help="file to write parameters to",
     )
     parser.add_argument(
         "--points",
@@ -288,4 +282,8 @@ if __name__ == "__main__":
     )
 
     args = vars(parser.parse_args())
+    q1 = 0.00125
+    q5 = 0.000125
+    q9 = 0.000125
+    r = 0.003
     main(args, q1, q5, q9, r)

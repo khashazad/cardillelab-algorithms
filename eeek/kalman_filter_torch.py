@@ -1,8 +1,8 @@
 import pandas as pd
 import torch
-from datetime import datetime
+import math
 
-FREQUENCY = 6.283
+FREQUENCY = math.pi * 2
 
 
 def predict(x, P, F, Q):
@@ -39,12 +39,16 @@ def update(x_bar, P_bar, z, H, R, num_params):
     """
     identity = torch.eye(num_params)
 
-    H = H.reshape(1, num_params)
+    # residual between measurement and prediction
     y = z - (H @ x_bar)
+    # covariance
     S = ((H @ P_bar) @ H.t()) + R
     S_inv = torch.inverse(S)
+    # Kalman gain: how much the prediction should be corrected by the measurement
     K = (P_bar @ H.t()) @ S_inv
+    # updated state
     x = x_bar + (K @ y)
+    # updated covariance
     P = (identity - (K @ H)) @ P_bar
 
     return x, P
@@ -71,12 +75,12 @@ def kalman_filter(measurements, x0, P, F, Q, H, R, num_params):
 
     outputs = []
 
-    for measurement, date in measurements:
+    for measurement, date_timestamp in measurements:
         x_prev = states[-1]
         P_prev = covariances[-1]
 
         # Convert timestamp to date and extract the year
-        date = pd.to_datetime(date, unit="ms")
+        date = pd.to_datetime(date_timestamp, unit="ms")
 
         t = torch.tensor(
             (date - pd.to_datetime("2016-01-01")).total_seconds()
@@ -85,9 +89,16 @@ def kalman_filter(measurements, x0, P, F, Q, H, R, num_params):
         )
 
         x_bar, P_bar = predict(x_prev, P_prev, F, Q)
-        x, P = update(x_bar, P_bar, measurement, H(t), R, num_params)
+        x, P = update(
+            x_bar,
+            P_bar,
+            measurement,
+            H(t).reshape(1, num_params),
+            R,
+            num_params,
+        )
 
-        if measurement is None:
+        if measurement == 0:
             x = x_prev
             P = P_prev
 
@@ -102,11 +113,10 @@ def kalman_filter(measurements, x0, P, F, Q, H, R, num_params):
 
         outputs.append(
             [
-                measurement,
                 x,
                 estimate,
-                date,
-                # amplitude,
+                measurement,
+                date_timestamp,
             ]
         )
 

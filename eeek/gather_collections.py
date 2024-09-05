@@ -1,6 +1,7 @@
 import ee
 import pandas as pd
 import csv
+from pprint import pprint
 
 # Initialize the Earth Engine library.
 ee.Initialize()
@@ -646,48 +647,59 @@ def gather_collections_and_reduce(gather_collections_args):
 
 
 def reduce_collection_to_points_and_write_to_file(collection, points, output_file_path):
-    geometries = ee.FeatureCollection(
-        ee.List(points).map(
-            lambda coordinate: ee.Feature(ee.Geometry.Point(coordinate))
+    measurements = pd.DataFrame(columns=["longitude", "latitude", "swir", "date"])
+    for point_index, point in enumerate(points):
+        point_geometry = ee.Geometry.Point(point)
+        collection_for_point = collection.filterBounds(point_geometry)
+
+        def process_image(image):
+            img = image
+
+            def sample_and_copy(feature):
+                return feature.copyProperties(
+                    img, img.propertyNames().remove(ee.String("nominalDate"))
+                )
+
+            sampled = img.sample(
+                region=point_geometry,
+                scale=10,
+                dropNulls=False,
+                geometries=True,
+            ).map(sample_and_copy)
+
+            return sampled
+
+        features = (
+            collection_for_point.map(process_image).flatten().getInfo()["features"]
         )
-    )
 
-    def process_image(image):
-        img = image
+        data = pd.DataFrame(
+            [
+                [
+                    int(point_index),
+                    feature["geometry"]["coordinates"][0],
+                    feature["geometry"]["coordinates"][1],
+                    (
+                        feature["properties"]["swir"]
+                        if "swir" in feature["properties"]
+                        else float(0)
+                    ),
+                    feature["properties"]["millis"],
+                ]
+                for feature in features
+            ],
+            columns=["point", "longitude", "latitude", "swir", "date"],
+        )
 
-        def sample_and_copy(feature):
-            return feature.copyProperties(
-                img, img.propertyNames().remove(ee.String("nominalDate"))
+        measurements = (
+            measurements.copy()
+            if data.empty
+            else (
+                data.copy()
+                if measurements.empty
+                else pd.concat([measurements, data], ignore_index=True)
             )
+        )
 
-        sampled = img.sampleRegions(
-            collection=geometries, scale=10, geometries=True
-        ).map(sample_and_copy)
-
-        return sampled
-
-    measurements = ee.FeatureCollection(collection.map(process_image).flatten())
-
-    features = measurements.getInfo()["features"]
-
-    measurements = pd.DataFrame(
-        [
-            {
-                "longitude": feature["geometry"]["coordinates"][0],
-                "latitude": feature["geometry"]["coordinates"][1],
-                "swir": feature["properties"]["swir"],
-                "date": feature["properties"]["millis"],
-            }
-            for feature in features
-            if "swir" in feature["properties"]
-        ]
-    )
-
-    grouped_measurements = measurements.groupby(["longitude", "latitude"])
-
-    with open(output_file_path, "w") as file:
-        writer = csv.writer(file)
-        writer.writerow(["point", "longitude", "latitude", "swir", "date"])
-        for index, (point, data) in enumerate(grouped_measurements):
-            for _, row in data.iterrows():
-                writer.writerow([index, point[0], point[1], row["swir"], row["date"]])
+    measurements = measurements[["point", "longitude", "latitude", "swir", "date"]]
+    measurements.to_csv(output_file_path, index=False, mode="w")
