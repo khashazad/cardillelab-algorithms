@@ -17,8 +17,8 @@ def predict(x, P, F, Q):
     Returns:
         x_bar, P_bar: the predicted state and the predicted state covariance.
     """
-    x_bar = F @ x
-    P_bar = F @ P @ F.t() + Q
+    x_bar = (F @ x).requires_grad_(True)
+    P_bar = (F @ P @ F.t() + Q).requires_grad_(True)
 
     return x_bar, P_bar
 
@@ -37,19 +37,19 @@ def update(x_bar, P_bar, z, H, R, num_params):
     Returns:
         x, P: the updated state and state covariance
     """
-    identity = torch.eye(num_params)
+    identity = torch.eye(num_params, requires_grad=True)
 
     # residual between measurement and prediction
-    y = z - (H @ x_bar)
+    y = (z - (H @ x_bar)).requires_grad_(True)
     # covariance
-    S = ((H @ P_bar) @ H.t()) + R
-    S_inv = torch.inverse(S)
+    S = (((H @ P_bar) @ H.t()) + R).requires_grad_(True)
+    S_inv = torch.inverse(S).requires_grad_(True)
     # Kalman gain: how much the prediction should be corrected by the measurement
-    K = (P_bar @ H.t()) @ S_inv
+    K = ((P_bar @ H.t()) @ S_inv).requires_grad_(True)
     # updated state
-    x = x_bar + (K @ y)
+    x = (x_bar + (K @ y)).requires_grad_(True)
     # updated covariance
-    P = (identity - (K @ H)) @ P_bar
+    P = ((identity - (K @ H)) @ P_bar).requires_grad_(True)
 
     return x, P
 
@@ -86,6 +86,7 @@ def kalman_filter(measurements, x0, P, F, Q, H, R, num_params):
             (date - pd.to_datetime("2016-01-01")).total_seconds()
             / (365.25 * 24 * 60 * 60),
             dtype=torch.float32,
+            requires_grad=True,
         )
 
         x_bar, P_bar = predict(x_prev, P_prev, F, Q)
@@ -108,8 +109,7 @@ def kalman_filter(measurements, x0, P, F, Q, H, R, num_params):
 
         estimate = (
             intp + cos * torch.cos(t * FREQUENCY) + sin * torch.sin(t * FREQUENCY)
-        )
-        amplitude = torch.sqrt(cos**2 + sin**2)
+        ).requires_grad_(True)
 
         outputs.append(
             [

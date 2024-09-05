@@ -16,9 +16,7 @@
             0.0001250000059371814
         ]
     ],
-    "measurement noise (R)": [
-        0.003000000026077032
-    ],
+    "measurement noise (R)": 0.003000000026077032,
     "initial state covariance matrix (P)": [
         [
             0.0010100000072270632,

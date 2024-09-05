@@ -1,60 +1,7 @@
-"""Runs the Kalman Filter for PEST parameter estimation.
-
-The input file, containing the parameters that PEST is estimating, should
-contain a list of comma separated numbers on each line. The first line should
-contain the values for the Q matrix (the process noise), the second line should
-contain the values for the R matrix (the measurement noise), the third line
-should contain the values for the P matrix (the initial state covariance). The
-fourth line should contain the values of x0 (the initial state matrix).
-
-Q, R, P, and x0 have a different shape depending on the number of parameters in
-the state variable. For a Kalman filter whose state variable has N parameters:
-Q has shape (N, N)
-R has shape (1, 1)
-P has shape (N, N)
-x0 has shape (N, 1)
-Set the flags `num_sinusoid_pairs`, `include_intercept`, `include_slope` to
-change the number of parameters in the state variable.
-
-For variables that have more than one dimension they should be written row first
-in the input file. e.g. 1, 2, 3, 4, 5, 6, 7, 8, 9 will be converted to the
-following matrix:
-    1, 2, 3
-    4, 5, 6
-    7, 8, 9
-
-The output file will be in CSV format with a single header row containing the
-following columns:
-    point: ID of the point (row number of the point in the given points file)
-    INTP: the intercept value for the current point at this time step
-    SLP: the slope value for the current point at this time step
-    COS0: the cosine coefficient ""
-    SIN0: the sine coefficient ""
-    COS2: ""
-    SIN2: ""
-    COS3: ""
-    SIN3: ""
-State values (INPT, SLP, etc.) will be recorded to 10 significant figures in
-scientific notation. Only the state values that are used in the given model are
-output. The model can be adjusted using the flags `include_intercept`,
-`include_slope`, and `num_sinusoid_pairs`.
-
-The points file should specify each location where you want to apply the Kalman
-filter. Each line of the points file should contain 2 numbers: the longitude of
-the point and the latitude of the point followed by two strings: the date to
-start running the Kalman filter and the date to stop running the kalman filter
-(in YYYY-MM-dd format) all separated by a single ',' with no spaces.
-"""
-
-import argparse
-import os
-
-import json
 import torch
 import pandas as pd
-from pathos.pools import ProcessPool
+import multiprocessing as mp
 from pprint import pprint
-from eeek.kalman_filter_torch import kalman_filter
 import math
 
 NUM_MEASURES = 1  # eeek only supports one band at a time
@@ -118,31 +65,138 @@ def sinusoidal(num_sinusoid_pairs, include_slope=True, include_intercept=True):
     return sinusoidal_function
 
 
-def main(args, q1, q5, q9, r):
-    param_names = []
-    if args["include_intercept"]:
-        param_names.append("INTP")
-    if args["include_slope"]:
-        param_names.append("SLP")
-    for i in range(args["num_sinusoid_pairs"]):
-        param_names.extend([f"COS{i}", f"SIN{i}"])
-    num_params = len(param_names)
+def kalman_filter(point_index, measurements, x0, P, F, Q, H, R, num_params):
+    """Applies a Kalman Filter to the given data.
 
-    #################################################
-    ########### Read in PEST parameters #############
-    #################################################
-    parameters = {}
+    Args:
+        data: list of measurements (torch.Tensor)
+        init_state: torch.Tensor, the initial state
+        init_covariance: torch.Tensor, the initial state covariance
+        F: torch.Tensor, the process model
+        Q: torch.Tensor, the process noise
+        H: torch.Tensor, the measurement function
+        R: torch.Tensor, the measurement noise
+        num_params: int, number of parameters in the state
 
-    Q = torch.tensor(
-        [[q1, 0.0, 0.0], [0.0, q5, 0.0], [0.0, 0.0, q9]], dtype=torch.float32
+    Returns:
+        list of states and covariances after applying Kalman Filter
+    """
+
+    FREQUENCY = math.pi * 2
+
+    def predict(x, P, F, Q):
+        """Performs the predict step of the Kalman Filter loop.
+
+        Args:
+            x: torch.Tensor (n x 1), the state
+            P: torch.Tensor (n x n), the state covariance
+            F: torch.Tensor (n x n), the process model
+            Q: torch.Tensor (n x n), the process noise
+
+        Returns:
+            x_bar, P_bar: the predicted state and the predicted state covariance.
+        """
+        x_bar = (F @ x).requires_grad_(True)
+        P_bar = (F @ P @ F.t() + Q).requires_grad_(True)
+
+        return x_bar, P_bar
+
+    def update(x_bar, P_bar, z, H, R, num_params):
+        """Performs the update step of the Kalman Filter loop.
+
+        Args:
+            x_bar: torch.Tensor (n x 1), the predicted state
+            P_bar: torch.Tensor (n x n), the predicted state covariance
+            z: torch.Tensor (1 x 1), the measurement
+            H: torch.Tensor (1 x n), the measurement function
+            R: torch.Tensor (1 x 1), the measurement noise
+            num_params: int, the number of parameters in the state variable
+
+        Returns:
+            x, P: the updated state and state covariance
+        """
+        identity = torch.eye(num_params, requires_grad=True)
+
+        # residual between measurement and prediction
+        y = (z - (H @ x_bar)).requires_grad_(True)
+        # covariance
+        S = (((H @ P_bar) @ H.t()) + R).requires_grad_(True)
+        S_inv = torch.inverse(S).requires_grad_(True)
+        # Kalman gain: how much the prediction should be corrected by the measurement
+        K = ((P_bar @ H.t()) @ S_inv).requires_grad_(True)
+        # updated state
+        x = (x_bar + (K @ y)).requires_grad_(True)
+        # updated covariance
+        P = ((identity - (K @ H)) @ P_bar).requires_grad_(True)
+
+        return x, P
+
+    states = [x0]
+    covariances = [P]
+
+    outputs = []
+
+    for measurement, date_timestamp in measurements:
+        x_prev = states[-1]
+        P_prev = covariances[-1]
+
+        # Convert timestamp to date and extract the year
+        date = pd.to_datetime(date_timestamp, unit="ms")
+
+        t = torch.tensor(
+            (date - pd.to_datetime("2016-01-01")).total_seconds()
+            / (365.25 * 24 * 60 * 60),
+            dtype=torch.float32,
+            requires_grad=True,
+        )
+
+        x_bar, P_bar = predict(x_prev, P_prev, F, Q)
+        x, P = update(
+            x_bar,
+            P_bar,
+            measurement,
+            H(t).reshape(1, num_params),
+            R,
+            num_params,
+        )
+
+        if measurement == 0:
+            x = x_prev
+            P = P_prev
+
+        states.append(x)
+        covariances.append(P)
+
+        intp = x[0]
+        cos = x[1]
+        sin = x[2]
+
+        estimate = (
+            intp + cos * torch.cos(t * FREQUENCY) + sin * torch.sin(t * FREQUENCY)
+        ).requires_grad_(True)
+
+        outputs.append(
+            [
+                point_index,
+                x,
+                estimate,
+                measurement,
+                date_timestamp,
+            ]
+        )
+
+    return outputs
+
+
+def main(args, Q, R):
+    num_params = 3
+    param_names = ["INTP", "COS0", "SIN0"]
+
+    P = torch.tensor(
+        [[0.00101, 0.0, 0.0], [0.0, 0.00222, 0.0], [0.0, 0.0, 0.00333]],
+        dtype=torch.float32,
+        requires_grad=True,
     )
-    parameters["process noise (Q)"] = Q.tolist()
-
-    R = torch.tensor([r], dtype=torch.float32)
-    parameters["measurement noise (R)"] = R.tolist()
-
-    P = torch.tensor([[0.00101, 0.0, 0.0], [0.0, 0.00222, 0.0], [0.0, 0.0, 0.00333]])
-    parameters["initial state covariance matrix (P)"] = P.tolist()
 
     H = sinusoidal(
         args["num_sinusoid_pairs"],
@@ -157,9 +211,6 @@ def main(args, q1, q5, q9, r):
         "R": R,
         "num_params": num_params,
     }
-
-    with open(args["parameters_output"], "w") as f:
-        json.dump(parameters, f, indent=4)
 
     #################################################
     # Create parameters to run filter on each point #
@@ -190,100 +241,47 @@ def main(args, q1, q5, q9, r):
         ]
         measurements = measurements_for_point[["swir", "date"]].values.tolist()
 
-        x0 = torch.tensor(kwargs["x0"], dtype=torch.float32).reshape(
-            num_params, NUM_MEASURES
+        x0 = torch.tensor(
+            kwargs["x0"], dtype=torch.float32, requires_grad=True
+        ).reshape(num_params, NUM_MEASURES)
+
+        kalman_result = kalman_filter(
+            index,
+            measurements,
+            x0,
+            P,
+            **kalman_init,
         )
 
-        kalman_result = kalman_filter(measurements, x0, P, **kalman_init)
+        return kalman_result
 
-        output = [
+    all_results = []
+    for p in points:
+        all_results.extend(process_point(p))
+
+    df = pd.DataFrame(
+        [
             [
                 index,
-                row[0][0].item(),
-                row[0][1].item(),
-                row[0][2].item(),
-                row[1].item(),
-                row[2],
-                row[3],
+                x[0].item(),
+                x[1].item(),
+                x[2].item(),
+                estimate,
+                measurement,
+                date_timestamp,
             ]
-            for row in kalman_result
+            for index, x, estimate, measurement, date_timestamp in all_results
+        ],
+        columns=band_names,
+    )
+
+    df.to_csv(args["output"], index=False)
+
+    return [
+        [
+            row[1][0],
+            row[1][1],
+            row[1][2],
         ]
-
-        df = pd.DataFrame(output, columns=band_names)
-
-        df.sort_values(by=["point", "date"], inplace=True)
-
-        # df = df[["point"] + band_names]
-
-        basename, ext = os.path.splitext(args["output"])
-        shard_path = basename + f"-{index:06d}" + ext
-        df.to_csv(shard_path, index=False)
-
-        return shard_path
-
-    with ProcessPool(nodes=40) as pool:
-        all_output_files = pool.map(process_point, points)
-
-    #################################################
-    ## Combine results from all runs to single csv ##
-    #################################################
-    all_results = pd.concat(map(pd.read_csv, all_output_files), ignore_index=True)
-    all_results.to_csv(args["output"], index=False)
-
-    # delete intermediate files
-    for f in all_output_files:
-        os.remove(f)
-
-    return all_results[["INTP", "COS0", "SIN0"]].values.tolist()
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        # show the module docstring in help
-        description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-    )
-    parser.add_argument(
-        "--measurements",
-        required=True,
-        help="file containing measurements",
-    )
-    parser.add_argument(
-        "--output",
-        required=True,
-        help="file to write results to",
-    )
-    parser.add_argument(
-        "--parameters_output",
-        required=True,
-        help="file to write parameters to",
-    )
-    parser.add_argument(
-        "--points",
-        required=True,
-        help="file containing points to run kalman filter on",
-    )
-    parser.add_argument(
-        "--include_intercept",
-        action="store_true",
-        help="if set the model will include a y intercept",
-    )
-    parser.add_argument(
-        "--include_slope",
-        action="store_true",
-        help="if set the model will include a linear slope",
-    )
-    parser.add_argument(
-        "--num_sinusoid_pairs",
-        choices=[1, 2, 3],
-        type=int,
-        default=3,
-        help="the number of sin/cos pairs to include in the model",
-    )
-
-    args = vars(parser.parse_args())
-    q1 = 0.00125
-    q5 = 0.000125
-    q9 = 0.000125
-    r = 0.003
-    main(args, q1, q5, q9, r)
+        for row in all_results
+    ]
