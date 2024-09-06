@@ -96,8 +96,8 @@ def kalman_filter(point_index, measurements, x0, P, F, Q, H, R, num_params):
         Returns:
             x_bar, P_bar: the predicted state and the predicted state covariance.
         """
-        x_bar = (F @ x).requires_grad_(True)
-        P_bar = (F @ P @ F.t() + Q).requires_grad_(True)
+        x_bar = F @ x
+        P_bar = F @ P @ F.t() + Q
 
         return x_bar, P_bar
 
@@ -115,19 +115,19 @@ def kalman_filter(point_index, measurements, x0, P, F, Q, H, R, num_params):
         Returns:
             x, P: the updated state and state covariance
         """
-        identity = torch.eye(num_params, requires_grad=True)
+        identity = torch.eye(num_params)
 
         # residual between measurement and prediction
-        y = (z - (H @ x_bar)).requires_grad_(True)
+        y = z - (H @ x_bar)
         # covariance
-        S = (((H @ P_bar) @ H.t()) + R).requires_grad_(True)
-        S_inv = torch.inverse(S).requires_grad_(True)
+        S = ((H @ P_bar) @ H.t()) + R
+        S_inv = torch.inverse(S)
         # Kalman gain: how much the prediction should be corrected by the measurement
-        K = ((P_bar @ H.t()) @ S_inv).requires_grad_(True)
+        K = (P_bar @ H.t()) @ S_inv
         # updated state
-        x = (x_bar + (K @ y)).requires_grad_(True)
+        x = x_bar + (K @ y)
         # updated covariance
-        P = ((identity - (K @ H)) @ P_bar).requires_grad_(True)
+        P = (identity - (K @ H)) @ P_bar
 
         return x, P
 
@@ -140,8 +140,8 @@ def kalman_filter(point_index, measurements, x0, P, F, Q, H, R, num_params):
     outputs = torch.empty((0, 7), requires_grad=True)
 
     for measurement, date_timestamp in measurements:
-        x_prev = states[-1].reshape(num_params, 1).requires_grad_(True)
-        P_prev = covariances[-1].reshape(num_params, num_params).requires_grad_(True)
+        x_prev = states[-1].reshape(num_params, 1)
+        P_prev = covariances[-1].reshape(num_params, num_params)
 
         # Convert timestamp to date and extract the year
         date = pd.to_datetime(date_timestamp, unit="ms")
@@ -150,7 +150,6 @@ def kalman_filter(point_index, measurements, x0, P, F, Q, H, R, num_params):
             (date - pd.to_datetime("2016-01-01")).total_seconds()
             / (365.25 * 24 * 60 * 60),
             dtype=torch.float32,
-            requires_grad=True,
         )
 
         x_bar, P_bar = predict(x_prev, P_prev, F, Q)
@@ -163,16 +162,12 @@ def kalman_filter(point_index, measurements, x0, P, F, Q, H, R, num_params):
             num_params,
         )
 
-        if measurement == 0:
+        if abs(measurement) < 1e-30:
             x = x_prev
             P = P_prev
 
-        states = torch.cat(
-            [states, x.flatten().unsqueeze(0).requires_grad_(True)], dim=0
-        )
-        covariances = torch.cat(
-            [covariances, P.flatten().unsqueeze(0).requires_grad_(True)], dim=0
-        )
+        states = torch.cat([states, x.flatten().unsqueeze(0)], dim=0)
+        covariances = torch.cat([covariances, P.flatten().unsqueeze(0)], dim=0)
 
         intp = x[0]
         cos = x[1]
@@ -180,22 +175,21 @@ def kalman_filter(point_index, measurements, x0, P, F, Q, H, R, num_params):
 
         estimate = (
             intp + cos * torch.cos(t * FREQUENCY) + sin * torch.sin(t * FREQUENCY)
-        ).requires_grad_(True)
+        )
 
         outputs = torch.cat(
             [
                 outputs,
                 torch.tensor(
                     [
-                        point_index,
+                        torch.tensor(point_index, dtype=torch.int),
                         intp,
                         cos,
                         sin,
                         estimate,
-                        measurement,
-                        date_timestamp,
+                        torch.tensor(measurement, dtype=torch.float32),
+                        torch.tensor(date_timestamp, dtype=torch.int64),
                     ],
-                    requires_grad=True,
                 )
                 .flatten()
                 .unsqueeze(0),
@@ -203,11 +197,17 @@ def kalman_filter(point_index, measurements, x0, P, F, Q, H, R, num_params):
             dim=0,
         )
 
-    return states, outputs
+    return states[1:], outputs
 
 
-def main(args, Q, R):
+def main(args, Q1, Q5, Q9, R):
     num_params = 3
+
+    Q = torch.tensor(
+        [[Q1, 0.0, 0.0], [0.0, Q5, 0.0], [0.0, 0.0, Q9]],
+        dtype=torch.float32,
+        requires_grad=True,
+    )
 
     P = torch.reshape(
         torch.tensor(
@@ -225,7 +225,7 @@ def main(args, Q, R):
     )
 
     kalman_init = {
-        "F": torch.eye(num_params, requires_grad=True),
+        "F": torch.eye(num_params),
         "Q": Q,
         "H": H,
         "R": R,
@@ -247,7 +247,6 @@ def main(args, Q, R):
                     "x0": torch.tensor(
                         [[float(x1)], [float(x2)], [float(x3)]],
                         dtype=torch.float32,
-                        requires_grad=True,
                     ),
                 }
             )
@@ -260,10 +259,9 @@ def main(args, Q, R):
     def process_point(kwargs):
         index = kwargs["index"]
 
-        measurements_for_point = all_measurements[
-            all_measurements["point"] == kwargs["index"]
-        ]
-        measurements = measurements_for_point[["swir", "date"]].values.tolist()
+        measurements = all_measurements[all_measurements["point"] == kwargs["index"]][
+            ["swir", "date"]
+        ].values.tolist()
 
         states, outputs = kalman_filter(
             index,
@@ -273,7 +271,7 @@ def main(args, Q, R):
             **kalman_init,
         )
 
-        return states[1:], outputs[1:]
+        return states, outputs
 
     all_results = torch.empty(0, requires_grad=True)
     all_outputs = torch.empty(0, requires_grad=True)
@@ -283,6 +281,7 @@ def main(args, Q, R):
         all_outputs = torch.cat([all_outputs, outputs])
 
     all_outputs_df = pd.DataFrame(all_outputs.detach().numpy(), columns=band_names)
+    all_outputs_df["point"] = all_outputs_df["point"].astype(int)
 
     all_outputs_df.to_csv(args["output"], index=False)
     return all_results

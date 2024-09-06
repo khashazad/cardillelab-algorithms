@@ -682,7 +682,7 @@ def reduce_collection_to_points_and_write_to_file(collection, points, output_fil
                     (
                         feature["properties"]["swir"]
                         if "swir" in feature["properties"]
-                        else float(0)
+                        else 0
                     ),
                     feature["properties"]["millis"],
                 ]

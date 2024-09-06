@@ -19,13 +19,13 @@ import concurrent.futures
 
 VERSION = 1
 
-POINT_SET = 10
-POINTS_COUNT = 1
+POINT_SET = 1
+POINTS_COUNT = 15
 
 graph_flags = {
     "estimate": True,
     "final_2022_fit": False,
-    "final_2023_fit": True,
+    "final_2023_fit": False,
     "intercept_cos_sin": True,
     "residuals": True,
     "amplitude": True,

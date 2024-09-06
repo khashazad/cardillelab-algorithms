@@ -16,6 +16,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch_eeek import main as run_eeek
 import numpy as np
+import json
 
 
 class RunType(Enum):
@@ -23,7 +24,7 @@ class RunType(Enum):
     OPTIMIZATION = "optimization"
 
 
-POINT_SET = 7
+POINT_SET = 1
 RUN_VERSION = 1
 RUN_TYPE = RunType.OPTIMIZATION
 
@@ -63,7 +64,7 @@ class KalmanFilterModel(nn.Module):
             "num_sinusoid_pairs": 1,
         }
 
-        output = run_eeek(args, self.Q, self.R)
+        output = run_eeek(args, self.Q1, self.Q5, self.Q9, self.R)
 
         return output
 
@@ -77,14 +78,12 @@ def loss_function(estimates, true_states):
     return torch.mean((estimates_tensor - true_states_tensor) ** 2)
 
 
-def optimize_parameters(run_directory, q1, q5, q9, r, epochs=500):
+def optimize_parameters(run_directory, q1, q5, q9, r, epochs=1000):
     kf_model = KalmanFilterModel()
 
-    kf_model.Q = nn.Parameter(
-        torch.tensor(
-            [[q1, 0.0, 0.0], [0.0, q5, 0.0], [0.0, 0.0, q9]], requires_grad=True
-        )
-    )
+    kf_model.Q1 = nn.Parameter(torch.tensor(q1, requires_grad=True))
+    kf_model.Q5 = nn.Parameter(torch.tensor(q5, requires_grad=True))
+    kf_model.Q9 = nn.Parameter(torch.tensor(q9, requires_grad=True))
     kf_model.R = nn.Parameter(torch.tensor(r, requires_grad=True))
 
     # # Example optimizer (Adam)
@@ -127,9 +126,16 @@ def optimize_parameters(run_directory, q1, q5, q9, r, epochs=500):
         # )
 
     # After training, check the optimized Q1, Q2, Q3, R
-    print(
-        f"Optimized Q1: {kf_model.Q[0][0].item()}, Q5: {kf_model.Q[1][1].item()}, Q9: {kf_model.Q[2][2].item()}, R: {kf_model.R.item()}"
-    )
+
+    optimized_params = {
+        "Q1": kf_model.Q1.item(),
+        "Q5": kf_model.Q5.item(),
+        "Q9": kf_model.Q9.item(),
+        "R": kf_model.R.item(),
+    }
+
+    with open(f"{run_directory}/optimized_params.json", "w") as json_file:
+        json.dump(optimized_params, json_file, indent=4)
 
 
 if __name__ == "__main__":
@@ -164,14 +170,10 @@ if __name__ == "__main__":
 
         eeek(
             args,
-            torch.tensor(
-                [
-                    [initial_params["q1"], 0, 0],
-                    [0, initial_params["q5"], 0],
-                    [0, 0, initial_params["q9"]],
-                ]
-            ),
-            torch.tensor([initial_params["r"]]),
+            torch.tensor(initial_params["q1"]),
+            torch.tensor(initial_params["q5"]),
+            torch.tensor(initial_params["q9"]),
+            torch.tensor(initial_params["r"]),
         )
     else:
         optimize_parameters(run_directory, **initial_params)
