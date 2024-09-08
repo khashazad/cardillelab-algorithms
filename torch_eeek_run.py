@@ -29,7 +29,7 @@ class RunType(Enum):
 
 POINT_SET = 8
 RUN_TYPE = RunType.OPTIMIZATION
-LOOPS = 200
+LOOPS = 1000
 
 
 param_sets = [
@@ -116,10 +116,10 @@ def optimize_parameters(
 
     optimizer = optim.Adam(
         [
-            {"params": kf_model.Q1, "lr": 0.02},
-            {"params": kf_model.Q5, "lr": 0.02},
-            {"params": kf_model.Q9, "lr": 0.02},
-            {"params": kf_model.R, "lr": 0.01},
+            {"params": kf_model.Q1, "lr": 0.005},
+            {"params": kf_model.Q5, "lr": 0.005},
+            {"params": kf_model.Q9, "lr": 0.005},
+            {"params": kf_model.R, "lr": 0.005},
         ]
     )
 
