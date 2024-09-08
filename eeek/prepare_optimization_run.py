@@ -15,8 +15,6 @@ import csv
 import math
 import pandas as pd
 
-ee.Initialize()
-
 
 def create_points_file(points_filename, coefficients_by_point):
     with open(points_filename, "w", newline="") as file:
@@ -48,6 +46,7 @@ def parse_point_coordinates(point_set_directory_path):
 
 
 def harmonic_trend_coefficients(collection, coords):
+    ee.Initialize()
     modality = {
         "constant": True,
         "linear": False,
@@ -77,6 +76,8 @@ def harmonic_trend_coefficients(collection, coords):
 
 
 def fitted_coefficients_and_dates(points, fitted_coefficiets_filename):
+    ee.Initialize()
+
     def get_dates_from_image_collection(year, coords):
         timestamps = [
             image["properties"]["millis"]

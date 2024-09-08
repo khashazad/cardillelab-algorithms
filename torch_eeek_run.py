@@ -17,6 +17,9 @@ import torch.optim as optim
 from torch_eeek import main as run_eeek
 import numpy as np
 import json
+from utils.charts import generate_charts_comparing_runs
+from pprint import pprint
+import torch.multiprocessing as mp
 
 
 class RunType(Enum):
@@ -24,39 +27,41 @@ class RunType(Enum):
     OPTIMIZATION = "optimization"
 
 
-POINT_SET = 1
-RUN_VERSION = 1
+POINT_SET = 8
 RUN_TYPE = RunType.OPTIMIZATION
+LOOPS = 200
 
 
-initial_params = {"q1": 0.00125, "q5": 0.000125, "q9": 0.000125, "r": 0.003}
-
-graph_flags = {
-    "estimate": True,
-    "final_2022_fit": False,
-    "final_2023_fit": False,
-    "intercept_cos_sin": True,
-    "residuals": True,
-    "amplitude": True,
-}
+param_sets = [
+    {
+        "q1": 0.00125,
+        "q5": 0.000125,
+        "q9": 0.000125,
+        "r": 0.003,
+    },
+    {
+        "q1": 0.00070531606,
+        "q5": 0.00026831817,
+        "q9": 0.00417308787,
+        "r": 0.00124919674,
+    },
+]
 
 root = os.path.dirname(os.path.abspath(__file__))
 
-run_directory = os.path.join(
-    root, "torch runs", f"point set {POINT_SET}", f"v{RUN_VERSION}"
-)
+parent_run_directory = os.path.join(root, "torch runs", f"point set {POINT_SET}")
 
-os.makedirs(run_directory, exist_ok=True)
+os.makedirs(parent_run_directory, exist_ok=True)
 
 
 class KalmanFilterModel(nn.Module):
     def __init__(self):
         super(KalmanFilterModel, self).__init__()
 
-    def forward(self, run_directory):
+    def forward(self, parent_run_directory, run_directory):
         args = {
-            "measurements": f"{run_directory}/measurements.csv",
-            "points": f"{run_directory}/points.csv",
+            "measurements": f"{parent_run_directory}/measurements.csv",
+            "points": f"{parent_run_directory}/points.csv",
             "output": f"{run_directory}/eeek_output.csv",
             "parameters_output": f"{run_directory}/eeek_parameters.csv",
             "include_intercept": True,
@@ -64,34 +69,63 @@ class KalmanFilterModel(nn.Module):
             "num_sinusoid_pairs": 1,
         }
 
-        output = run_eeek(args, self.Q1, self.Q5, self.Q9, self.R)
+        output = run_eeek(
+            args,
+            torch.diag(torch.stack([self.Q1, self.Q5, self.Q9])),
+            self.R,
+        )
 
         return output
 
 
-# Define the loss function to handle a list of tuples (3 values per tuple)
 def loss_function(estimates, true_states):
-    # Convert the list of tuples to a tensor for easier computation
     estimates_tensor = estimates
     true_states_tensor = true_states
 
     return torch.mean((estimates_tensor - true_states_tensor) ** 2)
 
 
-def optimize_parameters(run_directory, q1, q5, q9, r, epochs=1000):
+def optimize_parameters(
+    parent_run_directory, run_directory, q1, q5, q9, r, max_iteration=LOOPS
+):
     kf_model = KalmanFilterModel()
 
-    kf_model.Q1 = nn.Parameter(torch.tensor(q1, requires_grad=True))
-    kf_model.Q5 = nn.Parameter(torch.tensor(q5, requires_grad=True))
-    kf_model.Q9 = nn.Parameter(torch.tensor(q9, requires_grad=True))
+    kf_model.Q1 = nn.Parameter(
+        torch.tensor(
+            q1,
+            dtype=torch.float32,
+            requires_grad=True,
+        )
+    )
+    kf_model.Q5 = nn.Parameter(
+        torch.tensor(
+            q5,
+            dtype=torch.float32,
+            requires_grad=True,
+        )
+    )
+    kf_model.Q9 = nn.Parameter(
+        torch.tensor(
+            q9,
+            dtype=torch.float32,
+            requires_grad=True,
+        )
+    )
+
     kf_model.R = nn.Parameter(torch.tensor(r, requires_grad=True))
 
-    # # Example optimizer (Adam)
-    optimizer = optim.Adam(kf_model.parameters(), lr=0.01)
+    optimizer = optim.Adam(
+        [
+            {"params": kf_model.Q1, "lr": 0.02},
+            {"params": kf_model.Q5, "lr": 0.02},
+            {"params": kf_model.Q9, "lr": 0.02},
+            {"params": kf_model.R, "lr": 0.01},
+        ]
+    )
 
     true_states = torch.tensor(
         np.loadtxt(
-            f"{run_directory}/observations.csv",
+            f"{parent_run_directory}/observations.csv",
             delimiter=",",
             skiprows=1,
             usecols=(2, 3, 4),
@@ -100,11 +134,11 @@ def optimize_parameters(run_directory, q1, q5, q9, r, epochs=1000):
     )
 
     # Training loop
-    for epoch in range(epochs):
+    for iteration in range(max_iteration):
         optimizer.zero_grad()  # Zero the gradients
 
         # Forward pass: get the estimate updates from Kalman filter
-        estimates = kf_model(run_directory)
+        estimates = kf_model(parent_run_directory, run_directory)
 
         # Calculate loss (compare estimates with ground truth)
         loss = loss_function(estimates, true_states)
@@ -112,57 +146,74 @@ def optimize_parameters(run_directory, q1, q5, q9, r, epochs=1000):
         # Backward pass: compute gradients
         loss.backward()
 
-        # print(kf_model.Q1.grad, kf_model.Q5.grad, kf_model.Q9.grad, kf_model.R.grad)
-        # print(kf_model.Q.grad, kf_model.R.grad)
-
-        # Update the parameters (Q and R)
-        optimizer.step()
-
-        # Print the loss for monitoring
-        print(f"Epoch {epoch+1}/{epochs}, Loss: {loss.item()}")
+        # with torch.no_grad():
+        #     p.data = torch.clamp(p.data, min=1e-50)
+        #     kf_model.Q5.data = torch.clamp(kf_model.Q5.data, min=1e-50)
+        #     kf_model.Q9.data = torch.clamp(kf_model.Q9.data, min=1e-50)
+        #     kf_model.R.data = torch.clamp(kf_model.R.data, min=1e-50)
 
         # print(
-        #     f"Q1: {kf_model.Q1.item()}, Q5: {kf_model.Q5.item()}, Q9: {kf_model.Q9.item()}, R: {kf_model.R.item()}"
+        #     f"Gradients: Q1: {kf_model.Q1.grad}, Q5: {kf_model.Q5.grad}, Q9: {kf_model.Q9.grad}, R: {kf_model.R.grad}"
         # )
 
-    # After training, check the optimized Q1, Q2, Q3, R
+        optimizer.step()
+
+        for p in kf_model.parameters():
+            p.data = p.data.clamp(1e-50, 1)
+        # print(f"Epoch {iteration+1}/{max_iteration}, Loss: {loss.item()}")
+
+        if iteration == 0:
+            prev_loss = loss.item()
+            no_change_count = 0
+        else:
+            if abs(prev_loss - loss.item()) < 1e-10:
+                no_change_count += 1
+            else:
+                no_change_count = 0
+
+            prev_loss = loss.item()
+
+            if no_change_count >= 5:
+                print(
+                    f"Early stopping at iteration {iteration+1} due to no significant change in loss."
+                )
+                break
 
     optimized_params = {
-        "Q1": kf_model.Q1.item(),
-        "Q5": kf_model.Q5.item(),
-        "Q9": kf_model.Q9.item(),
-        "R": kf_model.R.item(),
+        "optimized_Q1": kf_model.Q1.item(),
+        "optimized_Q5": kf_model.Q5.item(),
+        "optimized_Q9": kf_model.Q9.item(),
+        "optimized_R": kf_model.R.item(),
+        "final_loss": loss.item(),
     }
 
-    with open(f"{run_directory}/optimized_params.json", "w") as json_file:
-        json.dump(optimized_params, json_file, indent=4)
+    with open(f"{run_directory}/eeek_params.json", "r+") as json_file:
+        try:
+            data = json.load(json_file)
+        except json.JSONDecodeError:
+            data = {}
+        data.update(optimized_params)
+        json_file.seek(0)
+        json.dump(data, json_file, indent=4)
+        json_file.truncate()
 
 
-if __name__ == "__main__":
-    points = parse_point_coordinates(f"{root}/points/sets/{POINT_SET}")
+def run_torch_eeek(parent_run_directory, param_set):
+    run_version = (
+        len([f for f in os.listdir(parent_run_directory) if f.startswith("v")]) + 1
+    )
+    run_directory = os.path.join(parent_run_directory, f"v{run_version}")
+    os.makedirs(run_directory, exist_ok=True)
 
-    if not os.path.exists(f"{run_directory}/measurements.csv"):
-        reduce_collection_to_points_and_write_to_file(
-            COLLECTIONS["L8_L9_2022_2023"], points, f"{run_directory}/measurements.csv"
-        )
-
-    if not os.path.exists(f"{run_directory}/fitted_coefficients.csv"):
-        fitted_coefficiets_by_point = fitted_coefficients_and_dates(
-            points, f"{run_directory}/fitted_coefficients.csv"
-        )
-
-        create_points_file(f"{run_directory}/points.csv", fitted_coefficiets_by_point)
-
-        observations = build_observations(
-            fitted_coefficiets_by_point, f"{run_directory}/observations.csv"
-        )
+    with open(f"{run_directory}/eeek_params.json", "w") as json_file:
+        json.dump(param_set, json_file, indent=4)
 
     if RUN_TYPE == RunType.SINGLE_RUN:
         args = {
-            "measurements": f"{run_directory}/measurements.csv",
-            "points": f"{run_directory}/points.csv",
-            "output": f"{run_directory}/eeek_output.csv",
-            "parameters_output": f"{run_directory}/eeek_parameters.csv",
+            "measurements": f"{parent_run_directory}/measurements.csv",
+            "points": f"{parent_run_directory}/points.csv",
+            "output": f"{parent_run_directory}/eeek_output.csv",
+            "parameters_output": f"{parent_run_directory}/eeek_parameters.csv",
             "include_intercept": True,
             "include_slope": False,
             "num_sinusoid_pairs": 1,
@@ -170,12 +221,56 @@ if __name__ == "__main__":
 
         eeek(
             args,
-            torch.tensor(initial_params["q1"]),
-            torch.tensor(initial_params["q5"]),
-            torch.tensor(initial_params["q9"]),
-            torch.tensor(initial_params["r"]),
+            torch.diag(
+                torch.tensor(
+                    [param_set["q1"], param_set["q5"], param_set["q9"]],
+                    dtype=torch.float32,
+                )
+            ),
+            torch.tensor(param_set["r"]),
         )
     else:
-        optimize_parameters(run_directory, **initial_params)
+        optimize_parameters(parent_run_directory, run_directory, **param_set)
 
-    analyze_results(run_directory, graph_flags)
+    generate_charts_comparing_runs(
+        {"run": f"{run_directory}/eeek_output.csv"},
+        f"{parent_run_directory}/observations.csv",
+        f"{parent_run_directory}/analysis/v{run_version}",
+        {
+            "estimate": True,
+            "final_2022_fit": False,
+            "final_2023_fit": False,
+            "intercept_cos_sin": True,
+            "residuals": True,
+            "amplitude": True,
+        },
+    )
+
+
+def run_torch_eeek_wrapper(param_set):
+    run_torch_eeek(parent_run_directory, param_set)
+
+
+if __name__ == "__main__":
+    if not os.path.exists(f"{parent_run_directory}/measurements.csv"):
+        points = parse_point_coordinates(f"{root}/points/sets/{POINT_SET}")
+        reduce_collection_to_points_and_write_to_file(
+            COLLECTIONS["L8_L9_2022_2023"],
+            points,
+            f"{parent_run_directory}/measurements.csv",
+        )
+        fitted_coefficiets_by_point = fitted_coefficients_and_dates(
+            points, f"{parent_run_directory}/fitted_coefficients.csv"
+        )
+
+        create_points_file(
+            f"{parent_run_directory}/points.csv", fitted_coefficiets_by_point
+        )
+
+        observations = build_observations(
+            fitted_coefficiets_by_point, f"{parent_run_directory}/observations.csv"
+        )
+
+    mp.set_start_method("spawn")
+    with mp.Pool(processes=len(param_sets)) as pool:
+        pool.map(run_torch_eeek_wrapper, param_sets)

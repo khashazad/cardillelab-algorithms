@@ -4,7 +4,6 @@ import multiprocessing as mp
 from pprint import pprint
 import math
 
-NUM_MEASURES = 1  # eeek only supports one band at a time
 
 band_names = [
     "point",
@@ -119,10 +118,10 @@ def kalman_filter(point_index, measurements, x0, P, F, Q, H, R, num_params):
 
         # residual between measurement and prediction
         y = z - (H @ x_bar)
-        # covariance
+        # measurement prediction covariance
         S = ((H @ P_bar) @ H.t()) + R
         S_inv = torch.inverse(S)
-        # Kalman gain: how much the prediction should be corrected by the measurement
+        # Kalman gain: how much the state prediction should be corrected by the measurement
         K = (P_bar @ H.t()) @ S_inv
         # updated state
         x = x_bar + (K @ y)
@@ -200,14 +199,8 @@ def kalman_filter(point_index, measurements, x0, P, F, Q, H, R, num_params):
     return states[1:], outputs
 
 
-def main(args, Q1, Q5, Q9, R):
+def main(args, Q, R):
     num_params = 3
-
-    Q = torch.tensor(
-        [[Q1, 0.0, 0.0], [0.0, Q5, 0.0], [0.0, 0.0, Q9]],
-        dtype=torch.float32,
-        requires_grad=True,
-    )
 
     P = torch.reshape(
         torch.tensor(

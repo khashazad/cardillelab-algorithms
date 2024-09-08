@@ -17,7 +17,7 @@ from pest_eeek import main as run_eeek
 import csv
 import concurrent.futures
 
-VERSION = 1
+VERSION = 2
 
 POINT_SET = 1
 POINTS_COUNT = 15
