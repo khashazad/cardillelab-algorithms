@@ -8,7 +8,6 @@ from eeek.prepare_optimization_run import (
     create_points_file,
 )
 from torch_eeek import main as eeek
-from utils.analysis import analyze_results
 from enum import Enum
 import torch
 import torch
@@ -17,7 +16,7 @@ import torch.optim as optim
 from torch_eeek import main as run_eeek
 import numpy as np
 import json
-from utils.charts import generate_charts_comparing_runs
+from utils.charts import generate_charts_single_run
 from pprint import pprint
 import torch.multiprocessing as mp
 
@@ -27,25 +26,69 @@ class RunType(Enum):
     OPTIMIZATION = "optimization"
 
 
+class ObservationType(Enum):
+    STATE = "state"
+    ESTIMATE = "estimate"
+    ALL = "all"
+
+
 POINT_SET = 8
 RUN_TYPE = RunType.OPTIMIZATION
-LOOPS = 1000
+OBSERVATION_TYPE = ObservationType.ALL
+ITERATIONS = 100
 
 
 param_sets = [
+    # {
+    #     "q1": 0.5,
+    #     "q5": 0.5,
+    #     "q9": 0.5,
+    #     "r": 0.5,
+    #     "p1": 0.5,
+    #     "p5": 0.5,
+    #     "p9": 0.5,
+    # },
     {
         "q1": 0.00125,
         "q5": 0.000125,
         "q9": 0.000125,
         "r": 0.003,
+        "p1": 0.00101,
+        "p5": 0.00222,
+        "p9": 0.00333,
     },
     {
         "q1": 0.00070531606,
         "q5": 0.00026831817,
         "q9": 0.00417308787,
         "r": 0.00124919674,
+        "p1": 0.00101,
+        "p5": 0.00222,
+        "p9": 0.00333,
     },
 ]
+
+parameter_learning_rates = {
+    "q1": {
+        "lr": 0.001,
+        "momentum": 0.9,
+    },
+    "q5": {
+        "lr": 0.001,
+        "momentum": 0.9,
+    },
+    "q9": {
+        "lr": 0.001,
+        "momentum": 0.9,
+    },
+    "r": {
+        "lr": 0.001,
+        "momentum": 0.9,
+    },
+    "p1": None,
+    "p5": None,
+    "p9": None,
+}
 
 root = os.path.dirname(os.path.abspath(__file__))
 
@@ -69,88 +112,136 @@ class KalmanFilterModel(nn.Module):
             "num_sinusoid_pairs": 1,
         }
 
-        output = run_eeek(
+        return run_eeek(
             args,
             torch.diag(torch.stack([self.Q1, self.Q5, self.Q9])),
             self.R,
+            torch.diag(torch.stack([self.P1, self.P5, self.P9])),
         )
 
-        return output
+
+def loss_function(estimates, target):
+    if OBSERVATION_TYPE == ObservationType.ALL:
+        estimates = estimates[:, 1:5]
+    if OBSERVATION_TYPE == ObservationType.ESTIMATE:
+        estimates = estimates[:, 4]
+    if OBSERVATION_TYPE == ObservationType.STATE:
+        estimates = estimates[:, 1:4]
+
+    return torch.mean((estimates - target) ** 2)
 
 
-def loss_function(estimates, true_states):
-    estimates_tensor = estimates
-    true_states_tensor = true_states
-
-    return torch.mean((estimates_tensor - true_states_tensor) ** 2)
-
-
-def optimize_parameters(
-    parent_run_directory, run_directory, q1, q5, q9, r, max_iteration=LOOPS
-):
+def optimize_parameters(parent_run_directory, run_directory, q1, q5, q9, r, p1, p5, p9):
     kf_model = KalmanFilterModel()
 
     kf_model.Q1 = nn.Parameter(
-        torch.tensor(
-            q1,
-            dtype=torch.float32,
-            requires_grad=True,
-        )
+        torch.tensor(q1, dtype=torch.float32, requires_grad=True)
     )
     kf_model.Q5 = nn.Parameter(
-        torch.tensor(
-            q5,
-            dtype=torch.float32,
-            requires_grad=True,
-        )
+        torch.tensor(q5, dtype=torch.float32, requires_grad=True)
     )
     kf_model.Q9 = nn.Parameter(
-        torch.tensor(
-            q9,
-            dtype=torch.float32,
-            requires_grad=True,
-        )
+        torch.tensor(q9, dtype=torch.float32, requires_grad=True)
     )
 
     kf_model.R = nn.Parameter(torch.tensor(r, requires_grad=True))
 
-    optimizer = optim.Adam(
-        [
-            {"params": kf_model.Q1, "lr": 0.005},
-            {"params": kf_model.Q5, "lr": 0.005},
-            {"params": kf_model.Q9, "lr": 0.005},
-            {"params": kf_model.R, "lr": 0.005},
-        ]
-    )
+    kf_model.P1 = nn.Parameter(torch.tensor(p1, requires_grad=True))
+    kf_model.P5 = nn.Parameter(torch.tensor(p5, requires_grad=True))
+    kf_model.P9 = nn.Parameter(torch.tensor(p9, requires_grad=True))
+
+    parameters_to_optimize = []
+
+    if parameter_learning_rates["q1"] is not None:
+        parameters_to_optimize.append(
+            {
+                "params": kf_model.Q1,
+                "lr": parameter_learning_rates["q1"]["lr"],
+                "momentum": parameter_learning_rates["q1"]["momentum"],
+            }
+        )
+    if parameter_learning_rates["q5"] is not None:
+        parameters_to_optimize.append(
+            {
+                "params": kf_model.Q5,
+                "lr": parameter_learning_rates["q5"]["lr"],
+                "momentum": parameter_learning_rates["q5"]["momentum"],
+            }
+        )
+    if parameter_learning_rates["q9"] is not None:
+        parameters_to_optimize.append(
+            {
+                "params": kf_model.Q9,
+                "lr": parameter_learning_rates["q9"]["lr"],
+                "momentum": parameter_learning_rates["q9"]["momentum"],
+            }
+        )
+    if parameter_learning_rates["r"] is not None:
+        parameters_to_optimize.append(
+            {
+                "params": kf_model.R,
+                "lr": parameter_learning_rates["r"]["lr"],
+                "momentum": parameter_learning_rates["r"]["momentum"],
+            }
+        )
+    if parameter_learning_rates["p1"] is not None:
+        parameters_to_optimize.append(
+            {
+                "params": kf_model.P1,
+                "lr": parameter_learning_rates["p1"]["lr"],
+                "momentum": parameter_learning_rates["p1"]["momentum"],
+            }
+        )
+    if parameter_learning_rates["p5"] is not None:
+        parameters_to_optimize.append(
+            {
+                "params": kf_model.P5,
+                "lr": parameter_learning_rates["p5"]["lr"],
+                "momentum": parameter_learning_rates["p5"]["momentum"],
+            }
+        )
+    if parameter_learning_rates["p9"] is not None:
+        parameters_to_optimize.append(
+            {
+                "params": kf_model.P9,
+                "lr": parameter_learning_rates["p9"]["lr"],
+                "momentum": parameter_learning_rates["p9"]["momentum"],
+            }
+        )
+
+    optimizer = optim.Adam(parameters_to_optimize)
+    if OBSERVATION_TYPE == ObservationType.ALL:
+        columns = (2, 3, 4, 5)
+    elif OBSERVATION_TYPE == ObservationType.STATE:
+        columns = (2, 3, 4)
+    elif OBSERVATION_TYPE == ObservationType.ESTIMATE:
+        columns = (5,)
 
     true_states = torch.tensor(
         np.loadtxt(
             f"{parent_run_directory}/observations.csv",
             delimiter=",",
             skiprows=1,
-            usecols=(2, 3, 4),
+            usecols=columns,
         ),
         requires_grad=True,
     )
 
     # Training loop
-    for iteration in range(max_iteration):
+    for iteration in range(ITERATIONS):
         optimizer.zero_grad()  # Zero the gradients
 
         # Forward pass: get the estimate updates from Kalman filter
         estimates = kf_model(parent_run_directory, run_directory)
 
-        # Calculate loss (compare estimates with ground truth)
+        # Calculate loss (compare observations with target)
         loss = loss_function(estimates, true_states)
+
+        if RUN_TYPE == RunType.SINGLE_RUN:
+            break
 
         # Backward pass: compute gradients
         loss.backward()
-
-        # with torch.no_grad():
-        #     p.data = torch.clamp(p.data, min=1e-50)
-        #     kf_model.Q5.data = torch.clamp(kf_model.Q5.data, min=1e-50)
-        #     kf_model.Q9.data = torch.clamp(kf_model.Q9.data, min=1e-50)
-        #     kf_model.R.data = torch.clamp(kf_model.R.data, min=1e-50)
 
         # print(
         #     f"Gradients: Q1: {kf_model.Q1.grad}, Q5: {kf_model.Q5.grad}, Q9: {kf_model.Q9.grad}, R: {kf_model.R.grad}"
@@ -160,6 +251,7 @@ def optimize_parameters(
 
         for p in kf_model.parameters():
             p.data = p.data.clamp(1e-50, 1)
+
         # print(f"Epoch {iteration+1}/{max_iteration}, Loss: {loss.item()}")
 
         if iteration == 0:
@@ -173,7 +265,7 @@ def optimize_parameters(
 
             prev_loss = loss.item()
 
-            if no_change_count >= 5:
+            if no_change_count >= 10:
                 print(
                     f"Early stopping at iteration {iteration+1} due to no significant change in loss."
                 )
@@ -184,6 +276,9 @@ def optimize_parameters(
         "optimized_Q5": kf_model.Q5.item(),
         "optimized_Q9": kf_model.Q9.item(),
         "optimized_R": kf_model.R.item(),
+        "optimized_P1": kf_model.P1.item(),
+        "optimized_P5": kf_model.P5.item(),
+        "optimized_P9": kf_model.P9.item(),
         "final_loss": loss.item(),
     }
 
@@ -208,34 +303,12 @@ def run_torch_eeek(parent_run_directory, param_set):
     with open(f"{run_directory}/eeek_params.json", "w") as json_file:
         json.dump(param_set, json_file, indent=4)
 
-    if RUN_TYPE == RunType.SINGLE_RUN:
-        args = {
-            "measurements": f"{parent_run_directory}/measurements.csv",
-            "points": f"{parent_run_directory}/points.csv",
-            "output": f"{parent_run_directory}/eeek_output.csv",
-            "parameters_output": f"{parent_run_directory}/eeek_parameters.csv",
-            "include_intercept": True,
-            "include_slope": False,
-            "num_sinusoid_pairs": 1,
-        }
+    optimize_parameters(parent_run_directory, run_directory, **param_set)
 
-        eeek(
-            args,
-            torch.diag(
-                torch.tensor(
-                    [param_set["q1"], param_set["q5"], param_set["q9"]],
-                    dtype=torch.float32,
-                )
-            ),
-            torch.tensor(param_set["r"]),
-        )
-    else:
-        optimize_parameters(parent_run_directory, run_directory, **param_set)
-
-    generate_charts_comparing_runs(
-        {"run": f"{run_directory}/eeek_output.csv"},
+    generate_charts_single_run(
+        f"{run_directory}/eeek_output.csv",
         f"{parent_run_directory}/observations.csv",
-        f"{parent_run_directory}/analysis/v{run_version}",
+        f"{run_directory}/analysis",
         {
             "estimate": True,
             "final_2022_fit": False,
