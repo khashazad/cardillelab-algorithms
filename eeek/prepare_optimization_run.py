@@ -1,7 +1,7 @@
 from datetime import datetime
 import os
 from eeek.harmonic_utils import (
-    add_harmonic_bands,
+    add_harmonic_bands_via_modality_dictionary,
     determine_harmonic_independents_via_modality_dictionary,
     fit_harmonic_to_collection,
 )
@@ -59,8 +59,8 @@ def harmonic_trend_coefficients(collection, coords):
         collection.filterBounds(ee.Geometry.Point(coords))
     )
 
-    reduced_image_collection_with_harmonics = add_harmonic_bands(
-        image_collection, modality
+    reduced_image_collection_with_harmonics = (
+        add_harmonic_bands_via_modality_dictionary(image_collection, modality)
     )
 
     harmonic_independent_variables = (

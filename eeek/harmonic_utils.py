@@ -11,11 +11,12 @@ def get_rmse_and_r2(linear_trend, image_collection, independents, dependent):
     s_squared = rss.divide(dof)
     y_variance = image_collection.select(dependent).reduce(ee.Reducer.sampleVariance())
     r_square_adj = ee.Image(1).subtract(s_squared.divide(y_variance))
-    the_ret = {}
-    the_ret["the_residuals"] = rmsr
-    the_ret["the_rmse"] = rmsr
-    the_ret["the_r2"] = r_square_adj
-    return the_ret
+
+    return {
+        "the_residuals": rmsr,
+        "the_rmse": rmsr,
+        "the_r2": r_square_adj,
+    }
 
 
 def fit_harmonic_to_collection(harmonic_ic, tracked_band, harmonic_independents):
@@ -30,7 +31,7 @@ def fit_harmonic_to_collection(harmonic_ic, tracked_band, harmonic_independents)
         .arrayProject([0])
         .arrayFlatten([harmonic_independents])
     )
-    myrmsr = harmonic_trend.select("residuals")
+
     rmse_and_r2 = get_rmse_and_r2(
         harmonic_trend, harmonic_ic, harmonic_independents, tracked_band
     )
@@ -60,7 +61,7 @@ def apply_harmonic_to_collection(
     return fitted_harmonic
 
 
-def add_harmonic_bands(image_collection, modality_dictionary):
+def add_harmonic_bands_via_modality_dictionary(image_collection, modality_dictionary):
     vm = modality_dictionary  # for convenience of typing
     if (
         vm["bimodal"]
@@ -81,9 +82,7 @@ def add_harmonic_bands(image_collection, modality_dictionary):
             )
         if vm["unimodal"]:
             var_args_harmonic_bands = {}
-            var_args_harmonic_bands["time_band_name"] = args[
-                "time_band_name"
-            ]
+            var_args_harmonic_bands["time_band_name"] = args["time_band_name"]
             var_args_harmonic_bands["non_standard_period_boolean"] = False
             var_args_harmonic_bands["cos_name"] = "cos"
             var_args_harmonic_bands["sin_name"] = "sin"
@@ -93,9 +92,7 @@ def add_harmonic_bands(image_collection, modality_dictionary):
             )
         if vm["bimodal"]:
             var_args_harmonic_bands = {}
-            var_args_harmonic_bands["time_band_name"] = args[
-                "time_band_name"
-            ]
+            var_args_harmonic_bands["time_band_name"] = args["time_band_name"]
             var_args_harmonic_bands["non_standard_period_boolean"] = True
             var_args_harmonic_bands["non_standard_period_value"] = 1
             var_args_harmonic_bands["cos_name"] = "cos2"
@@ -106,9 +103,7 @@ def add_harmonic_bands(image_collection, modality_dictionary):
             )
         if vm["trimodal"]:
             var_args_harmonic_bands = {}
-            var_args_harmonic_bands["time_band_name"] = args[
-                "time_band_name"
-            ]
+            var_args_harmonic_bands["time_band_name"] = args["time_band_name"]
             var_args_harmonic_bands["non_standard_period_boolean"] = True
             var_args_harmonic_bands["non_standard_period_value"] = 0.667
             var_args_harmonic_bands["cos_name"] = "cos3"

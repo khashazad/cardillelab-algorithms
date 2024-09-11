@@ -3,8 +3,37 @@ import pandas as pd
 import csv
 from pprint import pprint
 
-# Initialize the Earth Engine library.
-ee.Initialize()
+
+def check_for_sar(collecting_params):
+    """Check if the data sources include any SAR datasets."""
+    sar_present = False
+    # Check for specific SAR dataset presence in the parameters
+    if collecting_params["dataset_selection"].get("S1", False):  # Sentinel-1
+        sar_present = True
+    if collecting_params["dataset_selection"].get("AL", False):  # ALOS PALSAR
+        sar_present = True
+    if collecting_params["dataset_selection"].get("NI", False):  # NISAR
+        sar_present = True
+
+    return sar_present
+
+
+def check_for_optical(collecting_params):
+    """Check if the data sources include any optical datasets."""
+    optical_present = False
+    # Check for specific optical dataset presence in the parameters
+    if collecting_params["dataset_selection"].get("L7", False):  # Landsat 7
+        optical_present = True
+    if collecting_params["dataset_selection"].get("L8", False):  # Landsat 8
+        optical_present = True
+    if collecting_params["dataset_selection"].get("L9", False):  # Landsat 9
+        optical_present = True
+    if collecting_params["dataset_selection"].get("MO", False):  # MODIS
+        optical_present = True
+    if collecting_params["dataset_selection"].get("S2", False):  # Sentinel-2
+        optical_present = True
+
+    return optical_present
 
 
 # Function to mask pixels with low CS+ QA scores.
@@ -131,20 +160,13 @@ def check_for_optical(collecting_params):
 
 # Gather collections and reduce function
 def gather_collections_and_reduce(gather_collections_args):
-    verbose = gather_collections_args["verbose"]
-
-    if verbose:
-        print("VERBOSE!")
-        print(
-            "Arguments inside afn_gather_collections_and_reduce",
-            gather_collections_args,
-        )
-
     dataset_selection = gather_collections_args["dataset_selection"]
     default_study_area = gather_collections_args["default_study_area"]
     day_step_size = gather_collections_args["day_step_size"]
     band_name_reduction = gather_collections_args["band_name_reduction"]
     which_reduction = gather_collections_args["which_reduction"]
+
+    print(band_name_reduction)
 
     which_years = []
     group_start_doy = 365
@@ -250,11 +272,6 @@ def gather_collections_and_reduce(gather_collections_args):
         ).linkCollection(cs_plus, cs_plus_bands)
 
     which_years = sorted(set(which_years))
-
-    if verbose:
-        print("Verbose which_years before bubble_sort", which_years)
-        print("Verbose Minimum Start DOY among collections", group_start_doy)
-        print("Maximum End DOY among collections", group_end_doy)
 
     def afn_get_germane_values_for_a_given_period_all_sensors(
         get_germane_values_parameters,

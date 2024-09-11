@@ -2,7 +2,7 @@ import ee.geometry, ee
 import pandas as pd
 from eeek.image_collections import COLLECTIONS
 from eeek.harmonic_utils import (
-    add_harmonic_bands,
+    add_harmonic_bands_via_modality_dictionary,
     fit_harmonic_to_collection,
     determine_harmonic_independents_via_modality_dictionary,
 )
@@ -41,7 +41,13 @@ parser.add_argument(
 args = parser.parse_args()
 INITIAL_PARAMS_VERSION = args.initial_params
 
-OBSERVATIONS_FLAGS = {"intercept": True, "cos": False, "sin": False, "estimate": False, "amplitude": True}
+OBSERVATIONS_FLAGS = {
+    "intercept": True,
+    "cos": False,
+    "sin": False,
+    "estimate": False,
+    "amplitude": True,
+}
 
 parameters = f"{script_directory}/pest configuration/default - initial {INITIAL_PARAMS_VERSION}.json"
 pest_run_directory = f"{script_directory}/pest runs/set {POINT_SET} - {POINTS_COUNT} points/IA - initial params {INITIAL_PARAMS_VERSION}/"
@@ -103,7 +109,9 @@ def build_observations(coefficients_by_point, output_filename):
 
     with open(output_filename, "w", newline="") as file:
         csv_writer = csv.writer(file)
-        csv_writer.writerow(["point", "date", "intercept", "cos", "sin", "estimate", "amplitude"])
+        csv_writer.writerow(
+            ["point", "date", "intercept", "cos", "sin", "estimate", "amplitude"]
+        )
         for index, dic in enumerate(coefficients_by_point):
             observation_index = 1
 
@@ -130,7 +138,9 @@ def build_observations(coefficients_by_point, output_filename):
                     observations.append(
                         (f"amplitude_{int(index)}_{observation_index}", amplitude)
                     )
-                    csv_writer.writerow([index, date, intercept, cos, sin, estimate, amplitude])
+                    csv_writer.writerow(
+                        [index, date, intercept, cos, sin, estimate, amplitude]
+                    )
                     observation_index += 1
 
             coefficients_2022 = dic["2022"]
@@ -266,8 +276,8 @@ def harmonic_trend_coefficients(collection, coords):
         collection.filterBounds(ee.Geometry.Point(coords))
     )
 
-    reduced_image_collection_with_harmonics = add_harmonic_bands(
-        image_collection, modality
+    reduced_image_collection_with_harmonics = (
+        add_harmonic_bands_via_modality_dictionary(image_collection, modality)
     )
 
     harmonic_independent_variables = (
@@ -363,7 +373,13 @@ if __name__ == "__main__":
     create_control_file(
         read_json(parameters),
         control_filename,
-        int(len(observations) * (len([flag for flag in OBSERVATIONS_FLAGS.values() if flag]) / len(OBSERVATIONS_FLAGS.values()))),
+        int(
+            len(observations)
+            * (
+                len([flag for flag in OBSERVATIONS_FLAGS.values() if flag])
+                / len(OBSERVATIONS_FLAGS.values())
+            )
+        ),
     )
     append_observations_to_control_file(
         observations, control_filename, OBSERVATIONS_FLAGS
