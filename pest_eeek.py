@@ -134,7 +134,7 @@ def main(args):
             "num_params": num_params,
         }
 
-        with open('eeek_params.json', 'w') as f:
+        with open("eeek_params.json", "w") as f:
             json.dump(parameters, f, indent=4)
 
     #################################################
@@ -164,21 +164,16 @@ def main(args):
 
         coords = (float(kwargs["longitude"]), float(kwargs["latitude"]))
 
-        col = (
-            COLLECTIONS[args["collection"]]
-            .filterBounds(ee.Geometry.Point(coords))
-        )
+        col = COLLECTIONS[args["collection"]].filterBounds(ee.Geometry.Point(coords))
 
-        x0 = np.array(kwargs["x0"]).reshape(
-            num_params, NUM_MEASURES
-        )
+        x0 = np.array(kwargs["x0"]).reshape(num_params, NUM_MEASURES)
 
         x0 = ee.Image(ee.Array(x0.tolist())).rename("x")
 
         # print number of images in collection
         # print(col.size().getInfo())
 
-        kalman_init["init_image"] = ee.Image.cat([P , x0])
+        kalman_init["init_image"] = ee.Image.cat([P, x0])
         kalman_init["point_coords"] = coords
 
         kalman_result = kalman_filter.kalman_filter(col, **kalman_init)
@@ -220,10 +215,11 @@ def main(args):
     # last_row = all_results.iloc[-1]
     # new_df = pd.DataFrame([last_row])
     # new_df.to_csv(args.output, index=False)
-    
+
     # delete intermediate files
     for f in all_output_files:
         os.remove(f)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(

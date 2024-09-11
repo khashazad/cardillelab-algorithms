@@ -32,22 +32,14 @@ class ObservationType(Enum):
     ALL = "all"
 
 
-POINT_SET = 8
-RUN_TYPE = RunType.OPTIMIZATION
+POINT_SET = 10
+RUN_TYPE = RunType.SINGLE_RUN
 OBSERVATION_TYPE = ObservationType.ALL
 ITERATIONS = 100
+CONDITIONAL_Q = True
 
 
 param_sets = [
-    # {
-    #     "q1": 0.5,
-    #     "q5": 0.5,
-    #     "q9": 0.5,
-    #     "r": 0.5,
-    #     "p1": 0.5,
-    #     "p5": 0.5,
-    #     "p9": 0.5,
-    # },
     {
         "q1": 0.00125,
         "q5": 0.000125,
@@ -56,6 +48,8 @@ param_sets = [
         "p1": 0.00101,
         "p5": 0.00222,
         "p9": 0.00333,
+        "adaptive_threshold": 0.1,
+        "adaptive_scale_factor": 10.0,
     },
     {
         "q1": 0.00070531606,
@@ -65,29 +59,48 @@ param_sets = [
         "p1": 0.00101,
         "p5": 0.00222,
         "p9": 0.00333,
+        "adaptive_threshold": 0.1,
+        "adaptive_scale_factor": 10.0,
     },
 ]
 
 parameter_learning_rates = {
     "q1": {
         "lr": 0.001,
-        "momentum": 0.9,
+        "momentum": 0.85,
     },
     "q5": {
         "lr": 0.001,
-        "momentum": 0.9,
+        "momentum": 0.85,
     },
     "q9": {
         "lr": 0.001,
-        "momentum": 0.9,
+        "momentum": 0.85,
     },
     "r": {
         "lr": 0.001,
         "momentum": 0.9,
     },
-    "p1": None,
-    "p5": None,
-    "p9": None,
+    "p1": {
+        "lr": 0.001,
+        "momentum": 0.9,
+    },
+    "p5": {
+        "lr": 0.001,
+        "momentum": 0.9,
+    },
+    "p9": {
+        "lr": 0.001,
+        "momentum": 0.9,
+    },
+    "adaptive_threshold": {
+        "lr": 0.001,
+        "momentum": 0.9,
+    },
+    "adaptive_scale_factor": {
+        "lr": 0.001,
+        "momentum": 0.9,
+    },
 }
 
 root = os.path.dirname(os.path.abspath(__file__))
@@ -95,6 +108,90 @@ root = os.path.dirname(os.path.abspath(__file__))
 parent_run_directory = os.path.join(root, "torch runs", f"point set {POINT_SET}")
 
 os.makedirs(parent_run_directory, exist_ok=True)
+
+
+
+def get_paramters_to_optimize(model):
+    parameters_to_optimize = []
+
+    if parameter_learning_rates["q1"] is not None:
+        parameters_to_optimize.append(
+            {
+                "params": model.Q1,
+                "lr": parameter_learning_rates["q1"]["lr"],
+                "momentum": parameter_learning_rates["q1"]["momentum"],
+            }
+        )
+    if parameter_learning_rates["q5"] is not None:
+        parameters_to_optimize.append(
+            {
+                "params": model.Q5,
+                "lr": parameter_learning_rates["q5"]["lr"],
+                "momentum": parameter_learning_rates["q5"]["momentum"],
+            }
+        )
+    if parameter_learning_rates["q9"] is not None:
+        parameters_to_optimize.append(
+            {
+                "params": model.Q9,
+                "lr": parameter_learning_rates["q9"]["lr"],
+                "momentum": parameter_learning_rates["q9"]["momentum"],
+            }
+        )
+    if parameter_learning_rates["r"] is not None:
+        parameters_to_optimize.append(
+            {
+                "params": model.R,
+                "lr": parameter_learning_rates["r"]["lr"],
+                "momentum": parameter_learning_rates["r"]["momentum"],
+            }
+        )
+    if parameter_learning_rates["p1"] is not None:
+        parameters_to_optimize.append(
+            {
+                "params": model.P1,
+                "lr": parameter_learning_rates["p1"]["lr"],
+                "momentum": parameter_learning_rates["p1"]["momentum"],
+            }
+        )
+    if parameter_learning_rates["p5"] is not None:
+        parameters_to_optimize.append(
+            {
+                "params": model.P5,
+                "lr": parameter_learning_rates["p5"]["lr"],
+                "momentum": parameter_learning_rates["p5"]["momentum"],
+            }
+        )
+    if parameter_learning_rates["p9"] is not None:
+        parameters_to_optimize.append(
+            {
+                "params": model.P9,
+                "lr": parameter_learning_rates["p9"]["lr"],
+                "momentum": parameter_learning_rates["p9"]["momentum"],
+            }
+        )
+
+    if parameter_learning_rates["adaptive_threshold"] is not None:
+        parameters_to_optimize.append(
+            {
+                "params": model.adaptive_threshold,
+                "lr": parameter_learning_rates["adaptive_threshold"]["lr"],
+                "momentum": parameter_learning_rates["adaptive_threshold"]["momentum"],
+            }
+        )
+
+    if parameter_learning_rates["adaptive_scale_factor"] is not None:
+        parameters_to_optimize.append(
+            {
+                "params": model.adaptive_scale_factor,
+                "lr": parameter_learning_rates["adaptive_scale_factor"]["lr"],
+                "momentum": parameter_learning_rates["adaptive_scale_factor"][
+                    "momentum"
+                ],
+            }
+        )
+
+    return parameters_to_optimize
 
 
 class KalmanFilterModel(nn.Module):
@@ -117,6 +214,10 @@ class KalmanFilterModel(nn.Module):
             torch.diag(torch.stack([self.Q1, self.Q5, self.Q9])),
             self.R,
             torch.diag(torch.stack([self.P1, self.P5, self.P9])),
+            None,
+            None,
+            # self.adaptive_threshold,
+            # self.adaptive_scale_factor,
         )
 
 
@@ -131,7 +232,19 @@ def loss_function(estimates, target):
     return torch.mean((estimates - target) ** 2)
 
 
-def optimize_parameters(parent_run_directory, run_directory, q1, q5, q9, r, p1, p5, p9):
+def optimize_parameters(
+    parent_run_directory,
+    run_directory,
+    q1,
+    q5,
+    q9,
+    r,
+    p1,
+    p5,
+    p9,
+    adaptive_threshold,
+    adaptive_scale_factor,
+):
     kf_model = KalmanFilterModel()
 
     kf_model.Q1 = nn.Parameter(
@@ -150,66 +263,16 @@ def optimize_parameters(parent_run_directory, run_directory, q1, q5, q9, r, p1, 
     kf_model.P5 = nn.Parameter(torch.tensor(p5, requires_grad=True))
     kf_model.P9 = nn.Parameter(torch.tensor(p9, requires_grad=True))
 
-    parameters_to_optimize = []
-
-    if parameter_learning_rates["q1"] is not None:
-        parameters_to_optimize.append(
-            {
-                "params": kf_model.Q1,
-                "lr": parameter_learning_rates["q1"]["lr"],
-                "momentum": parameter_learning_rates["q1"]["momentum"],
-            }
+    if CONDITIONAL_Q:
+        kf_model.adaptive_threshold = nn.Parameter(
+            torch.tensor(adaptive_threshold, requires_grad=True)
         )
-    if parameter_learning_rates["q5"] is not None:
-        parameters_to_optimize.append(
-            {
-                "params": kf_model.Q5,
-                "lr": parameter_learning_rates["q5"]["lr"],
-                "momentum": parameter_learning_rates["q5"]["momentum"],
-            }
-        )
-    if parameter_learning_rates["q9"] is not None:
-        parameters_to_optimize.append(
-            {
-                "params": kf_model.Q9,
-                "lr": parameter_learning_rates["q9"]["lr"],
-                "momentum": parameter_learning_rates["q9"]["momentum"],
-            }
-        )
-    if parameter_learning_rates["r"] is not None:
-        parameters_to_optimize.append(
-            {
-                "params": kf_model.R,
-                "lr": parameter_learning_rates["r"]["lr"],
-                "momentum": parameter_learning_rates["r"]["momentum"],
-            }
-        )
-    if parameter_learning_rates["p1"] is not None:
-        parameters_to_optimize.append(
-            {
-                "params": kf_model.P1,
-                "lr": parameter_learning_rates["p1"]["lr"],
-                "momentum": parameter_learning_rates["p1"]["momentum"],
-            }
-        )
-    if parameter_learning_rates["p5"] is not None:
-        parameters_to_optimize.append(
-            {
-                "params": kf_model.P5,
-                "lr": parameter_learning_rates["p5"]["lr"],
-                "momentum": parameter_learning_rates["p5"]["momentum"],
-            }
-        )
-    if parameter_learning_rates["p9"] is not None:
-        parameters_to_optimize.append(
-            {
-                "params": kf_model.P9,
-                "lr": parameter_learning_rates["p9"]["lr"],
-                "momentum": parameter_learning_rates["p9"]["momentum"],
-            }
+        kf_model.adaptive_scale_factor = nn.Parameter(
+            torch.tensor(adaptive_scale_factor, requires_grad=True)
         )
 
-    optimizer = optim.Adam(parameters_to_optimize)
+    optimizer = optim.Adam(get_paramters_to_optimize(kf_model))
+
     if OBSERVATION_TYPE == ObservationType.ALL:
         columns = (2, 3, 4, 5)
     elif OBSERVATION_TYPE == ObservationType.STATE:
@@ -250,7 +313,8 @@ def optimize_parameters(parent_run_directory, run_directory, q1, q5, q9, r, p1, 
         optimizer.step()
 
         for p in kf_model.parameters():
-            p.data = p.data.clamp(1e-50, 1)
+            if p in [kf_model.Q1, kf_model.Q5, kf_model.Q9, kf_model.R]:
+                p.data = p.data.clamp(1e-50, 1)
 
         # print(f"Epoch {iteration+1}/{max_iteration}, Loss: {loss.item()}")
 
@@ -279,6 +343,8 @@ def optimize_parameters(parent_run_directory, run_directory, q1, q5, q9, r, p1, 
         "optimized_P1": kf_model.P1.item(),
         "optimized_P5": kf_model.P5.item(),
         "optimized_P9": kf_model.P9.item(),
+        "optimized_adaptive_threshold": kf_model.adaptive_threshold.item(),
+        "optimized_adaptive_scale_factor": kf_model.adaptive_scale_factor.item(),
         "final_loss": loss.item(),
     }
 

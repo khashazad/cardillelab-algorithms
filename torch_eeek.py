@@ -64,7 +64,19 @@ def sinusoidal(num_sinusoid_pairs, include_slope=True, include_intercept=True):
     return sinusoidal_function
 
 
-def kalman_filter(point_index, measurements, x0, P, F, Q, H, R, num_params):
+def kalman_filter(
+    point_index,
+    measurements,
+    x0,
+    adaptive_threshold,
+    adaptive_scale_factor,
+    P,
+    F,
+    Q,
+    H,
+    R,
+    num_params,
+):
     """Applies a Kalman Filter to the given data.
 
     Args:
@@ -151,7 +163,15 @@ def kalman_filter(point_index, measurements, x0, P, F, Q, H, R, num_params):
             dtype=torch.float32,
         )
 
-        x_bar, P_bar = predict(x_prev, P_prev, F, Q)
+        if adaptive_threshold and adaptive_scale_factor:
+            estimate_diff = measurement - (H(t) @ x_prev)
+            Q_adapted = adaptive_process_noise(
+                Q, estimate_diff, adaptive_threshold, adaptive_scale_factor
+            )
+        else:
+            Q_adapted = Q
+
+        x_bar, P_bar = predict(x_prev, P_prev, F, Q_adapted)
         x, P = update(
             x_bar,
             P_bar,
@@ -199,7 +219,7 @@ def kalman_filter(point_index, measurements, x0, P, F, Q, H, R, num_params):
     return results
 
 
-def main(args, Q, R, P):
+def main(args, Q, R, P, adaptive_threshold=None, adaptive_scale_factor=None):
     num_params = 3
 
     H = sinusoidal(
@@ -224,7 +244,7 @@ def main(args, Q, R, P):
         for i, line in enumerate(f.readlines()):
             lon, lat, x1, x2, x3 = line.split(",")
             points.append(
-                {
+            {
                     "index": i,
                     "longitude": float(lon),
                     "latitude": float(lat),
@@ -251,6 +271,8 @@ def main(args, Q, R, P):
             index,
             measurements,
             kwargs["x0"],
+            adaptive_threshold,
+            adaptive_scale_factor,
             P,
             **kalman_init,
         )
@@ -266,3 +288,17 @@ def main(args, Q, R, P):
     outputs_df.to_csv(args["output"], index=False)
 
     return all_results
+
+
+def adaptive_process_noise(Q_initial, estimate_diff, threshold=0.1, scale_factor=10):
+    # Compute the norm of the estimate difference to quantify the change
+    diff_norm = torch.norm(estimate_diff)
+
+    if diff_norm < threshold:
+        # Reduce Q when changes are small (stabilize coefficients)
+        Q_adapted = Q_initial / scale_factor
+    else:
+        # Increase Q when changes are significant (allow adaptation)
+        Q_adapted = Q_initial * scale_factor
+
+    return Q_adapted
