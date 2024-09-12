@@ -138,11 +138,13 @@ def organize_bulcd_inputs(var_args):
 
     expectation_period_standard_deviation = ee.Image(
         summarize_image_collection_simple(
-            expectation_collection,
+            expectation_residuals,
             summarization_method="StdDev",
-            band_name=band_name_to_fit,
+            band_name="expectation_difference_optical",
         )
     )
+
+    print(expectation_period_standard_deviation.getInfo())
 
     # Applying model to target collection
     target_collection = add_harmonic_bands_via_modality_dictionary(
@@ -181,7 +183,7 @@ def organize_bulcd_inputs(var_args):
     )
 
     if band_name_to_fit == "swir":
-        target_lack_of_fit_as_z_score = target_collection_lack_of_fit.multiply(-1)
+        target_lack_of_fit_as_z_score = target_lack_of_fit_as_z_score.multiply(-1)
 
     organized_bulcd_stream = {
         "expectation_collection": expectation_collection,
@@ -189,6 +191,8 @@ def organize_bulcd_inputs(var_args):
         "a_coefficient_set_expectation_year": a_coefficient_set_expectation_year,
         "the_expectation_r2": the_expectation_r2,
         "expectation_collection_fit": expectation_collection_fit,
+        "expectation_residuals": expectation_residuals,
+        "expectation_period_standard_deviation": expectation_period_standard_deviation,
         "target_collection": target_collection,
         "target_collection_fit": target_collection_fit,
         "target_residuals": target_residuals,

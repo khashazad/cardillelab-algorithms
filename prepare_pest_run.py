@@ -1,7 +1,7 @@
 import ee.geometry, ee
 import pandas as pd
 from eeek.image_collections import COLLECTIONS
-from eeek.utils.harmonic import (
+from eeek.harmonic_utils import (
     add_harmonic_bands_via_modality_dictionary,
     fit_harmonic_to_collection,
     determine_harmonic_independents_via_modality_dictionary,

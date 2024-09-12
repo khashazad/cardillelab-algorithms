@@ -22,7 +22,7 @@ dataset_selection = {
 # Define reduction method and band name
 which_reduction = "SWIR"
 band_name = "swir"
-day_step_size = 3
+day_step_size = 4
 
 # Expectation collection parameters
 expectation_collection_parameters = {
@@ -157,7 +157,7 @@ bulcd_params = {
         "constant": True,
         "linear": False,
         "trimodal": False,
-        "unimodal": False,
+        "unimodal": True,
     },
     "default_study_area": default_study_area,
     "expectation_collection_parameters": expectation_collection_parameters,

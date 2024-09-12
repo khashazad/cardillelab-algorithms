@@ -2,11 +2,17 @@ import ee
 
 ee.Initialize(opt_url=ee.data.HIGH_VOLUME_API_BASE_URL)
 
+from eeek import utils
 from eeek.bulc_d import run_bulc_d_algorithm
 from eeek.organize_bulcd_inputs import organize_bulcd_inputs
 from eeek.bulcd_params import bulcd_params
 from eeek.bulc_params import get_bulc_parameter_dictionary
 from pprint import pprint
+
+coords = (-122.48489, 45.079215)
+point = ee.Geometry.Point(coords)
+
+geometries = ee.FeatureCollection(ee.List([ee.Feature(point)]))
 
 
 def run_bulcd():
@@ -20,7 +26,30 @@ def run_bulcd():
     ]
     bulc_d_input["bulc_params"] = get_bulc_parameter_dictionary()
 
-    run_bulc_d_algorithm(bulc_d_input)
+    output = run_bulc_d_algorithm(bulc_d_input)
+    # image = output["target_lack_of_fit_as_z_score"].clip(point)
+    # image = output["final_bulc_probs"].clip(point)
+
+    # for title, data in organized_inputs.items():
+    #     print(f"\n\n")
+    #     try:
+    #         request = utils.build_request(coords)
+    #         request["expression"] = data
+    #         result = utils.compute_pixels_wrapper(request)
+
+    #         pprint(f"{title}: {result.tolist()}")
+    #     except Exception as e:
+    #         # print(e)
+    #         try:
+    #             request = utils.build_request(coords)
+    #             request["expression"] = data.mosaic()
+    #             result = utils.compute_pixels_wrapper(request)
+    #             pprint(f"{title}: {result}")
+    #         except Exception as e:
+    #             try:
+    #                 pprint(f"{title}: {data.getInfo()}")
+    #             except Exception as e:
+    #                 continue
 
 
 if __name__ == "__main__":

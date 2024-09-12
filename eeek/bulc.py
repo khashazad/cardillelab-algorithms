@@ -3,6 +3,7 @@
 import ee
 import numpy as np
 from scipy.integrate import quad
+from pprint import pprint
 
 from eeek import constants, utils
 from eeek.array_operations import dampen_truth_and_add_dummy_row11
@@ -307,7 +308,6 @@ def build_comparison_layer(cciidd):
         "initialization_approach_parameter1"
     )
     first_comparison_image = cciidd.get("first_comparison_image")
-    default_study_area = cciidd.get("default_study_area")
 
     # Develop the comparison layer if needed
     if (
@@ -315,27 +315,11 @@ def build_comparison_layer(cciidd):
     ):  # Custom-passed matrix, no comparison layer needed
         comparison_layer = ee.Image(-1).rename(comparison_layer_label)
 
-    elif (
-        transition_creation_method == "D"
-    ):  # Identity matrix, no comparison layer needed
-        comparison_layer = ee.Image(-1).rename(comparison_layer_label)
-
     elif transition_creation_method == "V":  # Overlay approach
         if initialization_approach == "F":  # First run image
             comparison_layer = ee.Image(first_comparison_image).rename(
                 [comparison_layer_label]
             )
-            # Optionally clip the comparison layer if needed
-            # comparison_layer = comparison_layer.clip(default_study_area)
-
-        elif initialization_approach == "A":  # Read from asset
-            # Import comparison layer from an earlier iteration
-            # comparison_layer = afn_import_multiband_asset_from_earlier_iteration(initialization_approach_parameter1, [comparison_layer_label])
-            pass
-        elif initialization_approach == "S":  # Sequential input from the same run
-            # Extract the comparison layer from an earlier step in the same run
-            # comparison_layer = extract_named_slot(notImplementedYet, comparison_layer_label)
-            pass
 
     return comparison_layer
 
@@ -628,13 +612,6 @@ def bulc(args):
     )
     record_final_class = bulc_args.get("record_final_class")
 
-    list_of_event_classes_from_0 = ee.List.sequence(0, max_class_in_event_images)
-    list_of_tracked_classes_from_1 = ee.List.sequence(1, number_of_classes_to_track)
-
-    class_name_list = list_of_tracked_classes_from_1.map(
-        lambda x: ee.String("probability_array").cat(ee.String(ee.Number(x).int()))
-    )
-
     total_image_counter_label = (
         "total_image_counter"  # Increases anytime a new image is processed
     )
@@ -642,7 +619,6 @@ def bulc(args):
     bulc_confidence_label = "BULC_confidence"
     bulc_layer_label = "BULC_classification"
 
-    class_name_list = []
     probs_selector = "prob_cls"
     probs_label = "probability_array"
 
@@ -652,6 +628,13 @@ def bulc(args):
     event_label = "event"
 
     global_counter_property_name = "number_of_images_so_far"
+
+    list_of_event_classes_from_0 = ee.List.sequence(0, max_class_in_event_images)
+    list_of_tracked_classes_from_1 = ee.List.sequence(1, number_of_classes_to_track)
+
+    class_name_list = list_of_tracked_classes_from_1.map(
+        lambda x: ee.String(probs_selector).cat(ee.String(ee.Number(x).int()))
+    )
 
     # Create an initialization dictionary for the iterate package
     iidd = {

@@ -4,6 +4,7 @@ from eeek.image_compression_expansion import (
 )
 from eeek.binning import get_one_z_bin
 from eeek.bulc import bulc
+from pprint import pprint
 
 
 def run_bulc_d_algorithm(args):
@@ -20,7 +21,7 @@ def run_bulc_d_algorithm(args):
         "events_as_image_collection", events_as_image_collection
     )
 
-    bulc_params["bulc_arugments"] = bulc_params["bulc_arguments"].set(
+    bulc_params["bulc_arguments"] = ee.Dictionary(bulc_params["bulc_arguments"]).set(
         "default_study_area", args["default_study_area"]
     )
 
@@ -35,4 +36,6 @@ def run_bulc_d_algorithm(args):
         "all_probability_layers": bulc_output["all_probability_layers"],
         "final_bulc_probs": bulc_output["final_bulc_probs"],
         "multi_band_bulc_return": bulc_output["multi_band_bulc_return"],
+        "target_lack_of_fit_as_z_score": args["target_lack_of_fit_as_z_score"],
+        "events_as_image_collection": events_as_image_collection,
     }
