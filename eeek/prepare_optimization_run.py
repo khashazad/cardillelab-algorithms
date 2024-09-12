@@ -1,6 +1,6 @@
 from datetime import datetime
 import os
-from eeek.harmonic_utils import (
+from eeek.harmonic_utils import (# type: ignore
     add_harmonic_bands_via_modality_dictionary,
     determine_harmonic_independents_via_modality_dictionary,
     fit_harmonic_to_collection,

@@ -166,8 +166,6 @@ def gather_collections_and_reduce(gather_collections_args):
     band_name_reduction = gather_collections_args["band_name_reduction"]
     which_reduction = gather_collections_args["which_reduction"]
 
-    print(band_name_reduction)
-
     which_years = []
     group_start_doy = 365
     group_end_doy = 1

@@ -6,7 +6,7 @@ import math
 from eeek.image_collections import COLLECTIONS
 from utils.charts import generate_charts_comparing_runs
 from utils.filesystem import delete_existing_directory_and_create_new, read_file
-from eeek.harmonic_utils import (
+from eeek.utils.harmonic import (
     add_harmonic_bands_via_modality_dictionary,
     fit_harmonic_to_collection,
     determine_harmonic_independents_via_modality_dictionary,

@@ -46,7 +46,7 @@ def get_bulc_parameter_dictionary():
         stratum_image = ee.Image(1)  # Placeholder for an actual image
 
     # Prepare BULC argument dictionary
-    bulc_argument_dict = {
+    bulc_argument = {
         "initializing_leveler": initializing_leveler,
         "transition_leveler": transition_leveler,
         "transition_minimum": (1 - transition_leveler) / number_of_classes_to_track,
@@ -72,7 +72,7 @@ def get_bulc_parameter_dictionary():
     }
 
     return {
-        "BULCargumentDictionary": bulc_argument_dict,
+        "bulc_arguments": bulc_argument,
         "initialization_approach": initialization_approach,
         "transition_creation_method": overlay_approach,
         "base_land_cover_image": base_land_cover_image,
