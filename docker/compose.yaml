@@ -1,8 +1,0 @@
-version: '3.8'
-
-services:
-  pest_app:
-    build: .
-    volumes:
-      - .:/pest
-    network_mode: host

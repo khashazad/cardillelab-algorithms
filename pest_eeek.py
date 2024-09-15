@@ -59,8 +59,11 @@ from google.api_core import retry
 from pathos.pools import ProcessPool
 from pprint import pprint
 
-from eeek import kalman_filter, utils, ccdc_utils, constants
-from eeek.image_collections import COLLECTIONS
+from kalman import kalman_filter
+from lib import constants
+from lib.image_collections import COLLECTIONS
+from utils.ee import ccdc_utils
+from utils import utils
 
 ee.Initialize(opt_url=ee.data.HIGH_VOLUME_API_BASE_URL)
 

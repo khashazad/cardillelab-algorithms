@@ -1,7 +1,7 @@
 import os 
 import shutil
 import random
-from eeek.image_collections import COLLECTIONS
+from lib.image_collections import COLLECTIONS
 import ee
 import pandas as pd
 import matplotlib.pyplot as plt

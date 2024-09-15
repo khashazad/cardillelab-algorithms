@@ -1,7 +1,7 @@
 import os
-from eeek.gather_collections import reduce_collection_to_points_and_write_to_file
-from eeek.image_collections import COLLECTIONS
-from eeek.prepare_optimization_run import (
+from utils.ee.gather_collections import reduce_collection_to_points_and_write_to_file
+from lib.image_collections import COLLECTIONS
+from utils.prepare_optimization_run import (
     build_observations,
     fitted_coefficients_and_dates,
     parse_point_coordinates,
@@ -16,7 +16,7 @@ import torch.optim as optim
 from torch_eeek import main as run_eeek
 import numpy as np
 import json
-from utils.charts import generate_charts_single_run
+from utils.visualization.charts import generate_charts_single_run
 from pprint import pprint
 import torch.multiprocessing as mp
 

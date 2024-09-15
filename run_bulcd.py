@@ -2,11 +2,11 @@ import ee
 
 ee.Initialize(opt_url=ee.data.HIGH_VOLUME_API_BASE_URL)
 
-from eeek import utils
-from eeek.bulc_d import run_bulc_d_algorithm
-from eeek.organize_bulcd_inputs import organize_bulcd_inputs
-from eeek.bulcd_params import bulcd_params
-from eeek.bulc_params import get_bulc_parameter_dictionary
+from utils import utils
+from bulc.bulc_d import run_bulc_d_algorithm
+from bulc.organize_bulcd_inputs import organize_bulcd_inputs
+from bulc.bulcd_params import bulcd_params
+from bulc.bulc_params import get_bulc_parameter_dictionary
 from pprint import pprint
 
 coords = (-122.48489, 45.079215)

@@ -3,15 +3,15 @@ import shutil
 import ee.geometry, ee
 import pandas as pd
 import math
-from eeek.image_collections import COLLECTIONS
-from utils.charts import generate_charts_comparing_runs
+from lib.image_collections import COLLECTIONS
+from utils.visualization.charts import generate_charts_comparing_runs
 from utils.filesystem import delete_existing_directory_and_create_new, read_file
-from eeek.utils.harmonic import (
+from lib.utils.harmonic import (
     add_harmonic_bands_via_modality_dictionary,
     fit_harmonic_to_collection,
     determine_harmonic_independents_via_modality_dictionary,
 )
-from eeek import utils
+from utils import utils
 from datetime import datetime
 from pest_eeek import main as run_eeek
 import csv

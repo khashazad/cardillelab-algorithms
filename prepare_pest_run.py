@@ -1,12 +1,12 @@
 import ee.geometry, ee
 import pandas as pd
-from eeek.image_collections import COLLECTIONS
-from eeek.harmonic_utils import (
+from lib.image_collections import COLLECTIONS
+from utils.ee.harmonic_utils import (
     add_harmonic_bands_via_modality_dictionary,
     fit_harmonic_to_collection,
     determine_harmonic_independents_via_modality_dictionary,
 )
-from eeek import utils
+from utils import utils
 from pprint import pprint
 from datetime import datetime
 from pest_eeek import main as run_eeek
@@ -17,7 +17,7 @@ import shutil
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from utils.filesystem import delete_existing_directory_and_create_new, read_json
-from utils.pest_file_builder import (
+from utils.pest.pest_file_builder import (
     create_control_file,
     append_observations_to_control_file,
     create_instructions_file,

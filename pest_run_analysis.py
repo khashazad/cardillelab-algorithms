@@ -1,10 +1,10 @@
 import os
 import csv
 import argparse
-from utils.charts import generate_charts_comparing_runs
+from utils.visualization.charts import generate_charts_comparing_runs
 from utils.root_mean_squared_error import calculate_rmse
 from utils.filesystem import delete_existing_directory_and_create_new
-from utils.pest_output_analysis import (
+from utils.pest.pest_output_analysis import (
     parse_initial_parameters,
     parse_optimized_parameters,
     parse_initial_and_final_objective_function,
