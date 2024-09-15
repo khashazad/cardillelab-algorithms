@@ -1,0 +1,3 @@
+title,q1_initial,q2_initial,q3_initial,r_initial,q1_optimized,q2_optimized,q3_optimized,r_optimized,initial_objective_function,final_objective_function
+multiple lambda - inital params v2,-6.9e-05,0.0016,0.0047,-0.000186,-0.0001275078,0.0010129128,0.00486885053,-8.644998e-05,28.003,27.75
+multiple lambda - inital params v1,-9.5e-05,0.0018,0.0035,0.0013,-8.061959e-05,0.00152491482,0.00400843114,-6.681378e-05,28.617,27.95

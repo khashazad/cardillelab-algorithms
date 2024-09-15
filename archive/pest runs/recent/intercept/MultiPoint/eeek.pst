@@ -1,0 +1,144 @@
+pcf
+* control data
+restart estimation
+10 100 10 0 1
+1 1 single point
+0 2.0 0.3 0.05 1
+5.0 5.0 0.001
+0.1
+50 1e-07 10 4 0.01 10 1e-05
+0 0 0 0 nojcosave nojcosaveitn noverboserec noreisaveitn parsaveitn
+* singular value decomposition
+1
+3 1e-06
+0
+* parameter groups
+q1 relative 0.01 0.0 switch 2.0 parabolic
+q5 relative 0.01 0.0 switch 2.0 parabolic
+q9 relative 0.01 0.0 switch 2.0 parabolic
+r relative 0.01 0.0 switch 2.0 parabolic
+p1 relative 0.01 0.0 switch 2.0 parabolic
+p5 relative 0.01 0.0 switch 2.0 parabolic
+p9 relative 0.01 0.0 switch 2.0 parabolic
+x1 relative 0.01 0.0 switch 2.0 parabolic
+x2 relative 0.01 0.0 switch 2.0 parabolic
+x3 relative 0.01 0.0 switch 2.0 parabolic
+* parameter data
+q1 none relative 0.00125 -5 5 q1 1.0 0.0
+q5 none relative 0.000125 -5 5 q5 1.0 0.0
+q9 none relative 0.000125 -5 5 q9 1.0 0.0
+r none relative 0.003 -5 5 r 1.0 0.0
+p1 fixed relative 0.00101 -5 1.0 p1 5 0.0
+p5 fixed relative 0.00222 -5 5 p5 1.0 0.0
+p9 fixed relative 0.00333 -5 5 p9 1.0 0.0
+x1 fixed relative 0.0694202 -5.0 5 x1 1.0 0.0
+x2 fixed relative -0.00617829 -5.0 1.0 x2 1.0 0.0
+x3 fixed relative 0.006266787 -5.0 1.0 x3 1.0 0.0
+* observation groups
+obsgroup
+* observation data
+intercept0_1 0.064383 1.0 obsgroup
+intercept0_2 0.064383 1.0 obsgroup
+intercept0_3 0.064383 1.0 obsgroup
+intercept0_4 0.064383 1.0 obsgroup
+intercept0_5 0.064383 1.0 obsgroup
+intercept0_6 0.064383 1.0 obsgroup
+intercept0_7 0.064383 1.0 obsgroup
+intercept0_8 0.064383 1.0 obsgroup
+intercept0_9 0.064383 1.0 obsgroup
+intercept0_10 0.064383 1.0 obsgroup
+intercept0_11 0.064383 1.0 obsgroup
+intercept0_12 0.064383 1.0 obsgroup
+intercept0_13 0.064383 1.0 obsgroup
+intercept0_14 0.064383 1.0 obsgroup
+intercept0_15 0.064383 1.0 obsgroup
+intercept0_16 0.064383 1.0 obsgroup
+intercept0_17 0.064383 1.0 obsgroup
+intercept0_18 0.064383 1.0 obsgroup
+intercept0_19 0.064383 1.0 obsgroup
+intercept0_20 0.064383 1.0 obsgroup
+intercept0_21 0.064383 1.0 obsgroup
+intercept0_22 0.064383 1.0 obsgroup
+intercept0_23 0.064383 1.0 obsgroup
+intercept0_24 0.064383 1.0 obsgroup
+intercept0_25 0.07515626 1.0 obsgroup
+intercept0_26 0.07515626 1.0 obsgroup
+intercept0_27 0.07515626 1.0 obsgroup
+intercept0_28 0.07515626 1.0 obsgroup
+intercept0_29 0.07515626 1.0 obsgroup
+intercept0_30 0.07515626 1.0 obsgroup
+intercept0_31 0.07515626 1.0 obsgroup
+intercept0_32 0.07515626 1.0 obsgroup
+intercept0_33 0.07515626 1.0 obsgroup
+intercept0_34 0.07515626 1.0 obsgroup
+intercept0_35 0.07515626 1.0 obsgroup
+intercept0_36 0.07515626 1.0 obsgroup
+intercept0_37 0.07515626 1.0 obsgroup
+intercept0_38 0.07515626 1.0 obsgroup
+intercept0_39 0.07515626 1.0 obsgroup
+intercept0_40 0.07515626 1.0 obsgroup
+intercept0_41 0.07515626 1.0 obsgroup
+intercept0_42 0.07515626 1.0 obsgroup
+intercept0_43 0.07515626 1.0 obsgroup
+intercept0_44 0.07515626 1.0 obsgroup
+intercept0_45 0.07515626 1.0 obsgroup
+intercept0_46 0.07515626 1.0 obsgroup
+intercept0_47 0.07515626 1.0 obsgroup
+intercept0_48 0.07515626 1.0 obsgroup
+intercept0_49 0.07515626 1.0 obsgroup
+intercept0_50 0.07515626 1.0 obsgroup
+intercept1_1 0.06441264 1.0 obsgroup
+intercept1_2 0.06441264 1.0 obsgroup
+intercept1_3 0.06441264 1.0 obsgroup
+intercept1_4 0.06441264 1.0 obsgroup
+intercept1_5 0.06441264 1.0 obsgroup
+intercept1_6 0.06441264 1.0 obsgroup
+intercept1_7 0.06441264 1.0 obsgroup
+intercept1_8 0.06441264 1.0 obsgroup
+intercept1_9 0.06441264 1.0 obsgroup
+intercept1_10 0.06441264 1.0 obsgroup
+intercept1_11 0.06441264 1.0 obsgroup
+intercept1_12 0.06441264 1.0 obsgroup
+intercept1_13 0.06441264 1.0 obsgroup
+intercept1_14 0.06441264 1.0 obsgroup
+intercept1_15 0.06441264 1.0 obsgroup
+intercept1_16 0.06441264 1.0 obsgroup
+intercept1_17 0.06441264 1.0 obsgroup
+intercept1_18 0.06441264 1.0 obsgroup
+intercept1_19 0.06441264 1.0 obsgroup
+intercept1_20 0.06441264 1.0 obsgroup
+intercept1_21 0.06441264 1.0 obsgroup
+intercept1_22 0.06441264 1.0 obsgroup
+intercept1_23 0.06441264 1.0 obsgroup
+intercept1_24 0.06441264 1.0 obsgroup
+intercept1_25 0.2349041 1.0 obsgroup
+intercept1_26 0.2349041 1.0 obsgroup
+intercept1_27 0.2349041 1.0 obsgroup
+intercept1_28 0.2349041 1.0 obsgroup
+intercept1_29 0.2349041 1.0 obsgroup
+intercept1_30 0.2349041 1.0 obsgroup
+intercept1_31 0.2349041 1.0 obsgroup
+intercept1_32 0.2349041 1.0 obsgroup
+intercept1_33 0.2349041 1.0 obsgroup
+intercept1_34 0.2349041 1.0 obsgroup
+intercept1_35 0.2349041 1.0 obsgroup
+intercept1_36 0.2349041 1.0 obsgroup
+intercept1_37 0.2349041 1.0 obsgroup
+intercept1_38 0.2349041 1.0 obsgroup
+intercept1_39 0.2349041 1.0 obsgroup
+intercept1_40 0.2349041 1.0 obsgroup
+intercept1_41 0.2349041 1.0 obsgroup
+intercept1_42 0.2349041 1.0 obsgroup
+intercept1_43 0.2349041 1.0 obsgroup
+intercept1_44 0.2349041 1.0 obsgroup
+intercept1_45 0.2349041 1.0 obsgroup
+intercept1_46 0.2349041 1.0 obsgroup
+intercept1_47 0.2349041 1.0 obsgroup
+intercept1_48 0.2349041 1.0 obsgroup
+intercept1_49 0.2349041 1.0 obsgroup
+intercept1_50 0.2349041 1.0 obsgroup
+* model command line
+model.bat
+* model input/output
+input.tpl  pest_input.csv
+output.ins  pest_output.csv

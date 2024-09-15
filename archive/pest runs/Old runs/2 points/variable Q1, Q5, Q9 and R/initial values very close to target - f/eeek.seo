@@ -1,0 +1,13 @@
+ Observation           Group         Measured          Modelled        Sensitivity
+ intp_p1_mid           obsgroup      0.1301218         0.1301640          13.10510    
+ cos_p1_mid            obsgroup      5.5421471E-02     5.5660694E-02      14.31659    
+ sin_p1_mid            obsgroup     -5.7915779E-02    -5.8008582E-02      1.616627    
+ intp_p1_final         obsgroup      6.9629042E-02     6.9480708E-02      14.35054    
+ cos_p1_final          obsgroup      5.3672933E-02     5.3581207E-02      16.59968    
+ sin_p1_final          obsgroup     -3.6074804E-02    -3.6117247E-02      12.69020    
+ intp_p2_mid           obsgroup      0.2522712         0.2521086         0.5405606    
+ cos_p2_mid            obsgroup     -2.3753509E-02    -2.3963544E-02     0.8101108    
+ sin_p2_mid            obsgroup     -3.5077105E-02    -3.4765571E-02      1.497126    
+ intp_p2_final         obsgroup      0.2251891         0.2251974          5.068552    
+ cos_p2_final          obsgroup     -2.4100603E-02    -2.4452198E-02      2.404286    
+ sin_p2_final          obsgroup     -2.5233838E-02    -2.4969110E-02      6.169997    

@@ -1,13 +1,17 @@
 import ee
+import ee.geometry
+from pprint import pprint
 
-from eeek import constants
+from eeek import constants, utils
 
 ee.Initialize(opt_url=ee.data.HIGH_VOLUME_API_BASE_URL)
 
-UNMASK_VALUE = 0
+UNMASK_VALUE = -999
 
 # use 2pi * time since this date as input to sinusoids
 START_DATE = "2016-01-01"
+
+FREQUENCY = ee.Number(6.283)
 
 
 def predict(x, P, F, Q):
@@ -25,6 +29,7 @@ def predict(x, P, F, Q):
     """
     x_bar = F.matrixMultiply(x)
     P_bar = F.matrixMultiply(P).matrixMultiply(F.matrixTranspose()).add(Q)
+
     return x_bar, P_bar
 
 
@@ -65,6 +70,7 @@ def kalman_filter(
     postprocess_fn=lambda **kwargs: [],
     measurement_band=None,
     num_params=3,
+    point_coords=None,
 ):
     """Applies a Kalman Filter to the given image collection.
 
@@ -115,30 +121,55 @@ def kalman_filter(
 
     if measurement_band is None:
         measurement_band = collection.first().bandNames().getString(0)
+        # print(f"Using {measurement_band.getInfo()} as measurement band.")
 
     def _iterator(curr, prev):
         """Kalman Filter Loop."""
-        curr = ee.Image(curr).unmask(UNMASK_VALUE, sameFootprint=False)
+        curr = (
+            ee.Image(curr)
+            # .unmask(UNMASK_VALUE, sameFootprint=False)
+        )
         prev = ee.List(prev)
 
         last = ee.Image(prev.get(-1))
-        x = last.select(constants.STATE)
-        P = last.select(constants.COV)
+        x_prev = last.select(constants.STATE)
+        P_prev = last.select(constants.COV)
 
         z = curr.select(measurement_band).toArray().toArray(1)
         t = curr.date().difference(START_DATE, "year")
 
         preprocess_results = preprocess_fn(**locals())
 
-        x_bar, P_bar = predict(x, P, F(**locals()), Q(**locals()))
+        x_bar, P_bar = predict(x_prev, P_prev, F(**locals()), Q(**locals()))
         x, P = update(x_bar, P_bar, z, H(**locals()), R(**locals()), num_params)
 
         postprocess_results = postprocess_fn(**locals())
+
+        x = x_prev.where(curr.select(measurement_band).gt(-999), x)
+        P = P_prev.where(curr.select(measurement_band).gt(-999), P)
+
+        pixel_image = (
+            x.select(constants.STATE)
+            .arrayProject([0])
+            .arrayFlatten([["INTP", "COS0", "SIN0"]])
+        )
+
+        intp = pixel_image.select("INTP")
+        cos = pixel_image.select("COS0")
+        sin = pixel_image.select("SIN0")
+
+        phi = t.multiply(FREQUENCY)
+        estimate = intp.add(cos.multiply(phi.cos())).add(sin.multiply(phi.sin()))
+
+        amplitude = cos.pow(2).add(sin.pow(2)).sqrt()
 
         outputs = [
             z.rename(constants.MEASUREMENT),
             x.rename(constants.STATE),
             P.rename(constants.COV),
+            estimate.rename(constants.ESTIMATE),
+            amplitude.rename(constants.AMPLITUDE),
+            ee.Image(curr.date().millis()).rename(constants.DATE)
         ]
         outputs.extend(preprocess_results)
         outputs.extend(postprocess_results)

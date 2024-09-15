@@ -1,0 +1,297 @@
+{
+  "control_data": {
+    "line1": {
+      "RSTFLE": { "value": "restart", "description": "Restart setting" },
+      "PESTMODE": {
+        "value": "estimation",
+        "description": "PEST mode of operation"
+      }
+    },
+    "line2": {
+      "NPAR": { "value": 10, "description": "Total number of parameters" },
+      "NOBS": { "value": 12, "description": "Total number of observations" },
+      "NPARGP": { "value": 10, "description": "Number of parameter groups" },
+      "NPRIOR": {
+        "value": 0,
+        "description": "Number of prior information articles"
+      },
+      "NOBSGP": { "value": 1, "description": "Number of observation groups" }
+    },
+    "line3": {
+      "NTPLFLE": { "value": 1, "description": "Number of template files" },
+      "NINSFLE": { "value": 1, "description": "Number of instruction files" },
+      "PRECIS": { "value": "single", "description": "Precision" },
+      "DPOINT": { "value": "point", "description": "Decimal point usage" }
+    },
+    "line4": {
+      "RLAMBDA1": { "value": 10, "description": "Initial Marquardt lambda" },
+      "RLAMFAC": { "value": 2.0, "description": "Lambda adjustment factor" },
+      "PHIRATSUF": {
+        "value": 0.3,
+        "description": "Objective function ratio sufficient: If at any stage PEST calculates an objective function which is a fraction PHIRATSUF or less of the starting objective function for that iteration, moves on to the next iteration. If it is set too high, PEST may not be given the opportunity of refining lambda in order that its value continues to be optimal as the inversion process progresses"
+      },
+      "PHIREDLAM": {
+        "value": 0.05,
+        "description": "Relative reduction in the objective function: If it is set too large, the criterion for moving on to the next iteration is too easily met and PEST is not given the opportunity of adjusting lambda to its optimal value for that particular stage of the parameter estimation process. If set too low, PEST will test too many Marquardt lambdas on each iteration of the inversion process when it would be better off starting a new iteration."
+      },
+      "NUMLAM": {
+        "value": 10,
+        "description": "Number of lambdas tested"
+      }
+    },
+    "line5": {
+      "RELPARMAX": {
+        "value": 5.0,
+        "description": "Maximum relative parameter change"
+      },
+      "FACPARMAX": {
+        "value": 5.0,
+        "description": "Maximum factor parameter change"
+      },
+      "ABSPARMAX": {
+        "value": 0.001,
+        "description": "Maximum absolute parameter change"
+      }
+    },
+    "line6": {
+      "PHIREDSWH": {
+        "value": 0.1,
+        "description": "Objective function reduction switch: If it is set too high, PEST may make the switch to higher order derivatives calculation before it needs to; the result will be that more model runs will be required to fill the Jacobian matrix than are really needed at that stage of the inversion process. If set too low, PEST may waste an iteration or two in lowering the objective function to a smaller extent than would have been possible if it had made an earlier switch to higher order derivatives calculation."
+      }
+    },
+    "line7": {
+      "NOPTMAX": { "value": 50, "description": "Maximum number of iterations" },
+      "PHIREDSTP": {
+        "value": 0.0000001,
+        "description": "Objective function reduction stop threshold"
+      },
+      "NPHISTP": {
+        "value": 10,
+        "description": "Number of iterations for objective function reduction"
+      },
+      "NPHINORED": {
+        "value": 4,
+        "description": "Number of iterations before stopping if objective function hasnt lowered"
+      },
+      "RELPARSTP": {
+        "value": 0.005,
+        "description": "Relative parameter change stop threshold"
+      },
+      "NRELPAR": {
+        "value": 10,
+        "description": "Number of iterations for relative parameter change"
+      },
+      "PHISTOPTHRESH": {
+        "value": 0.00001,
+        "description": "Objective function stop threshold"
+      }
+    },
+    "line8": {
+      "ICOV": {
+        "value": 0,
+        "description": "Posterior covariance matrix calculation"
+      },
+      "ICOR": {
+        "value": 0,
+        "description": "Posterior correlation coefficient matrix calculation"
+      },
+      "IEIG": { "value": 0, "description": "Posterior eigenvalue calculation" },
+      "IRES": { "value": 0, "description": "Resolution data file writing" },
+      "JCOSAVE": {
+        "value": "nojcosave",
+        "description": "Save Jacobian matrix"
+      },
+      "JCOSAVEITN": {
+        "value": "nojcosaveitn",
+        "description": "Save Jacobian matrix every iteration"
+      },
+      "VERBOSEREC": {
+        "value": "noverboserec",
+        "description": "Verbose recording"
+      },
+      "REISAVEITN": {
+        "value": "noreisaveitn",
+        "description": "Save residuals every iteration"
+      },
+      "PARSAVEITN": {
+        "value": "parsaveitn",
+        "description": "Save parameter values every iteration"
+      }
+    }
+  },
+  "singular_value_decomposition": {
+    "line1": {
+      "SVDMODE": {
+        "value": 1,
+        "description": "Enable Singular Value Decomposition (0 -> disabled, 1 -> activated)"
+      }
+    },
+    "line2": {
+      "MAXSING": {
+        "value": 3,
+        "description": "Number of singular values before truncation"
+      },
+      "EIGTHRESH": {
+        "value": 1e-6,
+        "description": "Eigenvalue threshold for truncation"
+      }
+    },
+    "line3": {
+      "EIGWRITE": {
+        "value": 0,
+        "description": "Write singular value decomposition details to file"
+      }
+    }
+  },
+  "parameter_groups": [
+    {
+      "name": "q1",
+      "inctyp": "relative",
+      "derinc": 0.01,
+      "derinclb": 0.0,
+      "forcen": "switch",
+      "derincmul": 2.0,
+      "splitthresh": "parabolic"
+    },
+    {
+      "name": "q5",
+      "inctyp": "relative",
+      "derinc": 0.01,
+      "derinclb": 0.0,
+      "forcen": "switch",
+      "derincmul": 2.0,
+      "splitthresh": "parabolic"
+    },
+    {
+      "name": "q9",
+      "inctyp": "relative",
+      "derinc": 0.01,
+      "derinclb": 0.0,
+      "forcen": "switch",
+      "derincmul": 2.0,
+      "splitthresh": "parabolic"
+    },
+    {
+      "name": "r",
+      "inctyp": "relative",
+      "derinc": 0.01,
+      "derinclb": 0.0,
+      "forcen": "switch",
+      "derincmul": 2.0,
+      "splitthresh": "parabolic"
+    },
+    {
+      "name": "p1",
+      "inctyp": "relative",
+      "derinc": 0.01,
+      "derinclb": 0.0,
+      "forcen": "switch",
+      "derincmul": 2.0,
+      "splitthresh": "parabolic"
+    },
+    {
+      "name": "p5",
+      "inctyp": "relative",
+      "derinc": 0.01,
+      "derinclb": 0.0,
+      "forcen": "switch",
+      "derincmul": 2.0,
+      "splitthresh": "parabolic"
+    },
+    {
+      "name": "p9",
+      "inctyp": "relative",
+      "derinc": 0.01,
+      "derinclb": 0.0,
+      "forcen": "switch",
+      "derincmul": 2.0,
+      "splitthresh": "parabolic"
+    }
+  ],
+  "parameter_data": [
+    {
+      "name": "q1",
+      "trans": "none",
+      "inctyp": "relative",
+      "parval1": 0.0007,
+      "parlbnd": 1e-15,
+      "parubnd": 1,
+      "pargp": "q1",
+      "scale": 1.0,
+      "offset": 0.0,
+      "dercom": 1
+    },
+    {
+      "name": "q5",
+      "trans": "none",
+      "inctyp": "relative",
+      "parval1": 0.00027,
+      "parlbnd": 1e-15,
+      "parubnd": 1,
+      "pargp": "q5",
+      "scale": 1.0,
+      "offset": 0.0,
+      "dercom": 1
+    },
+    {
+      "name": "q9",
+      "trans": "none",
+      "inctyp": "relative",
+      "parval1": 0.0042,
+      "parlbnd": 1e-15,
+      "parubnd": 1,
+      "pargp": "q9",
+      "scale": 1.0,
+      "offset": 0.0,
+      "dercom": 1
+    },
+    {
+      "name": "r",
+      "trans": "none",
+      "inctyp": "relative",
+      "parval1": 0.00125,
+      "parlbnd": 1e-15,
+      "parubnd": 1,
+      "pargp": "r",
+      "scale": 1.0,
+      "offset": 0.0,
+      "dercom": 1
+    },
+    {
+      "name": "p1",
+      "trans": "fixed",
+      "inctyp": "relative",
+      "parval1": 0.00101,
+      "parlbnd": -5,
+      "parubnd": 5,
+      "pargp": "p1",
+      "scale": 1.0,
+      "offset": 0.0,
+      "dercom": 1
+    },
+    {
+      "name": "p5",
+      "trans": "fixed",
+      "inctyp": "relative",
+      "parval1": 0.00222,
+      "parlbnd": -5,
+      "parubnd": 5,
+      "pargp": "p5",
+      "scale": 1.0,
+      "offset": 0.0,
+      "dercom": 1
+    },
+    {
+      "name": "p9",
+      "trans": "fixed",
+      "inctyp": "relative",
+      "parval1": 0.00333,
+      "parlbnd": -5,
+      "parubnd": 5,
+      "pargp": "p9",
+      "scale": 1.0,
+      "offset": 0.0,
+      "dercom": 1
+    }
+  ]
+}

@@ -48,12 +48,16 @@ start running the Kalman filter and the date to stop running the kalman filter
 
 import argparse
 import os
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+import json
 
 import ee
 import numpy as np
 import pandas as pd
 from google.api_core import retry
 from pathos.pools import ProcessPool
+from pprint import pprint
 
 from eeek import kalman_filter, utils, ccdc_utils, constants
 from eeek.image_collections import COLLECTIONS
@@ -65,46 +69,64 @@ NUM_MEASURES = 1  # eeek only supports one band at a time
 
 def main(args):
     param_names = []
-    if args.include_intercept:
+    if args["include_intercept"]:
         param_names.append("INTP")
-    if args.include_slope:
+    if args["include_slope"]:
         param_names.append("SLP")
-    for i in range(args.num_sinusoid_pairs):
+    for i in range(args["num_sinusoid_pairs"]):
         param_names.extend([f"COS{i}", f"SIN{i}"])
     num_params = len(param_names)
 
     request_band_names = param_names.copy()
-    if args.store_measurement:
+    if "store_estimate" in args and args["store_estimate"]:
+        request_band_names.append("estimate")
+    if "store_amplitude" in args and args["store_amplitude"]:
+        request_band_names.append("amplitude")
+    if "store_measurement" in args and args["store_measurement"]:
         request_band_names.append("z")
+    if "store_date" in args and args["store_date"]:
+        request_band_names.append("date")
+
     num_request_bands = len(request_band_names)
 
     #################################################
     ########### Read in PEST parameters #############
     #################################################
-    with open(args.input, "r") as f:
+    with open(args["input"], "r") as f:
         lines = f.readlines()
-        assert len(lines) == 4, "PEST parameter file must specify Q, R, P, and x0"
+        # assert len(lines) == 4, "PEST parameter file must specify Q, R, P, and x0"
+        assert len(lines) == 3, "PEST parameter file must specify Q, R, P"
 
-        Q, R, P, x0 = lines
+        parameters = {}
+
+        Q, R, P = lines
         Q = np.array([float(x) for x in Q.split(",")]).reshape(num_params, num_params)
+        parameters["process noise (Q)"] = Q.tolist()
+
         R = np.array([float(x) for x in R.split(",")]).reshape(
             NUM_MEASURES, NUM_MEASURES
         )
+        parameters["measurement noise (R)"] = R.tolist()
+
         P = np.array([float(x) for x in P.split(",")]).reshape(num_params, num_params)
+        parameters["initial state covariance matrix (P)"] = P.tolist()
         P = ee.Image(ee.Array(P.tolist())).rename("P")
-        x0 = np.array([float(x) for x in x0.split(",")]).reshape(
-            num_params, NUM_MEASURES
-        )
-        x0 = ee.Image(ee.Array(x0.tolist())).rename("x")
+
+        # x0 = np.array([float(x) for x in x0.split(",")]).reshape(
+        #     num_params, NUM_MEASURES
+        # )
+        # parameters["initial state matrix (X0)"] = x0.tolist()
+
+        # x0 = ee.Image(ee.Array(x0.tolist())).rename("x")
 
         H = utils.sinusoidal(
-            args.num_sinusoid_pairs,
-            include_slope=args.include_slope,
-            include_intercept=args.include_intercept,
+            args["num_sinusoid_pairs"],
+            include_slope=args["include_slope"],
+            include_intercept=args["include_intercept"],
         )
 
         kalman_init = {
-            "init_image": ee.Image.cat([P, x0]),
+            # "init_image": ee.Image.cat([P, x0]),
             "F": utils.identity(num_params),
             "Q": lambda **kwargs: ee.Image(ee.Array(Q.tolist())),
             "H": H,
@@ -112,20 +134,24 @@ def main(args):
             "num_params": num_params,
         }
 
+        with open("eeek_params.json", "w") as f:
+            json.dump(parameters, f, indent=4)
+
     #################################################
     # Create parameters to run filter on each point #
     #################################################
     points = []
-    with open(args.points, "r") as f:
+    with open(args["points"], "r") as f:
         for i, line in enumerate(f.readlines()):
-            lon, lat, start, stop = line.split(",")
+            lon, lat, x1, x2, x3 = line.split(",")
             points.append(
                 {
                     "index": i,
                     "longitude": float(lon),
                     "latitude": float(lat),
-                    "start_date": start.strip(),
-                    "stop_date": stop.strip(),
+                    "x0": [float(x1), float(x2), float(x3)],
+                    # "start_date": start.strip(),
+                    # "stop_date": stop.strip(),
                 }
             )
 
@@ -137,13 +163,21 @@ def main(args):
         index = kwargs["index"]
 
         coords = (float(kwargs["longitude"]), float(kwargs["latitude"]))
-        col = (
-            COLLECTIONS[args.collection]
-            .filterBounds(ee.Geometry.Point(coords))
-            .filterDate(kwargs["start_date"], kwargs["stop_date"])
-        )
+
+        col = COLLECTIONS[args["collection"]].filterBounds(ee.Geometry.Point(coords))
+
+        x0 = np.array(kwargs["x0"]).reshape(num_params, NUM_MEASURES)
+
+        x0 = ee.Image(ee.Array(x0.tolist())).rename("x")
+
+        # print number of images in collection
+        # print(col.size().getInfo())
+
+        kalman_init["init_image"] = ee.Image.cat([P, x0])
+        kalman_init["point_coords"] = coords
 
         kalman_result = kalman_filter.kalman_filter(col, **kalman_init)
+
         states = (
             kalman_result.map(lambda im: utils.unpack_arrays(im, param_names))
             .select(request_band_names)
@@ -160,7 +194,7 @@ def main(args):
         # put point as the first column
         df = df[["point"] + request_band_names]
 
-        basename, ext = os.path.splitext(args.output)
+        basename, ext = os.path.splitext(args["output"])
         shard_path = basename + f"-{index:06d}" + ext
         df.to_csv(shard_path, index=False)
 
@@ -169,11 +203,18 @@ def main(args):
     with ProcessPool(nodes=40) as pool:
         all_output_files = pool.map(process_point, points)
 
+    # result = process_point(points[0])
+    # all_output_files = [result]
+
     #################################################
     ## Combine results from all runs to single csv ##
     #################################################
     all_results = pd.concat(map(pd.read_csv, all_output_files), ignore_index=True)
-    all_results.to_csv(args.output, index=False)
+    all_results.to_csv(args["output"], index=False)
+
+    # last_row = all_results.iloc[-1]
+    # new_df = pd.DataFrame([last_row])
+    # new_df.to_csv(args.output, index=False)
 
     # delete intermediate files
     for f in all_output_files:
@@ -228,4 +269,21 @@ if __name__ == "__main__":
         action="store_true",
         help="if set the measurements at each time step will be saved",
     )
-    main(parser.parse_args())
+    parser.add_argument(
+        "--store_estimate",
+        action="store_true",
+        help="if set the estimate at each time step will be saved",
+    )
+    parser.add_argument(
+        "--store_date",
+        action="store_true",
+        help="if set the measurement date at each time step will be saved",
+    )
+    parser.add_argument(
+        "--store_amplitude",
+        action="store_true",
+        help="if set the amplitude at each time step will be saved",
+    )
+
+    args = vars(parser.parse_args())
+    main(args)

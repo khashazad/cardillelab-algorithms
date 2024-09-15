@@ -19,7 +19,11 @@ to use for the given run.
 
 import ee
 
-from eeek import constants
+ee.Initialize()
+
+from pprint import pprint
+
+from eeek.gather_collections import gather_collections_and_reduce
 
 
 def scale_landsat8(image):
@@ -31,11 +35,210 @@ def scale_landsat8(image):
 
 L8 = (
     ee.ImageCollection("LANDSAT/LC08/C02/T1_L2")
-    .filter(ee.Filter.lte("CLOUD_COVER", 30))
-    .map(scale_landsat8)
-    .select("SR_B7")
+    # .filter(ee.Filter.lte("CLOUD_COVER", 30))
+    .map(scale_landsat8).select("SR_B6")
+)
+
+EXPORTED_LANDSAT8_FROM_JS = ee.ImageCollection(
+    "projects/api-project-269347469410/assets/kalman-value-collection-60-180"
+)
+
+
+L8_GATHER_COLLECTIONS = gather_collections_and_reduce(
+    {
+        "L8dictionary": {
+            "years_list": [2020],
+            "first_doy": 1,
+            "last_doy": 365,
+            "cloud_cover_threshold": 30,
+        },
+        "default_study_area": (
+            ee.Geometry.Polygon(
+                [
+                    (-63.9533, -10.6813),
+                    (-63.9533, -10.1315),
+                    (-64.9118, -10.1315),
+                    (-64.9118, -10.6813),
+                ]
+            )
+        ),
+        "band_name_reduction": "swir",
+        "which_reduction": "SWIR",
+        "day_step_size": 4,
+        "verbose": False,
+        "dataset_selection": {
+            "L5": False,
+            "L7": False,
+            "L8": True,
+            "L9": False,
+            "MO": False,
+            "S2": False,
+            "S1": False,
+            "DW": False,
+        },
+        "first_expectation_year": 2020,
+        "verbose": False,
+    }
+)
+
+L8_L9_2022_2023 = gather_collections_and_reduce(
+    {
+        "L8dictionary": {
+            "years_list": [2022, 2023],
+            "first_doy": 150,
+            "last_doy": 250,
+            "cloud_cover_threshold": 20,
+        },
+        "L9dictionary": {
+            "years_list": [2022, 2023],
+            "first_doy": 150,
+            "last_doy": 250,
+            "cloud_cover_threshold": 20,
+        },
+        "default_study_area": (
+            ee.Geometry.Polygon(
+                [(-126.04, 49.59), (-126.04, 40.76), (-118.93, 40.76), (-118.93, 49.59)]
+            )
+        ),
+        "band_name_reduction": "swir",
+        "which_reduction": "SWIR",
+        "day_step_size": 4,
+        "verbose": False,
+        "dataset_selection": {
+            "L5": False,
+            "L7": False,
+            "L8": True,
+            "L9": True,
+            "MO": False,
+            "S2": False,
+            "S1": False,
+            "DW": False,
+        },
+        "first_expectation_year": 2022,
+        "verbose": False,
+    }
+)
+
+L8_L9_2022_2023_DSS_1 = gather_collections_and_reduce(
+    {
+        "L8dictionary": {
+            "years_list": [2022, 2023],
+            "first_doy": 150,
+            "last_doy": 250,
+            "cloud_cover_threshold": 20,
+        },
+        "L9dictionary": {
+            "years_list": [2022, 2023],
+            "first_doy": 150,
+            "last_doy": 250,
+            "cloud_cover_threshold": 20,
+        },
+        "default_study_area": (
+            ee.Geometry.Polygon(
+                [(-126.04, 49.59), (-126.04, 40.76), (-118.93, 40.76), (-118.93, 49.59)]
+            )
+        ),
+        "band_name_reduction": "swir",
+        "which_reduction": "SWIR",
+        "day_step_size": 1,
+        "verbose": False,
+        "dataset_selection": {
+            "L5": False,
+            "L7": False,
+            "L8": True,
+            "L9": True,
+            "MO": False,
+            "S2": False,
+            "S1": False,
+            "DW": False,
+        },
+        "first_expectation_year": 2022,
+        "verbose": False,
+    }
+)
+
+L8_L9_2022 = gather_collections_and_reduce(
+    {
+        "L8dictionary": {
+            "years_list": [2022],
+            "first_doy": 150,
+            "last_doy": 250,
+            "cloud_cover_threshold": 20,
+        },
+        "L9dictionary": {
+            "years_list": [2022],
+            "first_doy": 150,
+            "last_doy": 250,
+            "cloud_cover_threshold": 20,
+        },
+        "default_study_area": (
+            ee.Geometry.Polygon(
+                [(-126.04, 49.59), (-126.04, 40.76), (-118.93, 40.76), (-118.93, 49.59)]
+            )
+        ),
+        "band_name_reduction": "swir",
+        "which_reduction": "SWIR",
+        "day_step_size": 4,
+        "verbose": False,
+        "dataset_selection": {
+            "L5": False,
+            "L7": False,
+            "L8": True,
+            "L9": True,
+            "MO": False,
+            "S2": False,
+            "S1": False,
+            "DW": False,
+        },
+        "first_expectation_year": 2022,
+        "verbose": False,
+    }
+)
+
+L8_L9_2023 = gather_collections_and_reduce(
+    {
+        "L8dictionary": {
+            "years_list": [2023],
+            "first_doy": 150,
+            "last_doy": 250,
+            "cloud_cover_threshold": 20,
+        },
+        "L9dictionary": {
+            "years_list": [2023],
+            "first_doy": 150,
+            "last_doy": 250,
+            "cloud_cover_threshold": 20,
+        },
+        "default_study_area": (
+            ee.Geometry.Polygon(
+                [(-126.04, 49.59), (-126.04, 40.76), (-118.93, 40.76), (-118.93, 49.59)]
+            )
+        ),
+        "band_name_reduction": "swir",
+        "which_reduction": "SWIR",
+        "day_step_size": 4,
+        "verbose": False,
+        "dataset_selection": {
+            "L5": False,
+            "L7": False,
+            "L8": True,
+            "L9": True,
+            "MO": False,
+            "S2": False,
+            "S1": False,
+            "DW": False,
+        },
+        "first_expectation_year": 2023,
+        "verbose": False,
+    }
 )
 
 COLLECTIONS = {
-    "L8": L8,
+    "L8_L9_2022_2023": L8_L9_2022_2023,
+    "L8_L9_2022_2023_DSS_1": L8_L9_2022_2023_DSS_1,
+    "L8_L9_2022": L8_L9_2022,
+    "L8_L9_2023": L8_L9_2023,
 }
+
+if __name__ == "__main__":
+    pprint(L8_GATHER_COLLECTIONS.getInfo())

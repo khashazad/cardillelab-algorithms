@@ -1,0 +1,349 @@
+
+                       PEST RUN RECORD: CASE eeek
+
+
+PEST Version: 17.5
+
+
+PEST run mode:-
+
+   Parameter estimation mode
+
+
+Case dimensions:-
+
+   Number of parameters                           :     7
+   Number of adjustable parameters                :     4
+   Number of parameter groups                     :     7
+   Number of observations                         :  1350
+   Number of prior estimates                      :     0
+
+
+Model command line(s):-
+
+   model.bat
+
+
+Jacobian command line:-
+
+   na
+
+
+Model interface files:-
+
+   Templates:
+      input.tpl
+   for model input files:
+      pest_input.csv
+
+   (Parameter values written using single precision protocol.)
+   (Decimal point always included.)
+
+   Instruction files:
+      output.ins
+   for reading model output files:
+      pest_output.csv
+
+
+PEST-to-model message file:-
+
+   na
+
+
+Singular value decomposition:-
+
+   Perform SVD on XtQX or Q^(1/2)X               : XtQX
+   Max. number of singular values to employ      : 3
+   Ratio of lowest/highest singular value        :  1.000000E-06
+   Record eigenvectors in SVD file               : no
+
+
+Derivatives calculation:-
+
+Param        Increment   Increment   Increment   Forward or   Multiplier  Method
+group        type                    low bound   central      (central)   (central)
+q1           relative    1.0000E-02   none         switch       2.000     parabolic
+q5           relative    1.0000E-02   none         switch       2.000     parabolic
+q9           relative    1.0000E-02   none         switch       2.000     parabolic
+r            relative    1.0000E-02   none         switch       2.000     parabolic
+p1           relative    1.0000E-02   none         switch       2.000     parabolic
+p5           relative    1.0000E-02   none         switch       2.000     parabolic
+p9           relative    1.0000E-02   none         switch       2.000     parabolic
+
+
+Parameter definitions:-
+
+This information not provided as non-verbose run record file requested.
+
+
+Prior information:-
+
+   No prior information supplied
+
+
+Observations:-
+
+This information not provided as non-verbose run record file requested.
+
+
+Control settings:-
+
+   Initial lambda                                               :  10.000    
+   Lambda adjustment factor                                     :  2.0000    
+   Sufficient new/old phi ratio per optimisation iteration      : 0.30000    
+   Limiting relative phi reduction between lambdas              : 5.00000E-02
+   Maximum trial lambdas per iteration                          :   1
+   Forgive model run failure during lamda testing               : no
+   Forgive model run failure during Jacobian runs               : no
+
+   Perform Broyden's update of Jacobian matrix                  : no
+   Undertake observation re-referencing                         : no
+
+   Maximum  factor  parameter change (factor-limited changes)   : na
+   Maximum relative parameter change (relative-limited changes) :  5.0000
+   Fraction of initial parameter values used in computing
+   change limit for near-zero parameters                        : 1.00000E-03
+   Allow bending of parameter upgrade vector                    : no
+   Allow parameters to stick to their bounds                    : no
+
+   Relative phi reduction below which to begin use of
+   central derivatives                                          : 0.10000             
+   Iteration at which to first consider derivatives switch      :   1
+
+   Relative phi reduction indicating convergence                : 0.10000E-06
+   Number of phi values required within this range              :  10
+   Maximum number of consecutive failures to lower phi          :   4
+   Minimal relative parameter change indicating convergence     : 0.10000E-01
+   Number of consecutive iterations with minimal param change   :  10
+   Maximum number of optimisation iterations                    :  50
+   Objective function termination limit                         : 0.10000E-04
+
+   Attempt automatic user intervention                          : no
+
+   Attempt reuse of parameter sensitivities                     : no
+
+   Scale parameters by their bounds                             : no
+
+
+File saving options: -
+
+   Save best JCO file                                           : no
+   Save multiple JCO files                                      : no
+   Save multiple REI files                                      : no
+   Save multiple PAR files                                      : yes
+
+
+                            OPTIMISATION RECORD
+
+
+INITIAL CONDITIONS: 
+   Sum of squared weighted residuals (ie phi) =   8.5961    
+
+
+OPTIMISATION ITERATION NO.        : 1
+   Model calls so far             : 1
+   Starting phi for this iteration:   8.5961    
+
+       Lambda =   10.000     ----->
+          Phi =   7.9945      (  0.930 of starting phi)
+
+   No more lambdas: allowed lambdas per iteration =  1
+   Lowest phi this iteration:   7.9945    
+   Relative phi reduction between optimisation iterations less than 0.1000
+   Switch to higher order derivatives calculation
+   Maximum relative change:  3.190     ["q9"]
+
+
+OPTIMISATION ITERATION NO.        : 2
+   Model calls so far             : 6
+   Starting phi for this iteration:   7.9945    
+
+       Lambda =   5.0000     ----->
+          Phi =   7.1966      (  0.900 of starting phi)
+
+   No more lambdas: allowed lambdas per iteration =  1
+   Lowest phi this iteration:   7.1966    
+   Maximum relative change: 0.3583     ["q9"]
+
+
+OPTIMISATION ITERATION NO.        : 3
+   Model calls so far             : 15
+   Starting phi for this iteration:   7.1966    
+
+       Lambda =   2.5000     ----->
+          Phi =   7.2701      (  1.010 times starting phi)
+
+   No more lambdas: allowed lambdas per iteration =  1
+   Lowest phi this iteration:   7.2701    
+   Maximum relative change: 0.8336     ["q1"]
+
+
+OPTIMISATION ITERATION NO.        : 4
+   Model calls so far             : 24
+   Starting phi for this iteration:   7.2701    
+
+       Lambda =   1.2500     ----->
+          Phi =   6.9947      (  0.962 of starting phi)
+
+   No more lambdas: allowed lambdas per iteration =  1
+   Lowest phi this iteration:   6.9947    
+   Maximum relative change:  3.194     ["q9"]
+
+
+OPTIMISATION ITERATION NO.        : 5
+   Model calls so far             : 33
+   Starting phi for this iteration:   6.9947    
+
+       Lambda =  0.62500     ----->
+          Phi =   6.8821      (  0.984 of starting phi)
+
+   No more lambdas: allowed lambdas per iteration =  1
+   Lowest phi this iteration:   6.8821    
+   Maximum relative change:  2.583     ["q9"]
+
+
+OPTIMISATION ITERATION NO.        : 6
+   Model calls so far             : 42
+   Starting phi for this iteration:   6.8821    
+
+       Lambda =  0.31250     ----->
+          Phi =   6.8344      (  0.993 of starting phi)
+
+   No more lambdas: allowed lambdas per iteration =  1
+   Lowest phi this iteration:   6.8344    
+   Maximum relative change:  1.075     ["q9"]
+
+
+OPTIMISATION ITERATION NO.        : 7
+   Model calls so far             : 51
+   Starting phi for this iteration:   6.8344    
+
+       Lambda =  0.15625     ----->
+          Phi =   6.8069      (  0.996 of starting phi)
+
+   No more lambdas: allowed lambdas per iteration =  1
+   Lowest phi this iteration:   6.8069    
+   Maximum relative change: 0.7833     ["q9"]
+
+
+OPTIMISATION ITERATION NO.        : 8
+   Model calls so far             : 60
+   Starting phi for this iteration:   6.8069    
+
+       Lambda =  7.81250E-02 ----->
+          Phi =   6.7506      (  0.992 of starting phi)
+
+   No more lambdas: allowed lambdas per iteration =  1
+   Lowest phi this iteration:   6.7506    
+   Maximum relative change: 0.7544     ["q9"]
+
+
+OPTIMISATION ITERATION NO.        : 9
+   Model calls so far             : 69
+   Starting phi for this iteration:   6.7506    
+
+       Lambda =  3.90625E-02 ----->
+          Phi =   367.68      ( 54.466 times starting phi)
+
+   No more lambdas: allowed lambdas per iteration =  1
+   Lowest phi this iteration:   367.68    
+   Maximum relative change:  2.690     ["r"]
+
+
+OPTIMISATION ITERATION NO.        : 10
+   Model calls so far             : 78
+   Starting phi for this iteration:   367.68    
+
+       Lambda =  1.95313E-02 ----->
+          Phi =   90.729      (  0.247 of starting phi)
+
+   No more lambdas: allowed lambdas per iteration =  1
+   Lowest phi this iteration:   90.729    
+   Maximum relative change: 4.4792E-02 ["q5"]
+
+
+OPTIMISATION ITERATION NO.        : 11
+   Model calls so far             : 87
+   Starting phi for this iteration:   90.729    
+
+       Lambda =  9.76563E-03 ----->
+          Phi =   27.389      (  0.302 of starting phi)
+
+   No more lambdas: allowed lambdas per iteration =  1
+   Lowest phi this iteration:   27.389    
+   Maximum relative change: 4.0220E-03 ["q1"]
+
+
+OPTIMISATION ITERATION NO.        : 12
+   Model calls so far             : 96
+   Starting phi for this iteration:   27.389    
+
+       Lambda =  4.88281E-03 ----->
+          Phi =   31.443      (  1.148 times starting phi)
+
+   No more lambdas: allowed lambdas per iteration =  1
+   Lowest phi this iteration:   31.443    
+   Maximum relative change: 2.0110E-03 ["q1"]
+
+   Optimisation complete:   4 optimisation iterations have elapsed since lowest
+                          phi was achieved.
+   Total model calls:    105
+
+   The model has been run one final time using best parameters. 
+   Thus all model input files contain best parameter values, and model 
+   output files contain model results based on these parameters.
+
+
+                            OPTIMISATION RESULTS
+
+
+Parameters ----->
+
+This information not provided as non-verbose run record file requested.
+
+See file eeek.sen for parameter sensitivities.
+
+
+Observations ----->
+
+This information not provided as non-verbose run record file requested.
+
+See file eeek.res for more details of residuals in graph-ready format.
+
+See file eeek.seo for composite observation sensitivities.
+
+
+Objective function ----->
+
+  Sum of squared weighted residuals (ie phi)                =   6.751    
+
+
+Correlation Coefficient ----->
+
+  Correlation coefficient                                   =  0.87966    
+
+
+Analysis of residuals ----->
+
+  All residuals:-
+     Number of residuals with non-zero weight                       =  1350
+     Mean value of non-zero weighted residuals                      = -5.2720E-03
+     Maximum weighted residual [observation "cos_5_42"]             =  0.1328    
+     Minimum weighted residual [observation "cos_8_26"]             = -0.3776    
+     Standard variance of weighted residuals                        =  5.0153E-03
+     Standard error of weighted residuals                           =  7.0819E-02
+
+     Note: the above variance was obtained by dividing the objective 
+     function by the number of system degrees of freedom (ie. number of 
+     observations with non-zero weight plus number of prior information 
+     articles with non-zero weight minus the number of adjustable parameters.)
+     If the degrees of freedom is negative the divisor becomes 
+     the number of observations with non-zero weight plus the number of 
+     prior information items with non-zero weight.
+
+
+Covariance and other statistical matrices cannot be determined:-
+Some form or regularisation was implemented so these are not applicable.
+
+Use the PREDUNC7 utility to obtain a full posterior covariance matrix.
+
