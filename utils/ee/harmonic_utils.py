@@ -87,7 +87,7 @@ def add_harmonic_bands_via_modality_dictionary(image_collection, modality_dictio
             var_args_harmonic_bands["cos_name"] = "cos"
             var_args_harmonic_bands["sin_name"] = "sin"
 
-            reduced_collection_with_harmonic = add_cos_and_sin_bands_to_ic(
+            reduced_collection_with_harmonic = add_cos_and_sin_bands_to_collection(
                 reduced_collection_with_harmonic, var_args_harmonic_bands
             )
         if vm["bimodal"]:
@@ -98,7 +98,7 @@ def add_harmonic_bands_via_modality_dictionary(image_collection, modality_dictio
             var_args_harmonic_bands["cos_name"] = "cos2"
             var_args_harmonic_bands["sin_name"] = "sin2"
 
-            reduced_collection_with_harmonic = add_cos_and_sin_bands_to_ic(
+            reduced_collection_with_harmonic = add_cos_and_sin_bands_to_collection(
                 reduced_collection_with_harmonic, var_args_harmonic_bands
             )
         if vm["trimodal"]:
@@ -109,7 +109,7 @@ def add_harmonic_bands_via_modality_dictionary(image_collection, modality_dictio
             var_args_harmonic_bands["cos_name"] = "cos3"
             var_args_harmonic_bands["sin_name"] = "sin3"
 
-            reduced_collection_with_harmonic = add_cos_and_sin_bands_to_ic(
+            reduced_collection_with_harmonic = add_cos_and_sin_bands_to_collection(
                 reduced_collection_with_harmonic, var_args_harmonic_bands
             )
     return reduced_collection_with_harmonic
@@ -156,7 +156,7 @@ def add_linear_constant_to_ic(an_ic, constant_value, constant_band_name):
     return an_ic.map(add_constant_to_img)
 
 
-def add_cos_and_sin_bands_to_ic(an_ic, var_args_harmonic_bands):
+def add_cos_and_sin_bands_to_collection(collection, var_args_harmonic_bands):
     time_band_name = var_args_harmonic_bands["time_band_name"]
     non_standard_period_boolean = var_args_harmonic_bands["non_standard_period_boolean"]
 
@@ -179,7 +179,7 @@ def add_cos_and_sin_bands_to_ic(an_ic, var_args_harmonic_bands):
         the_sin_factor = time_radians.sin().rename(sin_name)
         return an_image.addBands(the_cos_factor).addBands(the_sin_factor)
 
-    the_ic_return = ee.ImageCollection(an_ic).map(
+    the_ic_return = ee.ImageCollection(collection).map(
         get_cos_and_sin_for_date_given_angular_freq
     )
     return the_ic_return

@@ -1,8 +1,4 @@
-import argparse
 import os
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
-import json
 
 import ee
 import numpy as np
@@ -11,24 +7,18 @@ from google.api_core import retry
 from pathos.pools import ProcessPool
 from pprint import pprint
 
-from kalman import kalman_filter
-from lib.image_collections import COLLECTIONS
 from utils.filesystem import write_json
 from utils import utils
+from kalman_with_bulcd.parameters import run_specific_parameters
+from kalman_with_bulcd.organize_inputs import organize_inputs
 
 ee.Initialize(opt_url=ee.data.HIGH_VOLUME_API_BASE_URL)
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+RUN_DIR = os.path.join(SCRIPT_DIR, "kalman_with_bulcd", "run")
+POINTS_FILE = os.path.join(RUN_DIR, "points.csv")
 
 NUM_MEASURES = 1  # eeek only supports one band at a time
-
-kalman_params = {
-    "Q": [0.00125, 0.000125, 0.000125],
-    "R": [0.003],
-    "P": [0.00101, 0.00222, 0.00333],
-    "change_probability_threshold": 0.65,
-    "Q_scale_factor": 10.0,
-}
 
 
 def parse_points(points_file):
@@ -47,31 +37,46 @@ def parse_points(points_file):
     return points
 
 
-def main(args):
+def get_param_names(modality):
     param_names = []
-    if args["include_intercept"]:
+    if modality["constant"]:
         param_names.append("INTP")
-    if args["include_slope"]:
+    if modality["linear"]:
         param_names.append("SLP")
-    for i in range(args["num_sinusoid_pairs"]):
-        param_names.extend([f"COS{i}", f"SIN{i}"])
-    num_params = len(param_names)
+    if modality["unimodal"]:
+        param_names.append("COS0")
+        param_names.append("SIN0")
+    if modality["bimodal"]:
+        param_names.append("COS1")
+        param_names.append("SIN1")
+    if modality["trimodal"]:
+        param_names.append("COS2")
+        param_names.append("SIN2")
+    return param_names, len(param_names)
+
+
+def main():
+    parameters = run_specific_parameters()
+    modality = parameters["modality_dictionary"]
+    kalman_params = parameters["kalman_params"]
+
+    param_names, num_params = get_param_names(modality)
 
     request_band_names = [*param_names.copy(), "estimate", "amplitude", "z", "date"]
     num_request_bands = len(request_band_names)
 
     Q, R, P = kalman_params["Q"], kalman_params["R"], kalman_params["P"]
+    Q = np.diag([float(x) for x in Q])
 
-    Q = np.array([float(x) for x in Q]).reshape(num_params, num_params)
-    R = np.array([float(x) for x in R.split(",")]).reshape(NUM_MEASURES, NUM_MEASURES)
-    P_arr = np.array([float(x) for x in P.split(",")]).reshape(num_params, num_params)
+    R = np.array([float(R)]).reshape(NUM_MEASURES, NUM_MEASURES)
+    P_arr = np.diag([float(x) for x in P])
 
     P = ee.Image(ee.Array(P_arr.tolist())).rename("P")
 
     H = utils.sinusoidal(
-        args["num_sinusoid_pairs"],
-        include_slope=args["include_slope"],
-        include_intercept=args["include_intercept"],
+        len([x for x in modality.keys() if modality[x] and x.endswith("modal")]),
+        modality["linear"],
+        modality["constant"],
     )
 
     kalman_init = {
@@ -83,15 +88,15 @@ def main(args):
     }
 
     write_json(
-        os.path.join(SCRIPT_DIR, "eeek_params.json"),
         {
             "process_noise": Q.tolist(),
             "measurement_noise": R.tolist(),
             "initial_state_covariance": P_arr.tolist(),
         },
+        os.path.join(SCRIPT_DIR, "eeek_params.json"),
     )
 
-    points = parse_points(args["points"])
+    points = parse_points(POINTS_FILE)
 
     ###########################################################
     ##### Run Kalman filter and bulcd across all points #######
@@ -99,10 +104,13 @@ def main(args):
     @retry.Retry()
     def process_point(kwargs):
         index = kwargs["index"]
-
         coords = (float(kwargs["longitude"]), float(kwargs["latitude"]))
 
-        col = COLLECTIONS[args["collection"]].filterBounds(ee.Geometry.Point(coords))
+        parameters = run_specific_parameters(study_area=ee.Geometry.Point(coords))
+
+        organized_inputs = organize_inputs(parameters)
+
+        exit()
 
         x0 = ee.Image(
             ee.Array(np.array(kwargs["x0"]).reshape(num_params, NUM_MEASURES).tolist())
@@ -111,7 +119,9 @@ def main(args):
         kalman_init["init_image"] = ee.Image.cat([P, x0])
         kalman_init["point_coords"] = coords
 
-        kalman_result = kalman_filter.kalman_filter(col, **kalman_init)
+        kalman_result = kalman_filter.kalman_filter(
+            organized_inputs["kalman_with_bulcd_params"], **kalman_init
+        )
 
         states = (
             kalman_result.map(lambda im: utils.unpack_arrays(im, param_names))
@@ -157,43 +167,4 @@ def main(args):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        # show the module docstring in help
-        description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-    )
-    parser.add_argument(
-        "--output",
-        required=True,
-        help="file to write results to",
-    )
-    parser.add_argument(
-        "--points",
-        required=True,
-        help="file containing points to run kalman filter on",
-    )
-    parser.add_argument(
-        "--collection",
-        default="L8",
-        help="name of image collection defined in image_collections.py",
-    )
-    parser.add_argument(
-        "--include_intercept",
-        action="store_true",
-        help="if set the model will include a y intercept",
-    )
-    parser.add_argument(
-        "--include_slope",
-        action="store_true",
-        help="if set the model will include a linear slope",
-    )
-    parser.add_argument(
-        "--num_sinusoid_pairs",
-        choices=[1, 2, 3],
-        type=int,
-        default=3,
-        help="the number of sin/cos pairs to include in the model",
-    )
-
-    args = vars(parser.parse_args())
-    main(args)
+    main()
