@@ -14,6 +14,7 @@ MAX_Z_SCORE = 5
 
 ee.Initialize(opt_url=ee.data.HIGH_VOLUME_API_BASE_URL)
 
+
 def create_priors_from_landcover_map(
     this_run_initializing_leveler,
     initial_image,
@@ -111,6 +112,7 @@ def build_start_probs(bbiidd):
     class_name_list = bbiidd.get("class_name_list")
     probs_label = bbiidd.get("probs_label")
 
+    pprint(initialization_approach)
     # Handle different initialization approaches
     if initialization_approach == "F":  # First run image
         # Create priors from the land cover map (placeholder for actual Earth Engine function)
@@ -121,27 +123,6 @@ def build_start_probs(bbiidd):
             probs_label,
         )
         current_probs = current_probs_array_img.rename(probs_label)
-
-    elif initialization_approach == "A":  # Read from asset
-        # Import multi-band asset from an earlier iteration (placeholder for actual function)
-        # current_probs_multi_band = afn_import_multiband_asset_from_earlier_iteration(
-        #     initialization_approach_parameter1, class_name_list
-        # )
-        # current_probs = (
-        #     ee.Image(current_probs_multi_band).toArray(0).rename(probs_label)
-        # )
-        pass
-
-    elif (
-        initialization_approach == "S"
-    ):  # Sequential run from an iterate within the same run
-        # Use probabilities from within this run
-        initialization_approach_parameter1 = ee.Image(
-            initialization_approach_parameter1
-        )  # Placeholder for input
-        current_probs = extract_named_slot(
-            initialization_approach_parameter1, probs_label
-        )
 
     return current_probs
 
@@ -186,6 +167,7 @@ def initialize_iterate_package(iidd):
         "record_probabilities_at_each_time_step"
     )
     initialization_approach = iidd.get("initialization_approach")
+    pprint(initialization_approach)
     base_land_cover_image = iidd.get("base_land_cover_image")
     first_comparison_image = iidd.get("first_comparison_image")
     global_counter_property_name = iidd.get("global_counter_property_name")
@@ -415,12 +397,13 @@ def hidden_bulc_iterate_with_options(
     return accumulating_answer
 
 
-def bulc(args):
-    bulc_args = args["bulc_arguments"]
+def kalman_with_bulcd(args):
+    bulc_args = args["kalman_with_bulcd_params"]["bulc_arguments"]
+    args = args["kalman_with_bulcd_params"]
 
     # Parse the parameter dictionary
     events_as_image_collection = ee.ImageCollection(
-        bulc_args.get("events_as_image_collection")
+        bulc_args.get("kalman_with_bulcd_params")
     )
     initializing_leveler = bulc_args.getNumber("initializing_leveler")
     posterior_leveler = bulc_args.getNumber("posterior_leveler")

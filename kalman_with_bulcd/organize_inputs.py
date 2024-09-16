@@ -222,8 +222,6 @@ def organize_inputs(params):
         )
     )
 
-    print(kalman_with_bulcd_params["events_and_measurements"].getInfo())
-
     return {
         "expectation_collection": expectation_collection,
         "expectation_year_regression_object": expectation_year_regression,

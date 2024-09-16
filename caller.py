@@ -7,6 +7,7 @@ from google.api_core import retry
 from pathos.pools import ProcessPool
 from pprint import pprint
 
+from kalman_with_bulcd.kalman_with_bulcd import kalman_with_bulcd
 from utils.filesystem import write_json
 from utils import utils
 from kalman_with_bulcd.parameters import run_specific_parameters
@@ -110,60 +111,57 @@ def main():
 
         organized_inputs = organize_inputs(parameters)
 
-        exit()
+        result = kalman_with_bulcd(organized_inputs)
 
-        x0 = ee.Image(
-            ee.Array(np.array(kwargs["x0"]).reshape(num_params, NUM_MEASURES).tolist())
-        ).rename("x")
+        pprint(result["multi_band_bulc_return"].getInfo())
 
-        kalman_init["init_image"] = ee.Image.cat([P, x0])
-        kalman_init["point_coords"] = coords
+        # x0 = ee.Image(
+        #     ee.Array(np.array(kwargs["x0"]).reshape(num_params, NUM_MEASURES).tolist())
+        # ).rename("x")
 
-        kalman_result = kalman_filter.kalman_filter(
-            organized_inputs["kalman_with_bulcd_params"], **kalman_init
-        )
+        # kalman_init["init_image"] = ee.Image.cat([P, x0])
+        # kalman_init["point_coords"] = coords
 
-        states = (
-            kalman_result.map(lambda im: utils.unpack_arrays(im, param_names))
-            .select(request_band_names)
-            .toBands()
-        )
+        # kalman_result = kalman_filter.kalman_filter(
+        #     organized_inputs["kalman_with_bulcd_params"], **kalman_init
+        # )
 
-        request = utils.build_request(coords)
-        request["expression"] = states
-        data = utils.compute_pixels_wrapper(request).reshape(-1, num_request_bands)
+        # states = (
+        #     kalman_result.map(lambda im: utils.unpack_arrays(im, param_names))
+        #     .select(request_band_names)
+        #     .toBands()
+        # )
 
-        df = pd.DataFrame(data, columns=request_band_names)
-        df["point"] = [index] * df.shape[0]
+        # request = utils.build_request(coords)
+        # request["expression"] = states
+        # data = utils.compute_pixels_wrapper(request).reshape(-1, num_request_bands)
 
-        # put point as the first column
-        df = df[["point"] + request_band_names]
+        # df = pd.DataFrame(data, columns=request_band_names)
+        # df["point"] = [index] * df.shape[0]
 
-        basename, ext = os.path.splitext(args["output"])
-        shard_path = basename + f"-{index:06d}" + ext
-        df.to_csv(shard_path, index=False)
+        # # put point as the first column
+        # df = df[["point"] + request_band_names]
 
-        return shard_path
+        # basename, ext = os.path.splitext(args["output"])
+        # shard_path = basename + f"-{index:06d}" + ext
+        # df.to_csv(shard_path, index=False)
 
-    with ProcessPool(nodes=40) as pool:
-        all_output_files = pool.map(process_point, points)
+        # return shard_path
 
-    # result = process_point(points[0])
+    # with ProcessPool(nodes=40) as pool:
+    #     all_output_files = pool.map(process_point, points)
+
+    result = process_point(points[0])
     # all_output_files = [result]
 
     #################################################
     ## Combine results from all runs to single csv ##
     #################################################
-    all_results = pd.concat(map(pd.read_csv, all_output_files), ignore_index=True)
-    all_results.to_csv(args["output"], index=False)
+    # all_results = pd.concat(map(pd.read_csv, all_output_files), ignore_index=True)
+    # all_results.to_csv(args["output"], index=False)
 
-    # last_row = all_results.iloc[-1]
-    # new_df = pd.DataFrame([last_row])
-    # new_df.to_csv(args.output, index=False)
-
-    # delete intermediate files
-    for f in all_output_files:
-        os.remove(f)
+    # for f in all_output_files:
+    #     os.remove(f)
 
 
 if __name__ == "__main__":
