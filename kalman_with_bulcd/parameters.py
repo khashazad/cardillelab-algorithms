@@ -7,7 +7,7 @@ def advanced_bulc_parameters():
         "initializing_leveler": 0.7,
         "transition_leveler": 0.7,
         "posterior_leveler": 0.9,
-        "number_of_classes_in_events": 10,
+        "max_class_in_event_images": 10,
         "number_of_classes_to_track": 3,
         "base_land_cover_image": ee.Image.constant(2),
         "first_comparison_image": ee.Image.constant(2),
@@ -41,6 +41,14 @@ def advanced_bulc_parameters():
         "number_of_stratified_points_for_overlay": 1000 if "V" else None,
         "stratum_image": ee.Image(1) if "V" else None,
     }
+
+    parameters["transition_minimum"] = (
+        1 - parameters["transition_leveler"]
+    ) / parameters["number_of_classes_to_track"]
+
+    parameters["posterior_minimum"] = (
+        1 - parameters["posterior_leveler"]
+    ) / parameters["number_of_classes_to_track"]
 
     return {
         "bulc_arguments": parameters,

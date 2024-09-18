@@ -15,6 +15,51 @@ MAX_Z_SCORE = 5
 ee.Initialize(opt_url=ee.data.HIGH_VOLUME_API_BASE_URL)
 
 
+def predict(x, P, F, Q):
+    """Performs the predict step of the Kalman Filter loop.
+
+    Args:
+        x: ee array Image (n x 1), the state
+        P: ee array Image (n x n), the state covariance
+        F: ee array_image (n x n), the process model
+        Q: ee array Image (n x n), the process noise
+
+    Returns:
+        x_bar (ee array image), P_bar (ee array image): the predicted state,
+        and the predicted state covariance.
+    """
+    x_bar = F.matrixMultiply(x)
+    P_bar = F.matrixMultiply(P).matrixMultiply(F.matrixTranspose()).add(Q)
+
+    return x_bar, P_bar
+
+
+def update(x_bar, P_bar, z, H, R, num_params):
+    """Performs the update step of the Kalman Filter loop.
+
+    Args:
+        x_bar: ee array image (n x 1), the predicted state
+        P_bar: ee array image (n x n), the predicted state covariance
+        z: ee array Image (1 x 1), the measurement
+        H: ee array image (1 x n), the measurement function
+        R: ee array Image (1 x 1), the measurement noise
+        num_params: int, the number of parameters in the state variable
+
+    Returns:
+        x (ee array image), P (ee array image): the updated state and state
+        covariance
+    """
+    identity = ee.Image(ee.Array.identity(num_params))
+
+    y = z.subtract(H.matrixMultiply(x_bar))
+    S = H.matrixMultiply(P_bar).matrixMultiply(H.matrixTranspose()).add(R)
+    S_inv = S.matrixInverse()
+    K = P_bar.matrixMultiply(H.matrixTranspose()).matrixMultiply(S_inv)
+    x = x_bar.add(K.matrixMultiply(y))
+    P = (identity.subtract(K.matrixMultiply(H))).matrixMultiply(P_bar)
+    return x, P
+
+
 def create_priors_from_landcover_map(
     this_run_initializing_leveler,
     initial_image,
@@ -279,10 +324,19 @@ def hidden_bulc_iterate_with_options(
     bulc_confidence_label,
     cond_stack_label,
     record_final_class,
+    Q,
+    R,
+    F,
+    H,
+    num_params,
+    measurement_band,
 ):
 
     accumulating_answer = ee.Image(accumulating_answer)
-    one_event = ee.Image(one_event)
+
+    z = ee.Image(one_event.select(measurement_band))
+
+    one_event = ee.Image(one_event.select("Slot"))
 
     # Assume all values are valid
     one_event_valid_values = one_event
@@ -290,13 +344,17 @@ def hidden_bulc_iterate_with_options(
     # Extract prior probabilities and comparison layer from accumulating answer
     current_probs = extract_named_slot(accumulating_answer, probs_label)
     comparison_layer = extract_named_slot(accumulating_answer, comparison_layer_label)
+    x_prev = extract_named_slot(accumulating_answer, constants.STATE)
+    P_prev = extract_named_slot(accumulating_answer, constants.COV)
+    t = z.date().difference("2016-01-01", "year")
 
     # Update image counters
     total_image_counter = (
-        extract_named_slot(accumulating_answer, total_image_counter_label)
+        accumulating_answer.select(total_image_counter_label)
         .add(1)
         .rename([total_image_counter_label])
     )
+
     accumulating_answer = overwrite_named_slot(
         accumulating_answer, total_image_counter, total_image_counter_label
     )
@@ -306,12 +364,12 @@ def hidden_bulc_iterate_with_options(
             total_image_counter.rename(["iter"])
         )
 
-    per_pixel_image_counter = extract_named_slot(
-        accumulating_answer, per_pixel_image_counter_label
-    )
+    per_pixel_image_counter = accumulating_answer.select(per_pixel_image_counter_label)
+
     per_pixel_image_counter = per_pixel_image_counter.where(
         one_event_valid_values, per_pixel_image_counter.add(1)
     ).rename([per_pixel_image_counter_label])
+
     accumulating_answer = overwrite_named_slot(
         accumulating_answer, per_pixel_image_counter, per_pixel_image_counter_label
     )
@@ -394,6 +452,32 @@ def hidden_bulc_iterate_with_options(
         )
     )
 
+    x_bar, P_bar = predict(x_prev, P_prev, F(**locals()), Q(**locals()))
+    x, P = update(x_bar, P_bar, z, H(**locals()), R(**locals()), num_params)
+
+    x = x_prev.where(z.select(measurement_band).gt(-999), x)
+    P = P_prev.where(z.select(measurement_band).gt(-999), P)
+
+    pixel_image = (
+        x.select(constants.STATE)
+        .arrayProject([0])
+        .arrayFlatten([["INTP", "COS0", "SIN0"]])
+    )
+
+    intp = pixel_image.select("INTP")
+    cos = pixel_image.select("COS0")
+    sin = pixel_image.select("SIN0")
+
+    phi = t.multiply(np.pi)
+    estimate = intp.add(cos.multiply(phi.cos())).add(sin.multiply(phi.sin()))
+
+    accumulating_answer = (
+        accumulating_answer.addBands(x.rename(constants.STATE))
+        .addBands(P.rename(constants.COV))
+        .addBands(estimate.rename(constants.ESTIMATE))
+        .addBands(ee.Image(z.date().millis()).rename(constants.DATE))
+    )
+
     return accumulating_answer
 
 
@@ -402,9 +486,16 @@ def kalman_with_bulcd(args):
     args = args["kalman_with_bulcd_params"]
 
     # Parse the parameter dictionary
-    events_as_image_collection = ee.ImageCollection(
-        bulc_args.get("kalman_with_bulcd_params")
-    )
+
+    kalman_params = args["kalman_params"]
+    Q = kalman_params["Q"]
+    R = kalman_params["R"]
+    F = kalman_params["F"]
+    H = kalman_params["H"]
+    num_params = kalman_params["num_params"]
+    measurement_band = kalman_params["measurement_band"]
+
+    events_as_image_collection = ee.ImageCollection(args.get("events_and_measurements"))
     initializing_leveler = bulc_args.getNumber("initializing_leveler")
     posterior_leveler = bulc_args.getNumber("posterior_leveler")
     posterior_minimum = bulc_args.getNumber("posterior_minimum")
@@ -448,6 +539,8 @@ def kalman_with_bulcd(args):
     per_pixel_image_counter_label = "per_pixel_image_counter"  # Increases if a new image is processed and has a valid value in that pixel
     bulc_confidence_label = "BULC_confidence"
     bulc_layer_label = "BULC_classification"
+    kalman_state_label = "kalman_state"
+    kalman_state_covariance_label = "kalman_state_covariance"
 
     probs_selector = "prob_cls"
     probs_label = "probability_array"
@@ -506,6 +599,10 @@ def kalman_with_bulcd(args):
         "truth_table_stack", truth_table_stack
     )
 
+    accumulating_answer = accumulating_answer.addBands(
+        kalman_params["init_image"], [constants.STATE, constants.COV]
+    )
+
     def bulc_binding(image, state):
         return hidden_bulc_iterate_with_options(
             image,
@@ -534,11 +631,19 @@ def kalman_with_bulcd(args):
             bulc_confidence_label,
             cond_stack_label,
             record_final_class,
+            Q,
+            R,
+            F,
+            H,
+            num_params,
+            measurement_band,
         )
 
     the_bound_iterate = ee.Image(
         events_as_image_collection.iterate(bulc_binding, accumulating_answer)
     )
+
+    pprint(the_bound_iterate.getInfo())
 
     if record_confidence_at_each_time_step:
         # Get the Probability layers and put them in their own image
@@ -576,12 +681,26 @@ def kalman_with_bulcd(args):
             .rename(class_name_list)
         )
 
+    # @TODO: Add flag later
+    if True:
+        layer_match_key = ".*" + "x" + ".*"
+        
+        kalman_states_multiband = the_bound_iterate.select(layer_match_key)
+
+
+    all_matched_layers_as_multiband = the_bound_iterate.select(layer_match_key)
+    all_bulc_layers = all_matched_layers_as_multiband
+
     return {
         "multi_band_bulc_return": the_bound_iterate.clip(default_study_area),
         "all_confidence_layers": all_confidence_layers.clip(default_study_area),
         "all_event_layers": all_event_layers.selfMask().clip(default_study_area),
         "all_bulc_layers": all_bulc_layers.selfMask().clip(default_study_area),
         "all_probability_layers": all_probability_layers.clip(default_study_area),
+        "kalman_states": the_bound_iterate.select(".*x.*").clip(default_study_area),
+        "kalman_covariances": the_bound_iterate.select(".*P.*").clip(default_study_area),
+        "kalman_estimates": the_bound_iterate.select(".*estimate.*").clip(default_study_area),
+        "kalman_dates": the_bound_iterate.select(".*date.*").clip(default_study_area),
         "final_bulc_probs": final_bulc_probs.clip(default_study_area),
         "default_study_area": default_study_area,
     }

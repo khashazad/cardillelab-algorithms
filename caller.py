@@ -8,10 +8,14 @@ from pathos.pools import ProcessPool
 from pprint import pprint
 
 from kalman_with_bulcd.kalman_with_bulcd import kalman_with_bulcd
+from utils.ee.image_compression_expansion import (
+    convert_multi_band_image_to_image_collection,
+)
 from utils.filesystem import write_json
 from utils import utils
 from kalman_with_bulcd.parameters import run_specific_parameters
 from kalman_with_bulcd.organize_inputs import organize_inputs
+from IPython.display import display
 
 ee.Initialize(opt_url=ee.data.HIGH_VOLUME_API_BASE_URL)
 
@@ -86,6 +90,7 @@ def main():
         "H": H,
         "R": lambda **kwargs: ee.Image(ee.Array(R.tolist())),
         "num_params": num_params,
+        "measurement_band": parameters["band_name_to_fit"],
     }
 
     write_json(
@@ -111,48 +116,78 @@ def main():
 
         organized_inputs = organize_inputs(parameters)
 
+        x0 = ee.Image(
+            ee.Array(np.array(kwargs["x0"]).reshape(num_params, NUM_MEASURES).tolist())
+        ).rename("x")
+
+        kalman_init["init_image"] = ee.Image.cat([P, x0])
+
+        organized_inputs["kalman_with_bulcd_params"]["kalman_params"] = kalman_init
+
         result = kalman_with_bulcd(organized_inputs)
 
-        pprint(result["multi_band_bulc_return"].getInfo())
+        states_as_ic = convert_multi_band_image_to_image_collection(
+            result["kalman_states"]
+        ).toList(300)
 
-        # x0 = ee.Image(
-        #     ee.Array(np.array(kwargs["x0"]).reshape(num_params, NUM_MEASURES).tolist())
-        # ).rename("x")
+        covariances_as_ic = convert_multi_band_image_to_image_collection(
+            result["kalman_covariances"]
+        ).toList(300)
 
-        # kalman_init["init_image"] = ee.Image.cat([P, x0])
-        # kalman_init["point_coords"] = coords
+        estimates_as_ic = convert_multi_band_image_to_image_collection(
+            result["kalman_estimates"]
+        ).toList(300)
 
-        # kalman_result = kalman_filter.kalman_filter(
-        #     organized_inputs["kalman_with_bulcd_params"], **kalman_init
-        # )
+        dates_as_ic = convert_multi_band_image_to_image_collection(
+            result["kalman_dates"]
+        ).toList(300)
 
-        # states = (
-        #     kalman_result.map(lambda im: utils.unpack_arrays(im, param_names))
-        #     .select(request_band_names)
-        #     .toBands()
-        # )
+        kalman_results = ee.ImageCollection(
+            states_as_ic.zip(covariances_as_ic)
+            .zip(estimates_as_ic)
+            .zip(dates_as_ic)
+            .map(
+                lambda img: (
+                    ee.Image(ee.List(img).get(0))
+                    .addBands(ee.List(img).get(1))
+                    .addBands(ee.List(img).get(2))
+                    .addBands(ee.List(img).get(3))
+                    .rename(["x", "P", "estimate", "date"])
+                )
+            )
+        )
 
-        # request = utils.build_request(coords)
-        # request["expression"] = states
-        # data = utils.compute_pixels_wrapper(request).reshape(-1, num_request_bands)
+        pprint(kalman_results.getInfo())
+        input("test")
 
-        # df = pd.DataFrame(data, columns=request_band_names)
-        # df["point"] = [index] * df.shape[0]
+        states = (
+            kalman_results.map(lambda im: utils.unpack_arrays(im, param_names))
+            .select(request_band_names)
+            .toBands()
+        )
 
-        # # put point as the first column
-        # df = df[["point"] + request_band_names]
+        request = utils.build_request(coords)
+        request["expression"] = states
+        pprint(request)
+        data = utils.compute_pixels_wrapper(request).reshape(-1, num_request_bands)
 
-        # basename, ext = os.path.splitext(args["output"])
-        # shard_path = basename + f"-{index:06d}" + ext
-        # df.to_csv(shard_path, index=False)
+        df = pd.DataFrame(data, columns=request_band_names)
+        df["point"] = [index] * df.shape[0]
 
-        # return shard_path
+        # put point as the first column
+        df = df[["point"] + request_band_names]
+
+        basename, ext = os.path.splitext(args["output"])
+        shard_path = basename + f"-{index:06d}" + ext
+        df.to_csv(shard_path, index=False)
+
+        return shard_path
 
     # with ProcessPool(nodes=40) as pool:
-    #     all_output_files = pool.map(process_point, points)
+        # all_output_files = pool.map(process_point, points)
 
     result = process_point(points[0])
-    # all_output_files = [result]
+    all_output_files = [result]
 
     #################################################
     ## Combine results from all runs to single csv ##
@@ -165,4 +200,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main()  #
