@@ -8,6 +8,7 @@ from pprint import pprint
 from lib import constants
 from utils.ee.array_operations import dampen_truth_and_add_dummy_row11
 from utils import utils
+from lib.constants import *
 
 MIN_Z_SCORE = 0
 MAX_Z_SCORE = 5
@@ -61,23 +62,19 @@ def update(x_bar, P_bar, z, H, R, num_params):
 
 
 def create_priors_from_landcover_map(
-    this_run_initializing_leveler,
+    initializing_leveler,
     initial_image,
     number_of_classes_to_track,
-    probs_label,
 ):
     def level_initial_lc_exploded(
-        lc_map_exploded, this_run_initializing_leveler, number_of_classes_to_track
+        lc_map_exploded, initializing_leveler, number_of_classes_to_track
     ):
-        # Calculate (1 - this_run_initializing_leveler) / number_of_classes_to_track
-        leveling_minimum_numerator_part1 = this_run_initializing_leveler.multiply(-1)
-        leveling_minimum_numerator = leveling_minimum_numerator_part1.add(1)
-        leveling_minimum = leveling_minimum_numerator.divide(number_of_classes_to_track)
+        leveling_minimum = (
+            initializing_leveler.multiply(-1).add(1).divide(number_of_classes_to_track)
+        )
 
         # Final calculation: lc_map_exploded * this_run_initializing_leveler + leveling_minimum
-        return lc_map_exploded.multiply(this_run_initializing_leveler).add(
-            leveling_minimum
-        )
+        return lc_map_exploded.multiply(initializing_leveler).add(leveling_minimum)
 
     # Unmask and multiply the initial image (Earth Engine-specific operations)
     initial_image = ee.Image(initial_image).unmask().multiply(1)
@@ -86,14 +83,14 @@ def create_priors_from_landcover_map(
     array_list = ee.Array(ee.List.sequence(1, ee.Number(number_of_classes_to_track)))
 
     # Create an array image from the array of values
-    stack_as_array = ee.Image(array_list).rename(probs_label)
+    stack_as_array = ee.Image(array_list).rename(PROBABILITY_SELECTOR)
 
     # Explode the land cover map, setting ith slot to 1 and others to 0
     lc_map_exploded = stack_as_array.eq(initial_image)
 
     # Level the exploded map (placeholder for actual function)
     lc_map_exploded_and_leveled = level_initial_lc_exploded(
-        lc_map_exploded, this_run_initializing_leveler, number_of_classes_to_track
+        lc_map_exploded, initializing_leveler, number_of_classes_to_track
     )
 
     return lc_map_exploded_and_leveled
@@ -116,13 +113,13 @@ def day_i_rebalancing_v3(
     return prob_stack_to_level.multiply(balance_factor).add(minimum_prob_to_add_daily)
 
 
-def increment_global_image_counter(accumulating_answer, global_counter_property_name):
-    one_value = ee.Number(accumulating_answer.get(global_counter_property_name)).add(1)
-    return accumulating_answer.set(global_counter_property_name, one_value)
+def increment_global_image_counter(accumulating_answer):
+    one_value = ee.Number(accumulating_answer.get(GLOBAL_COUNTER)).add(1)
+    return accumulating_answer.set(GLOBAL_COUNTER, one_value)
 
 
 def create_1d_transition_array_image_from_dynamic_truth(
-    one_event, any_dampened_truth_table, list_of_event_classes_from_0, cond_stack_label
+    one_event, any_dampened_truth_table, list_of_event_classes_from_0
 ):
     # Convert list_of_event_classes_from_0 to an Earth Engine list
     list_of_event_classes_from_0 = ee.List(list_of_event_classes_from_0)
@@ -142,7 +139,7 @@ def create_1d_transition_array_image_from_dynamic_truth(
     truth_table_row_to_array_image = (
         ee.Image(one_event)
         .remap(list_of_event_classes_from_0, dampened_truth_table_as_list_of_arrays)
-        .rename([cond_stack_label])
+        .rename([CONDITIONAL_STACK])
     )
 
     return truth_table_row_to_array_image
@@ -155,9 +152,7 @@ def build_start_probs(bbiidd):
     base_land_cover_image = bbiidd.get("base_land_cover_image")
     number_of_classes_to_track = bbiidd.get("number_of_classes_to_track")
     class_name_list = bbiidd.get("class_name_list")
-    probs_label = bbiidd.get("probs_label")
 
-    pprint(initialization_approach)
     # Handle different initialization approaches
     if initialization_approach == "F":  # First run image
         # Create priors from the land cover map (placeholder for actual Earth Engine function)
@@ -165,9 +160,8 @@ def build_start_probs(bbiidd):
             initializing_leveler,
             base_land_cover_image,
             number_of_classes_to_track,
-            probs_label,
         )
-        current_probs = current_probs_array_img.rename(probs_label)
+        current_probs = current_probs_array_img.rename(PROBABILITY_SELECTOR)
 
     return current_probs
 
@@ -203,27 +197,9 @@ def initialize_iterate_package(iidd):
     number_of_classes_to_track = iidd.get("number_of_classes_to_track")
     default_study_area = iidd.get("default_study_area")
     class_name_list = iidd.get("class_name_list")
-    probs_label = iidd.get("probs_label")
-    comparison_layer_label = iidd.get("comparison_layer_label")
-    total_image_counter_label = iidd.get("total_image_counter_label")
-    per_pixel_image_counter_label = iidd.get("per_pixel_image_counter_label")
-    cond_stack_label = iidd.get("cond_stack_label")
-    record_probabilities_at_each_time_step = iidd.get(
-        "record_probabilities_at_each_time_step"
-    )
     initialization_approach = iidd.get("initialization_approach")
-    pprint(initialization_approach)
     base_land_cover_image = iidd.get("base_land_cover_image")
     first_comparison_image = iidd.get("first_comparison_image")
-    global_counter_property_name = iidd.get("global_counter_property_name")
-    record_bulc_layers_at_each_time_step = iidd.get(
-        "record_bulc_layers_at_each_time_step"
-    )
-    record_confidence_at_each_time_step = iidd.get(
-        "record_confidence_at_each_time_step"
-    )
-    bulc_confidence_label = iidd.get("bulc_confidence_label")
-    bulc_layer_label = iidd.get("bulc_layer_label")
 
     # Build the start probabilities parameter dictionary
     bbiidd = {
@@ -233,7 +209,6 @@ def initialize_iterate_package(iidd):
         "number_of_classes_to_track": number_of_classes_to_track,
         "default_study_area": default_study_area,
         "class_name_list": class_name_list,
-        "probs_label": probs_label,
     }
 
     # Build initial probabilities (placeholder for afn_build_start_probs)
@@ -245,7 +220,7 @@ def initialize_iterate_package(iidd):
     # Build the comparison layer parameter dictionary
     cciidd = {
         "transition_creation_method": transition_creation_method,
-        "comparison_layer_label": comparison_layer_label,
+        "comparison_layer_label": COMPARISON_LAYER,
         "initialization_approach": initialization_approach,
         "base_land_cover_image": base_land_cover_image,
         "first_comparison_image": first_comparison_image,
@@ -257,40 +232,40 @@ def initialize_iterate_package(iidd):
     accumulating_answer = accumulating_answer.addBands(the_comparison_layer)
 
     # Add image counters
-    the_total_image_counter = ee.Image(0).rename([total_image_counter_label])
-    the_per_pixel_image_counter = ee.Image(0).rename([per_pixel_image_counter_label])
+    the_total_image_counter = ee.Image(0).rename([GLOBAL_COUNTER])
+    the_per_pixel_image_counter = ee.Image(0).rename([PER_PIXEL_IMAGE_COUNTER])
     accumulating_answer = accumulating_answer.addBands(
-        the_total_image_counter, [total_image_counter_label], False
+        the_total_image_counter, [GLOBAL_COUNTER], False
     )
     accumulating_answer = accumulating_answer.addBands(
-        the_per_pixel_image_counter, [per_pixel_image_counter_label], False
+        the_per_pixel_image_counter, [PER_PIXEL_IMAGE_COUNTER], False
     )
 
     # Add the iteration counter as a property
-    accumulating_answer = accumulating_answer.set(global_counter_property_name, 0)
+    accumulating_answer = accumulating_answer.set(GLOBAL_COUNTER_PROPERTY_NAME, 0)
 
     # Handle probabilities initialization based on the approach
     if initialization_approach == "f":  # First run
-        if record_probabilities_at_each_time_step:
+        if RECORDING_FLAGS["probabilities"]:
             current_probs_multi_band = current_probs.arrayFlatten([class_name_list])
             accumulating_answer = accumulating_answer.addBands(current_probs_multi_band)
 
     # Handle BULC layer and confidence if required
-    if record_bulc_layers_at_each_time_step:
+    if RECORDING_FLAGS["bulc_layers"]:
         bulc_posterior = (
-            current_probs.arrayArgmax().arrayFlatten([[bulc_layer_label]]).add(1)
+            current_probs.arrayArgmax().arrayFlatten([[BULC_CLASSIFICATION]]).add(1)
         )
         accumulating_answer = accumulating_answer.addBands(
-            bulc_posterior, [bulc_layer_label], False
+            bulc_posterior, [BULC_CLASSIFICATION], False
         )
 
-    if record_confidence_at_each_time_step:
+    if RECORDING_FLAGS["confidence"]:
         bulc_confidence_1d_array = current_probs.arrayReduce(
             ee.Reducer.max(), [0]
         ).select(0)
         bulc_confidence_0d = bulc_confidence_1d_array.reduce(
             ee.Reducer.max()
-        ).arrayFlatten([[bulc_confidence_label]])
+        ).arrayFlatten([[BULC_CONFIDENCE]])
         accumulating_answer = accumulating_answer.addBands(bulc_confidence_0d)
 
     # Return the final accumulating answer
@@ -300,30 +275,14 @@ def initialize_iterate_package(iidd):
 def hidden_bulc_iterate_with_options(
     one_event,
     accumulating_answer,
-    probs_label,
-    event_label,
-    comparison_layer_label,
-    total_image_counter_label,
-    per_pixel_image_counter_label,
-    record_iteration_number_at_each_time_step,
-    record_events_at_each_time_step,
-    record_conditionals_at_each_time_step,
     truth_table_stack,
     transition_creation_method,
     list_of_event_classes_from_0,
     posterior_leveler,
     posterior_minimum,
     number_of_classes_to_track,
-    record_probabilities_at_each_time_step,
     class_name_list,
     transition_leveler,
-    global_counter_property_name,
-    record_bulc_layers_at_each_time_step,
-    record_confidence_at_each_time_step,
-    bulc_layer_label,
-    bulc_confidence_label,
-    cond_stack_label,
-    record_final_class,
     Q,
     R,
     F,
@@ -342,41 +301,39 @@ def hidden_bulc_iterate_with_options(
     one_event_valid_values = one_event
 
     # Extract prior probabilities and comparison layer from accumulating answer
-    current_probs = extract_named_slot(accumulating_answer, probs_label)
-    comparison_layer = extract_named_slot(accumulating_answer, comparison_layer_label)
+    current_probs = extract_named_slot(accumulating_answer, PROBABILITY_SELECTOR)
+    comparison_layer = extract_named_slot(accumulating_answer, COMPARISON_LAYER)
     x_prev = extract_named_slot(accumulating_answer, constants.STATE)
     P_prev = extract_named_slot(accumulating_answer, constants.COV)
     t = z.date().difference("2016-01-01", "year")
 
     # Update image counters
     total_image_counter = (
-        accumulating_answer.select(total_image_counter_label)
-        .add(1)
-        .rename([total_image_counter_label])
+        accumulating_answer.select(GLOBAL_COUNTER).add(1).rename([GLOBAL_COUNTER])
     )
 
     accumulating_answer = overwrite_named_slot(
-        accumulating_answer, total_image_counter, total_image_counter_label
+        accumulating_answer, total_image_counter, GLOBAL_COUNTER
     )
 
-    if record_iteration_number_at_each_time_step:
+    if RECORDING_FLAGS["iteration_number"]:
         accumulating_answer = accumulating_answer.addBands(
             total_image_counter.rename(["iter"])
         )
 
-    per_pixel_image_counter = accumulating_answer.select(per_pixel_image_counter_label)
+    per_pixel_image_counter = accumulating_answer.select(PER_PIXEL_IMAGE_COUNTER)
 
     per_pixel_image_counter = per_pixel_image_counter.where(
         one_event_valid_values, per_pixel_image_counter.add(1)
-    ).rename([per_pixel_image_counter_label])
+    ).rename([PER_PIXEL_IMAGE_COUNTER])
 
     accumulating_answer = overwrite_named_slot(
-        accumulating_answer, per_pixel_image_counter, per_pixel_image_counter_label
+        accumulating_answer, per_pixel_image_counter, PER_PIXEL_IMAGE_COUNTER
     )
 
-    if record_events_at_each_time_step:
+    if RECORDING_FLAGS["events"]:
         accumulating_answer = accumulating_answer.addBands(
-            one_event.mask(one_event_valid_values).rename([event_label])
+            one_event.mask(one_event_valid_values).rename([EVENT])
         )
 
     # Handle different transition creation methods
@@ -386,12 +343,11 @@ def hidden_bulc_iterate_with_options(
                 one_event,
                 truth_table_stack,
                 list_of_event_classes_from_0,
-                cond_stack_label,
             )
         )
 
     # Record conditionals if needed
-    if record_conditionals_at_each_time_step:
+    if RECORDING_FLAGS["conditionals"]:
         accumulating_answer = accumulating_answer.addBands(
             transition_array_image_rescaled_and_dampened
         )
@@ -415,42 +371,38 @@ def hidden_bulc_iterate_with_options(
     # Burn pixel updates onto prior probabilities
     posterior_probs_all_pixels_1d = current_probs.where(
         one_event_valid_values, posterior_probs_valid_pixels_1d
-    ).rename([probs_label])
+    ).rename([PROBABILITY_SELECTOR])
     accumulating_answer = accumulating_answer.addBands(
-        posterior_probs_all_pixels_1d, [probs_label], True
+        posterior_probs_all_pixels_1d, [PROBABILITY_SELECTOR], True
     )
 
-    if record_probabilities_at_each_time_step:
+    if RECORDING_FLAGS["probabilities"]:
         accumulating_answer = accumulating_answer.addBands(
             posterior_probs_all_pixels_1d.arrayFlatten([class_name_list])
         )
 
     # Record BULC layers and confidence if needed
-    if record_bulc_layers_at_each_time_step:
+    if RECORDING_FLAGS["bulc_layers"]:
         bulc_posterior = (
             posterior_probs_all_pixels_1d.arrayArgmax()
-            .arrayFlatten([[bulc_layer_label]])
+            .arrayFlatten([[BULC_CLASSIFICATION]])
             .add(1)
         )
         accumulating_answer = accumulating_answer.addBands(
-            bulc_posterior, [bulc_layer_label], False
+            bulc_posterior, [BULC_CLASSIFICATION], False
         )
 
-    if record_confidence_at_each_time_step:
+    if RECORDING_FLAGS["confidence"]:
         bulc_confidence_1d_array = posterior_probs_all_pixels_1d.arrayReduce(
             ee.Reducer.max(), [0]
         ).select(0)
         bulc_confidence_0d = bulc_confidence_1d_array.reduce(
             ee.Reducer.max()
-        ).arrayFlatten([[bulc_confidence_label]])
+        ).arrayFlatten([[BULC_CONFIDENCE]])
         accumulating_answer = accumulating_answer.addBands(bulc_confidence_0d)
 
     # Increment the global image counter
-    accumulating_answer = ee.Image(
-        increment_global_image_counter(
-            accumulating_answer, global_counter_property_name
-        )
-    )
+    accumulating_answer = ee.Image(increment_global_image_counter(accumulating_answer))
 
     x_bar, P_bar = predict(x_prev, P_prev, F(**locals()), Q(**locals()))
     x, P = update(x_bar, P_bar, z, H(**locals()), R(**locals()), num_params)
@@ -472,7 +424,8 @@ def hidden_bulc_iterate_with_options(
     estimate = intp.add(cos.multiply(phi.cos())).add(sin.multiply(phi.sin()))
 
     accumulating_answer = (
-        accumulating_answer.addBands(x.rename(constants.STATE))
+        accumulating_answer.addBands(z.rename(constants.MEASUREMENT))
+        .addBands(x.rename(constants.STATE))
         .addBands(P.rename(constants.COV))
         .addBands(estimate.rename(constants.ESTIMATE))
         .addBands(ee.Image(z.date().millis()).rename(constants.DATE))
@@ -495,6 +448,8 @@ def kalman_with_bulcd(args):
     num_params = kalman_params["num_params"]
     measurement_band = kalman_params["measurement_band"]
 
+    pprint(ee.ImageCollection(args.get("events_and_measurements")).size().getInfo())
+
     events_as_image_collection = ee.ImageCollection(args.get("events_and_measurements"))
     initializing_leveler = bulc_args.getNumber("initializing_leveler")
     posterior_leveler = bulc_args.getNumber("posterior_leveler")
@@ -514,49 +469,11 @@ def kalman_with_bulcd(args):
         transition_leveler = bulc_args.getNumber("transition_leveler")
         transition_minimum = bulc_args.getNumber("transition_minimum")
 
-    # Setup flags and labels
-    record_iteration_number_at_each_time_step = bulc_args.get(
-        "record_iteration_number_at_each_time_step"
-    )
-    record_events_at_each_time_step = bulc_args.get("record_events_at_each_time_step")
-    record_probabilities_at_each_time_step = bulc_args.get(
-        "record_probabilities_at_each_time_step"
-    )
-    record_conditionals_at_each_time_step = bulc_args.get(
-        "record_conditionals_at_each_time_step"
-    )
-    record_bulc_layers_at_each_time_step = bulc_args.get(
-        "record_bulc_layers_at_each_time_step"
-    )
-    record_confidence_at_each_time_step = bulc_args.get(
-        "record_confidence_at_each_time_step"
-    )
-    record_final_class = bulc_args.get("record_final_class")
-
-    total_image_counter_label = (
-        "total_image_counter"  # Increases anytime a new image is processed
-    )
-    per_pixel_image_counter_label = "per_pixel_image_counter"  # Increases if a new image is processed and has a valid value in that pixel
-    bulc_confidence_label = "BULC_confidence"
-    bulc_layer_label = "BULC_classification"
-    kalman_state_label = "kalman_state"
-    kalman_state_covariance_label = "kalman_state_covariance"
-
-    probs_selector = "prob_cls"
-    probs_label = "probability_array"
-
-    cond_stack_label = "conditional_stack"
-
-    comparison_layer_label = "comparison_layer"
-    event_label = "event"
-
-    global_counter_property_name = "number_of_images_so_far"
-
     list_of_event_classes_from_0 = ee.List.sequence(0, max_class_in_event_images)
     list_of_tracked_classes_from_1 = ee.List.sequence(1, number_of_classes_to_track)
 
     class_name_list = list_of_tracked_classes_from_1.map(
-        lambda x: ee.String(probs_selector).cat(ee.String(ee.Number(x).int()))
+        lambda x: ee.String(PROBABILITY_SELECTOR).cat(ee.String(ee.Number(x).int()))
     )
 
     # Create an initialization dictionary for the iterate package
@@ -566,22 +483,11 @@ def kalman_with_bulcd(args):
         "number_of_classes_to_track": number_of_classes_to_track,
         "default_study_area": default_study_area,
         "class_name_list": class_name_list,
-        "probs_label": probs_label,
-        "comparison_layer_label": comparison_layer_label,
-        "total_image_counter_label": total_image_counter_label,
-        "per_pixel_image_counter_label": per_pixel_image_counter_label,
-        "cond_stack_label": cond_stack_label,
-        "record_probabilities_at_each_time_step": record_probabilities_at_each_time_step,
         "initialization_approach": initialization_approach,
         "base_land_cover_image": (
             base_land_cover_image if initialization_approach == "F" else None
         ),
         "first_comparison_image": bulc_args.get("first_comparison_image"),
-        "global_counter_property_name": global_counter_property_name,
-        "record_bulc_layers_at_each_time_step": record_bulc_layers_at_each_time_step,
-        "record_confidence_at_each_time_step": record_confidence_at_each_time_step,
-        "bulc_confidence_label": bulc_confidence_label,
-        "bulc_layer_label": bulc_layer_label,
     }
 
     accumulating_answer = initialize_iterate_package(iidd)
@@ -607,30 +513,14 @@ def kalman_with_bulcd(args):
         return hidden_bulc_iterate_with_options(
             image,
             state,
-            probs_label,
-            event_label,
-            comparison_layer_label,
-            total_image_counter_label,
-            per_pixel_image_counter_label,
-            record_iteration_number_at_each_time_step,
-            record_events_at_each_time_step,
-            record_conditionals_at_each_time_step,
             truth_table_stack,
             transition_creation_method,
             list_of_event_classes_from_0,
             posterior_leveler,
             posterior_minimum,
             number_of_classes_to_track,
-            record_probabilities_at_each_time_step,
             class_name_list,
             transition_leveler,
-            global_counter_property_name,
-            record_bulc_layers_at_each_time_step,
-            record_confidence_at_each_time_step,
-            bulc_layer_label,
-            bulc_confidence_label,
-            cond_stack_label,
-            record_final_class,
             Q,
             R,
             F,
@@ -643,37 +533,35 @@ def kalman_with_bulcd(args):
         events_as_image_collection.iterate(bulc_binding, accumulating_answer)
     )
 
-    pprint(the_bound_iterate.getInfo())
-
-    if record_confidence_at_each_time_step:
+    if RECORDING_FLAGS["confidence"]:
         # Get the Probability layers and put them in their own image
-        layer_match_key = ".*" + bulc_confidence_label + ".*"
+        layer_match_key = ".*" + BULC_CONFIDENCE + ".*"
 
         all_matched_layers_as_multiband = the_bound_iterate.select(layer_match_key)
         all_confidence_layers = all_matched_layers_as_multiband
 
-    if record_events_at_each_time_step:
+    if RECORDING_FLAGS["events"]:
         # Get the Event layers and put them in their own image
-        layer_match_key = ".*" + event_label + ".*"
+        layer_match_key = ".*" + EVENT + ".*"
 
         all_matched_layers_as_multiband = the_bound_iterate.select(layer_match_key)
         all_event_layers = all_matched_layers_as_multiband
 
-    if record_bulc_layers_at_each_time_step:
+    if RECORDING_FLAGS["bulc_layers"]:
         # Get the BULC layers and put them in their own image
-        layer_match_key = ".*" + bulc_layer_label + ".*"
+        layer_match_key = ".*" + BULC_CLASSIFICATION + ".*"
 
         all_matched_layers_as_multiband = the_bound_iterate.select(layer_match_key)
         all_bulc_layers = all_matched_layers_as_multiband
 
-    if record_probabilities_at_each_time_step:
+    if RECORDING_FLAGS["probabilities"]:
         # Get the Probability layers and put them in their own image
-        layer_match_key = ".*" + probs_selector + ".*"
+        layer_match_key = ".*" + PROBABILITY_SELECTOR + ".*"
 
         all_matched_layers_as_multiband = the_bound_iterate.select(layer_match_key)
         all_probability_layers = all_matched_layers_as_multiband
 
-    if record_final_class:
+    if RECORDING_FLAGS["final_class"]:
         # Grab the final BULC probabilities
         final_bulc_probs = (
             the_bound_iterate.select(0)
@@ -684,23 +572,29 @@ def kalman_with_bulcd(args):
     # @TODO: Add flag later
     if True:
         layer_match_key = ".*" + "x" + ".*"
-        
-        kalman_states_multiband = the_bound_iterate.select(layer_match_key)
 
+        kalman_states_multiband = the_bound_iterate.select(layer_match_key)
 
     all_matched_layers_as_multiband = the_bound_iterate.select(layer_match_key)
     all_bulc_layers = all_matched_layers_as_multiband
 
     return {
         "multi_band_bulc_return": the_bound_iterate.clip(default_study_area),
-        "all_confidence_layers": all_confidence_layers.clip(default_study_area),
-        "all_event_layers": all_event_layers.selfMask().clip(default_study_area),
+        # "all_confidence_layers": all_confidence_layers.clip(default_study_area),
+        # "all_event_layers": all_event_layers.selfMask().clip(default_study_area),
         "all_bulc_layers": all_bulc_layers.selfMask().clip(default_study_area),
-        "all_probability_layers": all_probability_layers.clip(default_study_area),
+        # "all_probability_layers": all_probability_layers.clip(default_study_area),
         "kalman_states": the_bound_iterate.select(".*x.*").clip(default_study_area),
-        "kalman_covariances": the_bound_iterate.select(".*P.*").clip(default_study_area),
-        "kalman_estimates": the_bound_iterate.select(".*estimate.*").clip(default_study_area),
+        "kalman_covariances": the_bound_iterate.select(".*P.*").clip(
+            default_study_area
+        ),
+        "kalman_estimates": the_bound_iterate.select(".*estimate.*").clip(
+            default_study_area
+        ),
         "kalman_dates": the_bound_iterate.select(".*date.*").clip(default_study_area),
+        "kalman_measurements": the_bound_iterate.select(".*z.*").clip(
+            default_study_area
+        ),
         "final_bulc_probs": final_bulc_probs.clip(default_study_area),
         "default_study_area": default_study_area,
     }

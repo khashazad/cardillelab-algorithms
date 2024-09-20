@@ -16,6 +16,7 @@ from utils import utils
 from kalman_with_bulcd.parameters import run_specific_parameters
 from kalman_with_bulcd.organize_inputs import organize_inputs
 from IPython.display import display
+from matplotlib import pyplot as plt
 
 ee.Initialize(opt_url=ee.data.HIGH_VOLUME_API_BASE_URL)
 
@@ -124,52 +125,96 @@ def main():
 
         organized_inputs["kalman_with_bulcd_params"]["kalman_params"] = kalman_init
 
-        result = kalman_with_bulcd(organized_inputs)
+        output = kalman_with_bulcd(organized_inputs)
 
-        states_as_ic = convert_multi_band_image_to_image_collection(
-            result["kalman_states"]
-        ).toList(300)
+        multi_band_bulc_return = output["multi_band_bulc_return"]
+        all_bulc_layers = output["all_bulc_layers"]
+        kalman_states = output["kalman_states"]
+        kalman_covariances = output["kalman_covariances"]
+        kalman_estimates = output["kalman_estimates"]
+        kalman_measurements = output["kalman_measurements"]
+        kalman_dates = output["kalman_dates"]
+        final_bulc_probs = output["final_bulc_probs"]
 
-        covariances_as_ic = convert_multi_band_image_to_image_collection(
-            result["kalman_covariances"]
-        ).toList(300)
+        images_to_merge = [
+            all_bulc_layers,
+            kalman_states,
+            kalman_covariances,
+            kalman_estimates,
+            kalman_measurements,
+            kalman_dates,
+        ]
 
-        estimates_as_ic = convert_multi_band_image_to_image_collection(
-            result["kalman_estimates"]
-        ).toList(300)
-
-        dates_as_ic = convert_multi_band_image_to_image_collection(
-            result["kalman_dates"]
-        ).toList(300)
-
-        kalman_results = ee.ImageCollection(
-            states_as_ic.zip(covariances_as_ic)
-            .zip(estimates_as_ic)
-            .zip(dates_as_ic)
-            .map(
-                lambda img: (
-                    ee.Image(ee.List(img).get(0))
-                    .addBands(ee.List(img).get(1))
-                    .addBands(ee.List(img).get(2))
-                    .addBands(ee.List(img).get(3))
-                    .rename(["x", "P", "estimate", "date"])
-                )
-            )
+        # Merge all images into a single image collection
+        merged_image_collection = ee.ImageCollection(images_to_merge).map(
+            lambda img: img.rename(img.bandNames())
         )
 
-        pprint(kalman_results.getInfo())
+        pprint(merged_image_collection.first().bandNames().getInfo())
         input("test")
 
-        states = (
-            kalman_results.map(lambda im: utils.unpack_arrays(im, param_names))
-            .select(request_band_names)
-            .toBands()
+        # kalman_results = ee.ImageCollection(
+        #     states_as_ic.zip(covariances_as_ic)
+        #     .zip(estimates_as_ic)
+        #     .zip(dates_as_ic)
+        #     .map(
+        #         lambda img: (
+        #             ee.Image(ee.List(img).get(0))
+        #             .addBands(ee.List(img).get(1))
+        #             .addBands(ee.List(img).get(2))
+        #             .addBands(ee.List(img).get(3))
+        #             .rename(["x", "P", "estimate", "date"])
+        #         )
+        #     )
+        # )
+
+        zipped = estimates_as_ic.zip(measurements_as_ic)
+
+        kalman_results = ee.ImageCollection(
+            ee.ImageCollection(
+                zipped.map(
+                    lambda img: ee.Image.cat(
+                        [ee.List(img).get(0), ee.List(img).get(1)]
+                    ).rename(["estimate", "z"])
+                )
+            )
+            .toList(300)
+            .zip(dates_as_ic)
+            .map(
+                lambda img: ee.Image.cat(
+                    [ee.List(img).get(0), ee.List(img).get(1), ee.List(img).get(2)]
+                ).rename(["estimate", "date", "z"])
+            )
         )
+        # kalman_results = ee.ImageCollection(
+        #     estimates_as_ic.zip(dates_as_ic)
+        #     .zip(measurements_as_ic)
+        #     .map(
+        #         lambda img: (
+        #             ee.Image.cat(
+        #                 [ee.List(img).get(0), ee.List(img).get(1), ee.List(img).get(2)]
+        #             ).rename(["estimate", "date", "z"])
+        #         )
+        #     )
+        # )
+
+        # pprint(kalman_results.getInfo())
+        # input("test")
+
+        # states = (
+        #     kalman_results.map(lambda im: utils.unpack_arrays(im, param_names))
+        #     .select(request_band_names)
+        #     .toBands()
+        # )
+
+        # states = kalman_results.select(["estimate", "date", "z"]).toBands()
 
         request = utils.build_request(coords)
-        request["expression"] = states
-        pprint(request)
-        data = utils.compute_pixels_wrapper(request).reshape(-1, num_request_bands)
+        request["expression"] = result["final_bulc_probs"]
+        data = utils.compute_pixels_wrapper(request)
+        # .reshape(-1, num_request_bands)
+
+        pprint(data)
 
         df = pd.DataFrame(data, columns=request_band_names)
         df["point"] = [index] * df.shape[0]
@@ -177,14 +222,20 @@ def main():
         # put point as the first column
         df = df[["point"] + request_band_names]
 
-        basename, ext = os.path.splitext(args["output"])
+        basename, ext = os.path.splitext(os.path.join(RUN_DIR, "output.csv"))
         shard_path = basename + f"-{index:06d}" + ext
         df.to_csv(shard_path, index=False)
+
+        df["date"] = pd.to_datetime(df["date"], unit="ms")
+
+        plt.plot(df["date"], df["estimate"])
+        plt.scatter(df["date"], df["z"])
+        plt.show()
 
         return shard_path
 
     # with ProcessPool(nodes=40) as pool:
-        # all_output_files = pool.map(process_point, points)
+    # all_output_files = pool.map(process_point, points)
 
     result = process_point(points[0])
     all_output_files = [result]

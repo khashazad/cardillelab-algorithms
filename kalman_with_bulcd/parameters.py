@@ -110,13 +110,13 @@ def run_specific_parameters(study_area=None):
             "cloud_cover_threshold": 47,
         },
         "L8dictionary": {
-            "years_list": [2022],
+            "years_list": [2021, 2022],
             "first_doy": 150,
             "last_doy": 250,
             "cloud_cover_threshold": 20,
         },
         "L9dictionary": {
-            "years_list": [2022],
+            "years_list": [2021, 2022],
             "first_doy": 150,
             "last_doy": 250,
             "cloud_cover_threshold": 20,
@@ -170,13 +170,13 @@ def run_specific_parameters(study_area=None):
             "cloud_cover_threshold": 17,
         },
         "L8dictionary": {
-            "years_list": [2023],
+            "years_list": [2022, 2023],
             "first_doy": 150,
             "last_doy": 250,
             "cloud_cover_threshold": 20,
         },
         "L9dictionary": {
-            "years_list": [2023],
+            "years_list": [2022, 2023],
             "first_doy": 150,
             "last_doy": 250,
             "cloud_cover_threshold": 20,
@@ -226,6 +226,10 @@ def run_specific_parameters(study_area=None):
         "default_study_area": default_study_area,
         "expectation_collection_parameters": expectation_collection_parameters,
         "target_collection_parameters": target_collection_parameters,
+        "sensitivity_dictionary": {
+            "z_score_numerator_factor": 1,
+            "z_score_denominator_factor": 0.05,
+        },
         "kalman_params": {
             "Q": [0.00125, 0.000125, 0.000125],
             "R": 0.003,

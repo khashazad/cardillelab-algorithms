@@ -116,32 +116,39 @@ def organize_inputs(params):
 
     expectation_collection = gather_collections_and_reduce(
         expectation_collection_parameters
-    ).filterBounds(default_study_area)
+    )
 
-    target_collection = gather_collections_and_reduce(
-        target_collection_parameters
-    ).filterBounds(default_study_area)
+    print(expectation_collection.first().bandNames().getInfo())
+
+    target_collection = gather_collections_and_reduce(target_collection_parameters)
 
     # Harmonic analysis on expectation collection
     harmonic_independents = determine_harmonic_independents_via_modality_dictionary(
         params["modality_dictionary"]
     )
+
     expectation_collection = add_harmonic_bands_via_modality_dictionary(
         expectation_collection, params["modality_dictionary"]
     )
+
     expectation_year_regression = fit_harmonic_to_collection(
         expectation_collection, band_name_to_fit, harmonic_independents
     )
+
     a_coefficient_set_expectation_year = expectation_year_regression[
         "harmonic_trend_coefficients"
     ]
+
     the_expectation_r2 = expectation_year_regression["the_r2"]
+
     expectation_collection_fit = apply_harmonic_to_collection(
         expectation_collection,
         band_name_to_fit,
         harmonic_independents,
         a_coefficient_set_expectation_year,
     )
+
+    print(expectation_collection_fit.getInfo())
 
     expectation_residuals = expectation_collection_fit.map(
         lambda img: img.select(band_name_to_fit)
@@ -163,6 +170,8 @@ def organize_inputs(params):
         target_collection, params["modality_dictionary"]
     )
 
+    print(target_collection.size().getInfo())
+
     target_collection_fit = apply_harmonic_to_collection(
         target_collection,
         band_name_to_fit,
@@ -181,9 +190,17 @@ def organize_inputs(params):
         target_collection_fit, band_name_to_fit, "fitted"
     )
 
+    rescaled_residuals = target_collection_lack_of_fit.multiply(
+        params["sensitivity_dictionary"]["z_score_numerator_factor"]
+    )
+
     target_lack_of_fit_as_z_score = (
-        ee.Image(target_collection_lack_of_fit)
-        .divide(ee.Image(expectation_period_standard_deviation))
+        ee.Image(rescaled_residuals)
+        .divide(
+            ee.Image(expectation_period_standard_deviation).max(
+                params["sensitivity_dictionary"]["z_score_denominator_factor"]
+            )
+        )
         .max(-10)
     )
 
@@ -213,6 +230,8 @@ def organize_inputs(params):
     ).set("default_study_area", default_study_area)
 
     kalman_with_bulcd_params["kalman_params"] = params["kalman_params"]
+
+    print(target_collection.select(params["band_name_to_fit"]).size().getInfo())
 
     kalman_with_bulcd_params["events_and_measurements"] = (
         merge_bands_of_images_of_two_collections(

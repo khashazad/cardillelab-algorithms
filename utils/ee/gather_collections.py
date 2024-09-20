@@ -166,6 +166,10 @@ def gather_collections_and_reduce(gather_collections_args):
     band_name_reduction = gather_collections_args["band_name_reduction"]
     which_reduction = gather_collections_args["which_reduction"]
 
+    def swir_landsat_8_9(img):
+        mySingleValue = ee.Image(img).select("SR_B6").rename(band_name_reduction)
+        return ee.Image(mySingleValue.copyProperties(img)).toFloat()
+
     which_years = []
     group_start_doy = 365
     group_end_doy = 1
@@ -282,11 +286,6 @@ def gather_collections_and_reduce(gather_collections_args):
         which_reduction = get_germane_values_parameters["which_reduction"]
         band_name_reduction = get_germane_values_parameters["band_name_reduction"]
 
-        # start_month = int(group_start_doy / 30) + 1
-        # start_day = group_start_doy % 30 + 1
-        # end_month = int(group_end_doy / 30) + 1
-        # end_day = group_end_doy % 30 + 1
-
         start_month = doy_to_month(group_start_doy, 1970)
         start_day = doy_to_day(group_start_doy, 1970)
         end_month = doy_to_month(group_end_doy, 1970)
@@ -300,7 +299,7 @@ def gather_collections_and_reduce(gather_collections_args):
                 the_year, start_month, start_day
             ).millis()
             end_date_millis = ee.Date.fromYMD(the_year, end_month, end_day).millis()
-            if start_month > end_month:
+            if int(start_month) > int(end_month):
                 end_date_millis = ee.Date.fromYMD(
                     the_year + 1, end_month, end_day
                 ).millis()
@@ -312,7 +311,7 @@ def gather_collections_and_reduce(gather_collections_args):
             def afn_nested_day(bin_start_millis):
                 start = ee.Date(bin_start_millis)
                 end = ee.Date(bin_start_millis).advance(day_step_size, "day")
-                multi_sensor_time_slice = ee.ImageCollection([])
+                multi_sensor_time_slice = ee.ImageCollection(ee.ImageCollection(sensor_input_l8).first()).map(swir_landsat_8_9)
 
                 if dataset_selection["DW"]:
                     one_time_slice = (
@@ -417,11 +416,15 @@ def gather_collections_and_reduce(gather_collections_args):
                     ).map(apply_scale_factors_l89)
                     if which_reduction == "NBR":
                         one_time_slice_reduction = one_time_slice_cloud_masked.map(
-                            lambda img: img.normalizedDifference(["SR_B5", "SR_B7"])
-                        )
+                            lambda img: img.normalizedDifference(
+                                ["SR_B5", "SR_B7"]
+                            ).rename([band_name_reduction])
+                        ).rename(band_name_reduction)
                     if which_reduction == "NDVI":
                         one_time_slice_reduction = one_time_slice_cloud_masked.map(
-                            lambda img: img.normalizedDifference(["SR_B5", "SR_B4"])
+                            lambda img: img.normalizedDifference(
+                                ["SR_B5", "SR_B4"]
+                            ).rename([band_name_reduction])
                         )
                     if which_reduction in ["count", "binary"]:
                         one_time_slice_reduction = (
@@ -432,7 +435,7 @@ def gather_collections_and_reduce(gather_collections_args):
                         )
                     if which_reduction == "SWIR":
                         one_time_slice_reduction = one_time_slice_cloud_masked.map(
-                            lambda img: img.select("SR_B6").rename(band_name_reduction)
+                            swir_landsat_8_9
                         )
                     multi_sensor_time_slice = multi_sensor_time_slice.merge(
                         one_time_slice_reduction
@@ -454,11 +457,15 @@ def gather_collections_and_reduce(gather_collections_args):
                     ).map(apply_scale_factors_l89)
                     if which_reduction == "NBR":
                         one_time_slice_reduction = one_time_slice_cloud_masked.map(
-                            lambda img: img.normalizedDifference(["SR_B5", "SR_B7"])
+                            lambda img: img.normalizedDifference(
+                                ["SR_B5", "SR_B7"]
+                            ).rename([band_name_reduction])
                         )
                     if which_reduction == "NDVI":
                         one_time_slice_reduction = one_time_slice_cloud_masked.map(
-                            lambda img: img.normalizedDifference(["SR_B5", "SR_B4"])
+                            lambda img: img.normalizedDifference(
+                                ["SR_B5", "SR_B4"]
+                            ).rename([band_name_reduction])
                         )
                     if which_reduction in ["count", "binary"]:
                         one_time_slice_reduction = (
@@ -469,7 +476,7 @@ def gather_collections_and_reduce(gather_collections_args):
                         )
                     if which_reduction == "SWIR":
                         one_time_slice_reduction = one_time_slice_cloud_masked.map(
-                            lambda img: img.select("SR_B6").rename(band_name_reduction)
+                            swir_landsat_8_9
                         )
                     multi_sensor_time_slice = multi_sensor_time_slice.merge(
                         one_time_slice_reduction
@@ -628,6 +635,7 @@ def gather_collections_and_reduce(gather_collections_args):
                 daily_answer = daily_answer.set("the_sensor", "mixed")
                 daily_answer = daily_answer.set("millis", end.millis())
                 daily_answer = daily_answer.set("system:time_start", end.millis())
+
                 return daily_answer
 
             yearly_answer = list_of_millis.map(afn_nested_day).flatten()
@@ -637,6 +645,7 @@ def gather_collections_and_reduce(gather_collections_args):
         # multi_year_answer = map(afn_nested_year, which_years)
         the_list = ee.List(multi_year_answer).flatten()
         the_collection = ee.ImageCollection.fromImages(the_list)
+
         return the_collection
 
     get_germane_values_parameters = {
