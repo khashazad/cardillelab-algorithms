@@ -51,8 +51,6 @@ def apply_harmonic_to_collection(
     dependent = ee.String(tracked_band)
     harmonic_independents = ee.List(harmonic_independents)
 
-    print(harmonic_trend_coefficients.getInfo())    
-
     fitted_harmonic = harmonic_ic.map(
         lambda image: image.addBands(
             image.select(harmonic_independents)

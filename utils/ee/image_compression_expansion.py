@@ -22,15 +22,17 @@ def convert_image_collection_to_multi_band_image(image_collection):
     return img_end_result
 
 
-def convert_multi_band_image_to_image_collection(image):
+def convert_multi_band_image_to_image_collection(image, labels=None):
     image = ee.Image(image)
     band_names = image.bandNames()
 
-    band_images = band_names.map(
-        lambda element: ee.Image(
-            ee.Image(image).select([element]).rename("band")
-        ).updateMask(ee.Image(ee.Image(image).select([element]).rename("band")).gt(-50))
-    )
+    def convert_band_to_image(band):
+        if labels is not None:
+            return ee.Image(ee.Image(image).select([band]).arrayFlatten([labels]).rename(labels))
+        else:
+            return ee.Image(ee.Image(image).select([band]).rename("band")).updateMask(ee.Image(ee.Image(image).select([band]).rename("band")).gt(-50))
+
+    band_images = band_names.map(convert_band_to_image)
 
     col = ee.ImageCollection.fromImages(band_images)
     return col

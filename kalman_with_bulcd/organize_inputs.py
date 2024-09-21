@@ -118,8 +118,6 @@ def organize_inputs(params):
         expectation_collection_parameters
     )
 
-    print(expectation_collection.first().bandNames().getInfo())
-
     target_collection = gather_collections_and_reduce(target_collection_parameters)
 
     # Harmonic analysis on expectation collection
@@ -148,8 +146,6 @@ def organize_inputs(params):
         a_coefficient_set_expectation_year,
     )
 
-    print(expectation_collection_fit.getInfo())
-
     expectation_residuals = expectation_collection_fit.map(
         lambda img: img.select(band_name_to_fit)
         .subtract(img.select(["fitted"]))
@@ -169,8 +165,6 @@ def organize_inputs(params):
     target_collection = add_harmonic_bands_via_modality_dictionary(
         target_collection, params["modality_dictionary"]
     )
-
-    print(target_collection.size().getInfo())
 
     target_collection_fit = apply_harmonic_to_collection(
         target_collection,
@@ -230,8 +224,6 @@ def organize_inputs(params):
     ).set("default_study_area", default_study_area)
 
     kalman_with_bulcd_params["kalman_params"] = params["kalman_params"]
-
-    print(target_collection.select(params["band_name_to_fit"]).size().getInfo())
 
     kalman_with_bulcd_params["events_and_measurements"] = (
         merge_bands_of_images_of_two_collections(

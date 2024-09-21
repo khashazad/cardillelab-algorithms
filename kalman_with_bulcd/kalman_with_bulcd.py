@@ -171,9 +171,6 @@ def build_comparison_layer(cciidd):
     transition_creation_method = cciidd.get("transition_creation_method")
     comparison_layer_label = cciidd.get("comparison_layer_label")
     initialization_approach = cciidd.get("initialization_approach")
-    initialization_approach_parameter1 = cciidd.get(
-        "initialization_approach_parameter1"
-    )
     first_comparison_image = cciidd.get("first_comparison_image")
 
     # Develop the comparison layer if needed
@@ -200,7 +197,7 @@ def initialize_iterate_package(iidd):
     initialization_approach = iidd.get("initialization_approach")
     base_land_cover_image = iidd.get("base_land_cover_image")
     first_comparison_image = iidd.get("first_comparison_image")
-
+    kalman_init_image = iidd.get("kalman_init_image")
     # Build the start probabilities parameter dictionary
     bbiidd = {
         "initialization_approach": initialization_approach,
@@ -211,7 +208,7 @@ def initialize_iterate_package(iidd):
         "class_name_list": class_name_list,
     }
 
-    # Build initial probabilities (placeholder for afn_build_start_probs)
+    # Build initial probabilities
     current_probs = build_start_probs(bbiidd)
 
     # Initialize accumulating_answer with current probabilities
@@ -227,7 +224,7 @@ def initialize_iterate_package(iidd):
         "default_study_area": default_study_area,
     }
 
-    # Build the first comparison layer (placeholder for afn_build_comparison_layer)
+    # Build the first comparison layer
     the_comparison_layer = build_comparison_layer(cciidd)
     accumulating_answer = accumulating_answer.addBands(the_comparison_layer)
 
@@ -267,6 +264,10 @@ def initialize_iterate_package(iidd):
             ee.Reducer.max()
         ).arrayFlatten([[BULC_CONFIDENCE]])
         accumulating_answer = accumulating_answer.addBands(bulc_confidence_0d)
+
+    accumulating_answer = accumulating_answer.addBands(
+        kalman_init_image, [constants.STATE, constants.COV]
+    )
 
     # Return the final accumulating answer
     return accumulating_answer
@@ -439,7 +440,6 @@ def kalman_with_bulcd(args):
     args = args["kalman_with_bulcd_params"]
 
     # Parse the parameter dictionary
-
     kalman_params = args["kalman_params"]
     Q = kalman_params["Q"]
     R = kalman_params["R"]
@@ -447,8 +447,6 @@ def kalman_with_bulcd(args):
     H = kalman_params["H"]
     num_params = kalman_params["num_params"]
     measurement_band = kalman_params["measurement_band"]
-
-    pprint(ee.ImageCollection(args.get("events_and_measurements")).size().getInfo())
 
     events_as_image_collection = ee.ImageCollection(args.get("events_and_measurements"))
     initializing_leveler = bulc_args.getNumber("initializing_leveler")
@@ -488,6 +486,7 @@ def kalman_with_bulcd(args):
             base_land_cover_image if initialization_approach == "F" else None
         ),
         "first_comparison_image": bulc_args.get("first_comparison_image"),
+        "kalman_init_image": kalman_params["init_image"],
     }
 
     accumulating_answer = initialize_iterate_package(iidd)
@@ -503,10 +502,6 @@ def kalman_with_bulcd(args):
 
     accumulating_answer = accumulating_answer.set(
         "truth_table_stack", truth_table_stack
-    )
-
-    accumulating_answer = accumulating_answer.addBands(
-        kalman_params["init_image"], [constants.STATE, constants.COV]
     )
 
     def bulc_binding(image, state):
@@ -568,12 +563,6 @@ def kalman_with_bulcd(args):
             .arrayFlatten([class_name_list])
             .rename(class_name_list)
         )
-
-    # @TODO: Add flag later
-    if True:
-        layer_match_key = ".*" + "x" + ".*"
-
-        kalman_states_multiband = the_bound_iterate.select(layer_match_key)
 
     all_matched_layers_as_multiband = the_bound_iterate.select(layer_match_key)
     all_bulc_layers = all_matched_layers_as_multiband
