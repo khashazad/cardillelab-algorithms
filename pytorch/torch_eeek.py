@@ -163,13 +163,13 @@ def kalman_filter(
             dtype=torch.float32,
         )
 
-        if adaptive_threshold and adaptive_scale_factor:
-            estimate_diff = measurement - (H(t) @ x_prev)
-            Q_adapted = adaptive_process_noise(
-                Q, estimate_diff, adaptive_threshold, adaptive_scale_factor
-            )
-        else:
-            Q_adapted = Q
+        # if adaptive_threshold and adaptive_scale_factor:
+        #     estimate_diff = measurement - (H(t) @ x_prev)
+        #     Q_adapted = adaptive_process_noise(
+        #         Q, estimate_diff, adaptive_threshold, adaptive_scale_factor
+        #     )
+        # else:
+        Q_adapted = Q
 
         x_bar, P_bar = predict(x_prev, P_prev, F, Q_adapted)
         x, P = update(

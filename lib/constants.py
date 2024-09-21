@@ -1,7 +1,7 @@
 """ Constants used throughout project. """
 
 # band names
-STATE = "x"
+STATE = "state"
 COV = "P"
 MEASUREMENT = "z"
 RESIDUAL = "residual"
@@ -26,9 +26,9 @@ RECORDING_FLAGS = {
     "iteration_number": False,
     "events": False,
     "conditionals": False,
-    "probabilities": False,
+    "probabilities": True,
     "bulc_layers": True,
     "confidence": False,
     "final_class": True,
-    "final_probabilities": False,
+    "final_probabilities": True,
 }

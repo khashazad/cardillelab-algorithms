@@ -59,8 +59,6 @@ def apply_harmonic_to_collection(
             .rename("fitted")
         )
     )
-
-    print(fitted_harmonic.first().bandNames().getInfo())
     return fitted_harmonic
 
 

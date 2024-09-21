@@ -294,7 +294,7 @@ def hidden_bulc_iterate_with_options(
 
     accumulating_answer = ee.Image(accumulating_answer)
 
-    z = ee.Image(one_event.select(measurement_band))
+    curr = ee.Image(one_event.select(measurement_band))
 
     one_event = ee.Image(one_event.select("Slot"))
 
@@ -302,11 +302,8 @@ def hidden_bulc_iterate_with_options(
     one_event_valid_values = one_event
 
     # Extract prior probabilities and comparison layer from accumulating answer
-    current_probs = extract_named_slot(accumulating_answer, PROBABILITY_SELECTOR)
-    comparison_layer = extract_named_slot(accumulating_answer, COMPARISON_LAYER)
-    x_prev = extract_named_slot(accumulating_answer, constants.STATE)
-    P_prev = extract_named_slot(accumulating_answer, constants.COV)
-    t = z.date().difference("2016-01-01", "year")
+    current_probs = accumulating_answer.select(PROBABILITY_SELECTOR)
+    comparison_layer = accumulating_answer.select(COMPARISON_LAYER)
 
     # Update image counters
     total_image_counter = (
@@ -402,35 +399,45 @@ def hidden_bulc_iterate_with_options(
         ).arrayFlatten([[BULC_CONFIDENCE]])
         accumulating_answer = accumulating_answer.addBands(bulc_confidence_0d)
 
-    # Increment the global image counter
-    accumulating_answer = ee.Image(increment_global_image_counter(accumulating_answer))
+    UNMASK_VALUE = -999
+
+    x_prev = accumulating_answer.select(
+        ee.String(accumulating_answer.select(f".*{STATE}.*").bandNames().get(-1))
+    )
+    P_prev = accumulating_answer.select(
+        ee.String(accumulating_answer.select(f".*{COV}.*").bandNames().get(-1))
+    )
+
+    z = curr.select(measurement_band).toArray().toArray(1)
+    t = curr.date().difference("2016-01-01", "year")
 
     x_bar, P_bar = predict(x_prev, P_prev, F(**locals()), Q(**locals()))
     x, P = update(x_bar, P_bar, z, H(**locals()), R(**locals()), num_params)
 
-    x = x_prev.where(z.select(measurement_band).gt(-999), x)
-    P = P_prev.where(z.select(measurement_band).gt(-999), P)
+    x = x_prev.where(curr.select(measurement_band).gt(UNMASK_VALUE), x)
+    P = P_prev.where(curr.select(measurement_band).gt(UNMASK_VALUE), P)
 
-    pixel_image = (
-        x.select(constants.STATE)
-        .arrayProject([0])
-        .arrayFlatten([["INTP", "COS0", "SIN0"]])
-    )
+    pixel_image = x.arrayProject([0]).arrayFlatten([["INTP", "COS0", "SIN0"]])
 
     intp = pixel_image.select("INTP")
     cos = pixel_image.select("COS0")
     sin = pixel_image.select("SIN0")
 
-    phi = t.multiply(np.pi)
+    phi = t.multiply(ee.Number(6.283))
     estimate = intp.add(cos.multiply(phi.cos())).add(sin.multiply(phi.sin()))
 
-    accumulating_answer = (
-        accumulating_answer.addBands(z.rename(constants.MEASUREMENT))
-        .addBands(x.rename(constants.STATE))
-        .addBands(P.rename(constants.COV))
-        .addBands(estimate.rename(constants.ESTIMATE))
-        .addBands(ee.Image(z.date().millis()).rename(constants.DATE))
-    )
+    result = [
+        curr.rename(constants.MEASUREMENT),
+        x.rename(constants.STATE),
+        P.rename(constants.COV),
+        estimate.rename(constants.ESTIMATE),
+        ee.Image(curr.date().millis()).rename(constants.DATE),
+    ]
+
+    accumulating_answer = accumulating_answer.addBands(ee.Image.cat(*result))
+
+    # Increment the global image counter
+    accumulating_answer = ee.Image(increment_global_image_counter(accumulating_answer))
 
     return accumulating_answer
 
@@ -572,8 +579,8 @@ def kalman_with_bulcd(args):
         # "all_confidence_layers": all_confidence_layers.clip(default_study_area),
         # "all_event_layers": all_event_layers.selfMask().clip(default_study_area),
         "all_bulc_layers": all_bulc_layers.selfMask().clip(default_study_area),
-        # "all_probability_layers": all_probability_layers.clip(default_study_area),
-        "kalman_states": the_bound_iterate.select(".*x.*").clip(default_study_area),
+        "all_probability_layers": all_probability_layers.clip(default_study_area),
+        "kalman_states": the_bound_iterate.select(".*state.*").clip(default_study_area),
         "kalman_covariances": the_bound_iterate.select(".*P.*").clip(
             default_study_area
         ),

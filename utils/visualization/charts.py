@@ -207,6 +207,50 @@ def amplitude(axes, actual, expected, point_index, title, fixed_y_axis=False):
     axes.set_title(title)
 
 
+def bulc_probs(axes, actual, point_index, title):
+    actual["date"] = pd.to_datetime(actual["date"], unit="ms")
+
+    filtered_data = actual[(actual["point"] == point_index)]
+
+    prob_decrease = filtered_data["prob_decrease"]
+    prob_stable = filtered_data["prob_no_change"]
+    prob_increase = filtered_data["prob_increase"]
+    dates = filtered_data["date"]
+
+    axes.plot(
+        dates,
+        prob_decrease,
+        marker="o",
+        label="Decrease",
+        linestyle="-",
+        color="red",
+    )
+    axes.plot(
+        dates,
+        prob_stable,
+        marker="o",
+        label="No Change",
+        linestyle="-",
+        color="green",
+    )
+    axes.plot(
+        dates,
+        prob_increase,
+        marker="o",
+        label="Increase",
+        linestyle="-",
+        color="blue",
+    )
+
+    axes.xaxis.set_major_locator(mdates.AutoDateLocator())
+    axes.xaxis.set_major_formatter(mdates.DateFormatter("%b %Y"))
+    axes.tick_params(axis="x", labelsize=8)
+
+    axes.set_ylim(0, 1)
+
+    axes.set_title(title)
+
+
 def get_labels_and_handles(axs):
     handles, labels = axs.get_legend_handles_labels()
     unique_labels = []
@@ -322,64 +366,74 @@ def generate_charts_single_run(
 
         plots = []
 
-        if flags["estimate"]:
+        if "estimate" in flags and flags["estimate"]:
             fig_estimate_vs_target, axs_estimate_vs_target = plt.subplots(
-                1, 1, figsize=(12, 8)
+                1, 1, figsize=ASPECT_RATIO
             )
             plots.append(
                 (fig_estimate_vs_target, axs_estimate_vs_target, "estimate vs target")
             )
-        if flags["intercept_cos_sin"]:
+        if "intercept_cos_sin" in flags and flags["intercept_cos_sin"]:
             fig_intercept_cos_sin, axs_intercept_cos_sin = plt.subplots(
                 1, 1, figsize=(12, 8)
             )
             plots.append(
                 (fig_intercept_cos_sin, axs_intercept_cos_sin, "intercept cos sin")
             )
-        if flags["residuals"]:
+        if "residuals" in flags and flags["residuals"]:
             fig_residuals, axs_residuals = plt.subplots(1, 1, figsize=(12, 8))
             plots.append((fig_residuals, axs_residuals, "residuals over time"))
-        if flags["amplitude"]:
+        if "amplitude" in flags and flags["amplitude"]:
             fig_amplitude, axs_amplitude = plt.subplots(1, 1, figsize=(12, 8))
             plots.append((fig_amplitude, axs_amplitude, "amplitude"))
+        if "bulc_probs" in flags and flags["bulc_probs"]:
+            fig_bulc_probs, axs_bulc_probs = plt.subplots(1, 1, figsize=(12, 8))
+            plots.append((fig_bulc_probs, axs_bulc_probs, "bulc probs"))
 
-            eeek_output = pd.read_csv(data_file)
+        eeek_output = pd.read_csv(data_file)
 
-            for fig, axes, graph_type in plots:
-                if graph_type == "estimate vs target":
-                    estimate(
-                        axes,
-                        eeek_output.copy(),
-                        target_observations.copy(),
-                        point_index,
-                        "",
-                        include_2022_fit=flags["final_2022_fit"],
-                        include_2023_fit=flags["final_2023_fit"],
-                    )
-                elif graph_type == "intercept cos sin":
-                    intercept_cos_sin(
-                        axes,
-                        eeek_output.copy(),
-                        target_observations.copy(),
-                        point_index,
-                        "",
-                    )
-                elif graph_type == "residuals over time":
-                    residuals_over_time(
-                        axes,
-                        eeek_output.copy(),
-                        target_observations.copy(),
-                        point_index,
-                        "",
-                    )
-                elif graph_type == "amplitude":
-                    amplitude(
-                        axes,
-                        eeek_output.copy(),
-                        target_observations.copy(),
-                        point_index,
-                        "",
-                    )
+        for fig, axes, graph_type in plots:
+            if graph_type == "estimate vs target":
+                estimate(
+                    axes,
+                    eeek_output.copy(),
+                    target_observations.copy(),
+                    point_index,
+                    "",
+                    include_2022_fit=flags["final_2022_fit"],
+                    include_2023_fit=flags["final_2023_fit"],
+                )
+            elif graph_type == "intercept cos sin":
+                intercept_cos_sin(
+                    axes,
+                    eeek_output.copy(),
+                    target_observations.copy(),
+                    point_index,
+                    "",
+                )
+            elif graph_type == "residuals over time":
+                residuals_over_time(
+                    axes,
+                    eeek_output.copy(),
+                    target_observations.copy(),
+                    point_index,
+                    "",
+                )
+            elif graph_type == "amplitude":
+                amplitude(
+                    axes,
+                    eeek_output.copy(),
+                    target_observations.copy(),
+                    point_index,
+                    "",
+                )
+            elif graph_type == "bulc probs":
+                bulc_probs(
+                    axes,
+                    eeek_output.copy(),
+                    point_index,
+                    "",
+                )
 
         for fig, axs, graph_type in plots:
             labels, handles = get_labels_and_handles(axs)

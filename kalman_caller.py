@@ -4,8 +4,10 @@ import ee.geometry, ee
 import pandas as pd
 import math
 from lib.image_collections import COLLECTIONS
-from utils.visualization.charts import generate_charts_comparing_runs
-from utils.filesystem import delete_existing_directory_and_create_new, read_file
+from utils.visualization.charts import (
+    generate_charts_comparing_runs,
+    generate_charts_single_run,
+)
 from utils.ee.harmonic_utils import (
     add_harmonic_bands_via_modality_dictionary,
     fit_harmonic_to_collection,
@@ -13,48 +15,37 @@ from utils.ee.harmonic_utils import (
 )
 from utils import utils
 from datetime import datetime
-from pest_eeek import main as run_eeek
+from pest.pest_eeek import main as run_eeek
 import csv
-import concurrent.futures
 
-VERSION = 2
-
-POINT_SET = 1
-POINTS_COUNT = 15
-
-graph_flags = {
-    "estimate": True,
-    "final_2022_fit": False,
-    "final_2023_fit": False,
-    "intercept_cos_sin": True,
-    "residuals": True,
-    "amplitude": True,
-}
+POINT_SET = 10
+POINTS_COUNT = 1
+VERSION = 1
 
 script_directory = os.path.dirname(os.path.realpath(__file__))
-parent_run_directory = f"{script_directory}/eeek runs/set {POINT_SET} - {POINTS_COUNT} points/version {VERSION}/"
+run_directory = f"{script_directory}/runs/kalman/set {POINT_SET} - {POINTS_COUNT} points/v{VERSION}/"
+
+parameters_file_path = f"{script_directory}/runs/kalman/eeek_input.csv"
+
+# run_version = len([f for f in os.listdir(run_directory) if f.startswith("v")]) + 1
+
+# run_directory = os.path.join(run_directory, f"v{run_version}")
 
 point_set_directory_path = f"{script_directory}/points/sets/{POINT_SET}"
 
-os.makedirs(parent_run_directory, exist_ok=True)
+os.makedirs(run_directory, exist_ok=True)
 
 
-def run_eeek_with_selected_parameters(parameter_file_path):
-    global parent_run_directory
+def run_kalman():
+    global run_directory
 
-    title = os.path.basename(parameter_file_path).replace("_", " ").split(".")[0]
-    local_run_directory = os.path.join(parent_run_directory, "runs", title)
+    os.makedirs(run_directory, exist_ok=True)
 
-    os.makedirs(local_run_directory, exist_ok=True)
+    shutil.copy(parameters_file_path, os.path.join(run_directory, "eeek_input.csv"))
 
-    os.chdir(local_run_directory)
-
-    input_file_path = os.path.join(local_run_directory, "eeek_input.csv")
-    output_file_path = os.path.join(local_run_directory, "eeek_output.csv")
-    points_file_path = os.path.join(local_run_directory, "points.csv")
-
-    shutil.copy(parameter_file_path, input_file_path)
-    shutil.copy(os.path.join(parent_run_directory, "points.csv"), points_file_path)
+    input_file_path = os.path.join(run_directory, "eeek_input.csv")
+    output_file_path = os.path.join(run_directory, "eeek_output.csv")
+    points_file_path = os.path.join(run_directory, "points.csv")
 
     args = {
         "input": input_file_path,
@@ -71,60 +62,6 @@ def run_eeek_with_selected_parameters(parameter_file_path):
     }
 
     run_eeek(args)
-
-
-def run_eeek_with_default_parameters():
-    global parent_run_directory
-    global script_directory
-
-    default_params_directory = os.path.join(
-        script_directory, "eeek runs", "parameter set", "default"
-    )
-
-    if os.path.exists(os.path.join(parent_run_directory, "default runs")):
-        return
-
-    def process_parameter_file(parameter_file_path):
-        title = os.path.basename(parameter_file_path).replace("_", " ").split(".")[0]
-        local_run_directory = os.path.join(parent_run_directory, "default runs", title)
-
-        os.makedirs(local_run_directory, exist_ok=True)
-
-        os.chdir(local_run_directory)
-
-        input_file_path = os.path.join(local_run_directory, "eeek_input.csv")
-        output_file_path = os.path.join(local_run_directory, "eeek_output.csv")
-        points_file_path = os.path.join(local_run_directory, "points.csv")
-
-        shutil.copy(parameter_file_path, input_file_path)
-        shutil.copy(os.path.join(parent_run_directory, "points.csv"), points_file_path)
-
-        args = {
-            "input": input_file_path,
-            "output": output_file_path,
-            "points": points_file_path,
-            "num_sinusoid_pairs": 1,
-            "collection": "L8_L9_2022_2023",
-            "include_intercept": True,
-            "store_measurement": True,
-            "store_estimate": True,
-            "store_date": True,
-            "include_slope": False,
-            "store_amplitude": False,
-        }
-
-        run_eeek(args)
-
-    # for parameter_file in os.listdir(default_params_directory):
-    #     process_parameter_file(os.path.join(default_params_directory, parameter_file))
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        executor.map(
-            process_parameter_file,
-            [
-                os.path.join(default_params_directory, parameter_file)
-                for parameter_file in os.listdir(default_params_directory)
-            ],
-        )
 
 
 def parse_point_coordinates():
@@ -325,53 +262,10 @@ def build_observations(coefficients_by_point, output_filename):
         return observations
 
 
-def analyze_results(run_directory):
-    global parent_run_directory
-
-    analysis_directory = os.path.join(
-        parent_run_directory, "analysis", os.path.basename(run_directory)
-    )
-    delete_existing_directory_and_create_new(analysis_directory)
-
-    observations_file_path = os.path.join(parent_run_directory, "observations.csv")
-
-    data_files = {
-        os.path.basename(run_directory).split(".")[0]: os.path.join(
-            run_directory, "eeek_output.csv"
-        )
-    }
-
-    default_runs_directories = [
-        run
-        for run in os.listdir(os.path.join(parent_run_directory, "default runs"))
-        if os.path.isdir(os.path.join(parent_run_directory, "default runs", run))
-    ]
-
-    for run in default_runs_directories:
-        run_directory = os.path.join(parent_run_directory, "default runs", run)
-
-        data_files[run.split(".")[0]] = os.path.join(run_directory, "eeek_output.csv")
-
-    generate_charts_comparing_runs(
-        data_files, observations_file_path, analysis_directory, graph_flags
-    )
-
-    parameters = []
-    for param_set in [os.path.dirname(param) for param in data_files.values()]:
-        Q, R, P = read_file(os.path.join(param_set, "eeek_input.csv"))
-        Q = [float(q) for q in Q.split(",")]
-        parameters.append([param_set.split("/")[-1], Q[0], Q[4], Q[8], float(R)])
-
-    with open(os.path.join(analysis_directory, "parameters.csv"), "w") as file:
-        csv_writer = csv.writer(file)
-        csv_writer.writerow(["Set", "Q1", "Q5", "Q9", "R"])
-        csv_writer.writerows(parameters)
-
-
 if __name__ == "__main__":
-    fitted_coefficiets_filename = parent_run_directory + "fitted_coefficients.csv"
-    points_filename = parent_run_directory + "points.csv"
-    observations_filename = parent_run_directory + "observations.csv"
+    fitted_coefficiets_filename = run_directory + "fitted_coefficients.csv"
+    points_filename = run_directory + "points.csv"
+    observations_filename = run_directory + "observations.csv"
 
     points = parse_point_coordinates()
 
@@ -388,17 +282,18 @@ if __name__ == "__main__":
             fitted_coefficiets_by_point, observations_filename
         )
 
-    parameter_sets_directory = os.path.join(
-        script_directory, "eeek runs", "parameter set", "selected"
+    run_kalman()
+
+    generate_charts_single_run(
+        f"{run_directory}/eeek_output.csv",
+        f"{run_directory}/observations.csv",
+        f"{run_directory}/analysis",
+        {
+            "estimate": True,
+            "final_2022_fit": False,
+            "final_2023_fit": False,
+            "intercept_cos_sin": True,
+            "residuals": True,
+            "amplitude": False,
+        },
     )
-    for parameter_set in os.listdir(parameter_sets_directory):
-        parameter_set_path = os.path.join(parameter_sets_directory, parameter_set)
-        run_eeek_with_selected_parameters(parameter_set_path)
-
-    run_eeek_with_default_parameters()
-
-    for result_directory in os.listdir(os.path.join(parent_run_directory, "runs")):
-        result_directory_path = os.path.join(
-            parent_run_directory, "runs", result_directory
-        )
-        analyze_results(result_directory_path)

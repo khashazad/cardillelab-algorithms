@@ -153,8 +153,6 @@ def main(args):
                     "longitude": float(lon),
                     "latitude": float(lat),
                     "x0": [float(x1), float(x2), float(x3)],
-                    # "start_date": start.strip(),
-                    # "stop_date": stop.strip(),
                 }
             )
 
@@ -170,11 +168,7 @@ def main(args):
         col = COLLECTIONS[args["collection"]].filterBounds(ee.Geometry.Point(coords))
 
         x0 = np.array(kwargs["x0"]).reshape(num_params, NUM_MEASURES)
-
-        x0 = ee.Image(ee.Array(x0.tolist())).rename("x")
-
-        # print number of images in collection
-        # print(col.size().getInfo())
+        x0 = ee.Image(ee.Array(x0.tolist())).rename(constants.STATE)
 
         kalman_init["init_image"] = ee.Image.cat([P, x0])
         kalman_init["point_coords"] = coords
@@ -203,21 +197,17 @@ def main(args):
 
         return shard_path
 
-    with ProcessPool(nodes=40) as pool:
-        all_output_files = pool.map(process_point, points)
+    # with ProcessPool(nodes=40) as pool:
+        # all_output_files = pool.map(process_point, points)
 
-    # result = process_point(points[0])
-    # all_output_files = [result]
+    result = process_point(points[0])
+    all_output_files = [result]
 
     #################################################
     ## Combine results from all runs to single csv ##
     #################################################
     all_results = pd.concat(map(pd.read_csv, all_output_files), ignore_index=True)
     all_results.to_csv(args["output"], index=False)
-
-    # last_row = all_results.iloc[-1]
-    # new_df = pd.DataFrame([last_row])
-    # new_df.to_csv(args.output, index=False)
 
     # delete intermediate files
     for f in all_output_files:
