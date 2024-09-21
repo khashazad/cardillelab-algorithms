@@ -61,15 +61,17 @@ def advanced_bulc_parameters():
 
 def run_specific_parameters(study_area=None):
     # Define coordinates and create a default study area
-    coordinates = [
-        (-126.04, 49.59),
-        (-126.04, 40.76),
-        (-118.93, 40.76),
-        (-118.93, 49.59),
-    ]
-    default_study_area = (
-        study_area if study_area else ee.Geometry.Polygon(coordinates, None, False)
-    )
+    # coordinates = [
+    #     (-126.04, 49.59),
+    #     (-126.04, 40.76),
+    #     (-118.93, 40.76),
+    #     (-118.93, 49.59),
+    # ]
+    # default_study_area = (
+    #     study_area if study_area else ee.Geometry.Polygon(coordinates, None, False)
+    # )
+
+    default_study_area = study_area
 
     # Define dataset selections
     dataset_selection = {
@@ -231,10 +233,10 @@ def run_specific_parameters(study_area=None):
             "z_score_denominator_factor": 0.05,
         },
         "kalman_params": {
-            "Q": [0.00125, 0.000125, 0.000125],
+            "Q": [0.0000125, 0.00000125, 0.00000125],
             "R": 0.003,
             "P": [0.00101, 0.00222, 0.00333],
-            "change_probability_threshold": 0.65,
-            "Q_scale_factor": 10.0,
+            "Q_scale_factor": 200.0,
+            "Q_change_threshold": 0.4,
         },
     }

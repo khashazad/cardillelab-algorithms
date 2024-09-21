@@ -29,11 +29,17 @@ from utils.visualization.charts import generate_charts_single_run
 
 ee.Initialize(opt_url=ee.data.HIGH_VOLUME_API_BASE_URL)
 
-POINT_SET = 10
-POINTS_COUNT = 1
+POINT_SET = 11
+POINTS_COUNT = 2
 VERSION = 1
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PARENT_RUN_DIR = os.path.join(
+    SCRIPT_DIR,
+    "runs",
+    "kalman with bulcd",
+    f"set {POINT_SET} - {POINTS_COUNT} points",
+)
 RUN_DIR = os.path.join(
     SCRIPT_DIR,
     "runs",
@@ -95,9 +101,13 @@ def merge_kalman_with_bulcd_results(
         bulc_probs.select(".*probability_class3.*")
     ).toList(300)
 
-    states_as_ic = convert_multi_band_image_to_image_collection(
-        kalman_states, ["INTP", "COS0", "SIN0"]
-    ).toList(300).slice(1)
+    states_as_ic = (
+        convert_multi_band_image_to_image_collection(
+            kalman_states, ["INTP", "COS0", "SIN0"]
+        )
+        .toList(300)
+        .slice(1)
+    )
     estimates_as_ic = convert_multi_band_image_to_image_collection(
         kalman_estimates
     ).toList(300)
@@ -191,9 +201,9 @@ def main():
 
     kalman_init = {
         "F": utils.identity(num_params),
-        "Q": lambda **kwargs: ee.Image(ee.Array(Q.tolist())),
+        "Q": ee.Image(ee.Array(Q.tolist())),
         "H": H,
-        "R": lambda **kwargs: ee.Image(ee.Array(R.tolist())),
+        "R": ee.Image(ee.Array(R.tolist())),
         "num_params": num_params,
         "measurement_band": parameters["band_name_to_fit"],
     }
@@ -207,7 +217,7 @@ def main():
         os.path.join(RUN_DIR, "eeek_params.json"),
     )
 
-    points = parse_points(os.path.join(RUN_DIR, "points.csv"))
+    points = parse_points(os.path.join(PARENT_RUN_DIR, "points.csv"))
 
     ###########################################################
     ##### Run Kalman filter and bulcd across all points #######
@@ -226,19 +236,17 @@ def main():
         ).rename(constants.STATE)
 
         kalman_init["init_image"] = ee.Image.cat([P, x0])
+        kalman_init["Q_change_threshold"] = kalman_params["Q_change_threshold"]
+        kalman_init["Q_scale_factor"] = kalman_params["Q_scale_factor"]
 
         organized_inputs["kalman_with_bulcd_params"]["kalman_params"] = kalman_init
 
         output = kalman_with_bulcd(organized_inputs)
 
-        multi_band_bulc_return = output["multi_band_bulc_return"]
-        all_bulc_layers = output["all_bulc_layers"]
         kalman_states = output["kalman_states"]
-        kalman_covariances = output["kalman_covariances"]
         kalman_estimates = output["kalman_estimates"]
         kalman_measurements = output["kalman_measurements"]
         kalman_dates = output["kalman_dates"]
-        final_bulc_probs = output["final_bulc_probs"]
         probability_layers = output["all_probability_layers"]
 
         result = merge_kalman_with_bulcd_results(
@@ -265,11 +273,11 @@ def main():
 
         return shard_path
 
-    # with ProcessPool(nodes=40) as pool:
-    # all_output_files = pool.map(process_point, points)
+    with ProcessPool(nodes=40) as pool:
+        all_output_files = pool.map(process_point, points)
 
-    result = process_point(points[0])
-    all_output_files = [result]
+    # result = process_point(points[0])
+    # all_output_files = [result]
 
     #################################################
     ## Combine results from all runs to single csv ##
@@ -282,28 +290,28 @@ def main():
 
 
 if __name__ == "__main__":
-    if not os.path.exists(f"{RUN_DIR}/measurements.csv"):
+    if not os.path.exists(f"{PARENT_RUN_DIR}/measurements.csv"):
         points = parse_point_coordinates(POINT_SET_DIRECTORY_PATH)
         reduce_collection_to_points_and_write_to_file(
             COLLECTIONS["L8_L9_2022_2023"],
             points,
-            f"{RUN_DIR}/measurements.csv",
+            f"{PARENT_RUN_DIR}/measurements.csv",
         )
         fitted_coefficiets_by_point = fitted_coefficients_and_dates(
-            points, f"{RUN_DIR}/fitted_coefficients.csv"
+            points, f"{PARENT_RUN_DIR}/fitted_coefficients.csv"
         )
 
-        create_points_file(f"{RUN_DIR}/points.csv", fitted_coefficiets_by_point)
+        create_points_file(f"{PARENT_RUN_DIR}/points.csv", fitted_coefficiets_by_point)
 
         observations = build_observations(
-            fitted_coefficiets_by_point, f"{RUN_DIR}/observations.csv"
+            fitted_coefficiets_by_point, f"{PARENT_RUN_DIR}/observations.csv"
         )
 
     main()
 
     generate_charts_single_run(
         f"{RUN_DIR}/output.csv",
-        f"{RUN_DIR}/observations.csv",
+        f"{PARENT_RUN_DIR}/observations.csv",
         f"{RUN_DIR}/analysis",
         {
             "estimate": True,

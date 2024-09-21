@@ -91,12 +91,6 @@ def estimate(
     axes.xaxis.set_major_formatter(mdates.DateFormatter("%b %Y"))
     axes.tick_params(axis="x", labelsize=8)
 
-    max_estimate = max(filtered_data["estimate"])
-    min_estimate = min(filtered_data["estimate"])
-
-    # if max_estimate < 0.23:
-    #     axes.set_ylim(min_estimate - 0.1, 0.25)
-
     if fixed_y_axis:
         axes.set_ylim(0, FIXED_Y_AXIS_LIMIT)
 

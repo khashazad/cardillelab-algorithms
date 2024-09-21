@@ -290,6 +290,8 @@ def hidden_bulc_iterate_with_options(
     H,
     num_params,
     measurement_band,
+    Q_change_threshold,
+    Q_scale_factor,
 ):
 
     accumulating_answer = ee.Image(accumulating_answer)
@@ -408,11 +410,22 @@ def hidden_bulc_iterate_with_options(
         ee.String(accumulating_answer.select(f".*{COV}.*").bandNames().get(-1))
     )
 
+    probability_of_no_change = ee.Image(
+        posterior_probs_all_pixels_1d.arrayFlatten([class_name_list]).select(
+            [class_name_list.get(1)]
+        )
+    )
+
     z = curr.select(measurement_band).toArray().toArray(1)
     t = curr.date().difference("2016-01-01", "year")
 
-    x_bar, P_bar = predict(x_prev, P_prev, F(**locals()), Q(**locals()))
-    x, P = update(x_bar, P_bar, z, H(**locals()), R(**locals()), num_params)
+    adaptive_Q = ee.Image(Q).where(
+        probability_of_no_change.lt(Q_change_threshold),
+        ee.Image(Q).multiply(ee.Number(Q_scale_factor)),
+    )
+
+    x_bar, P_bar = predict(x_prev, P_prev, F(**locals()), adaptive_Q)
+    x, P = update(x_bar, P_bar, z, H(**locals()), R, num_params)
 
     x = x_prev.where(curr.select(measurement_band).gt(UNMASK_VALUE), x)
     P = P_prev.where(curr.select(measurement_band).gt(UNMASK_VALUE), P)
@@ -454,6 +467,8 @@ def kalman_with_bulcd(args):
     H = kalman_params["H"]
     num_params = kalman_params["num_params"]
     measurement_band = kalman_params["measurement_band"]
+    Q_change_threshold = kalman_params["Q_change_threshold"]
+    Q_scale_factor = kalman_params["Q_scale_factor"]
 
     events_as_image_collection = ee.ImageCollection(args.get("events_and_measurements"))
     initializing_leveler = bulc_args.getNumber("initializing_leveler")
@@ -511,28 +526,30 @@ def kalman_with_bulcd(args):
         "truth_table_stack", truth_table_stack
     )
 
-    def bulc_binding(image, state):
-        return hidden_bulc_iterate_with_options(
-            image,
-            state,
-            truth_table_stack,
-            transition_creation_method,
-            list_of_event_classes_from_0,
-            posterior_leveler,
-            posterior_minimum,
-            number_of_classes_to_track,
-            class_name_list,
-            transition_leveler,
-            Q,
-            R,
-            F,
-            H,
-            num_params,
-            measurement_band,
-        )
-
     the_bound_iterate = ee.Image(
-        events_as_image_collection.iterate(bulc_binding, accumulating_answer)
+        events_as_image_collection.iterate(
+            lambda image, state: hidden_bulc_iterate_with_options(
+                image,
+                state,
+                truth_table_stack,
+                transition_creation_method,
+                list_of_event_classes_from_0,
+                posterior_leveler,
+                posterior_minimum,
+                number_of_classes_to_track,
+                class_name_list,
+                transition_leveler,
+                Q,
+                R,
+                F,
+                H,
+                num_params,
+                measurement_band,
+                Q_change_threshold,
+                Q_scale_factor,
+            ),
+            accumulating_answer,
+        )
     )
 
     if RECORDING_FLAGS["confidence"]:
