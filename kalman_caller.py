@@ -14,13 +14,12 @@ from utils.ee.harmonic_utils import (
 )
 from utils import utils
 from datetime import datetime
-from kalman.kalman_helper import main as run_kalman
+from kalman.kalman_helper import main as eeek
 import csv
 
 
 # Set the point set identifier
 POINT_SET = 12
-COLLECTION = "L8_L9_RANDONIA_SWIR_2017_2018"
 SINUSOID_PAIRS = 1
 FLAGS = {
     "include_intercept": True,
@@ -31,6 +30,11 @@ FLAGS = {
     "store_amplitude": False,
     "include_ccdc_coefficients": False,
 }
+YEARS = [2017, 2018]
+
+COLLECTION_TAG = "Randonia_l8_l9_2017_2018_swir"
+COLLECTION = COLLECTIONS[COLLECTION_TAG]
+INCLUDE_CCDC_COEFFICIENTS = True
 
 # Get the directory of the current script
 script_directory = os.path.dirname(os.path.realpath(__file__))
@@ -38,13 +42,14 @@ script_directory = os.path.dirname(os.path.realpath(__file__))
 # Count the number of points in the specified point set
 POINTS_COUNT = sum(
     [
-        int(x.split(" ")[1])
+        int(x.split("-")[1].split("p")[0].strip())
         for x in os.listdir(f"{script_directory}/points/sets/{POINT_SET}")
     ]
 )
 
 # Define the run directory based on the current timestamp
-run_directory = f"{script_directory}/runs/kalman/set {POINT_SET} - {POINTS_COUNT} points/{datetime.now().strftime('%Y%m%d_%H%M%S')}/"
+# run_directory = f"{script_directory}/runs/kalman/set {POINT_SET} - {POINTS_COUNT} points/{datetime.now().strftime('%m-%d %H:%M')}/"
+run_directory = f"{script_directory}/runs/kalman/set {POINT_SET} - {POINTS_COUNT} points/11-03 09:06/"
 
 # Path to the parameters file containing the process noise, measurement noise, and initial state covariance
 parameters_file_path = f"{script_directory}/kalman/eeek_input.csv"
@@ -54,6 +59,15 @@ point_set_directory_path = f"{script_directory}/points/sets/{POINT_SET}"
 
 # Create the run directory if it doesn't exist
 os.makedirs(run_directory, exist_ok=True)
+
+
+def append_ccdc_coefficients(output_file_path):
+    df = pd.read_csv(output_file_path)
+
+    dates = df["date"].to_numpy()
+
+    for index, date in enumerate(dates):
+        print(date)
 
 
 def run_kalman():
@@ -76,7 +90,7 @@ def run_kalman():
         "output": output_file_path,
         "points": points_file_path,
         "num_sinusoid_pairs": SINUSOID_PAIRS,
-        "collection": COLLECTION,
+        "collection": COLLECTION_TAG,
         "include_intercept": True,
         "store_measurement": True,
         "store_estimate": True,
@@ -86,7 +100,7 @@ def run_kalman():
     }
 
     # Run the Kalman process with the specified arguments
-    run_kalman(args)
+    eeek(args)
 
 
 def parse_point_coordinates():
@@ -113,9 +127,9 @@ def parse_point_coordinates():
 def get_dates_from_image_collection(year, coords):
     timestamps = [
         image["properties"]["millis"]
-        for image in COLLECTIONS[f"L8_L9_2022_2023"]
-        .filterBounds(ee.Geometry.Point(coords))
-        .getInfo()["features"]
+        for image in COLLECTION.filterBounds(ee.Geometry.Point(coords)).getInfo()[
+            "features"
+        ]
     ]
 
     return [
@@ -181,32 +195,22 @@ def fitted_coefficients_and_dates(points, fitted_coefficiets_filename):
                 "point",
                 "longitude",
                 "latitude",
-                "intercept_2022",
-                "cos_2022",
-                "sin_2022",
-                "intercept_2023",
-                "cos_2023",
-                "sin_2023",
+                *[f"intercept_{year}" for year in YEARS],
+                *[f"cos_{year}" for year in YEARS],
+                *[f"sin_{year}" for year in YEARS],
             ]
         )
         for i, point in enumerate(points):
             coefficients_by_point[i] = {
                 "coordinates": (point[0], point[1]),
-                "2022": get_fitted_coefficients_for_point(
-                    COLLECTIONS["L8_L9_2022"].filterBounds(
-                        ee.Geometry.Point(point[0], point[1])
-                    ),
-                    (point[0], point[1]),
-                    2022,
-                ),
-                "2023": get_fitted_coefficients_for_point(
-                    COLLECTIONS["L8_L9_2023"].filterBounds(
-                        ee.Geometry.Point(point[0], point[1])
-                    ),
-                    (point[0], point[1]),
-                    2023,
-                ),
             }
+
+            for year in YEARS:
+                coefficients_by_point[i][year] = get_fitted_coefficients_for_point(
+                    COLLECTION.filterBounds(ee.Geometry.Point(point[0], point[1])),
+                    (point[0], point[1]),
+                    year,
+                )
 
             # Write coefficients to the CSV file
             csv_writer.writerow(
@@ -214,12 +218,9 @@ def fitted_coefficients_and_dates(points, fitted_coefficiets_filename):
                     i,
                     point[0],
                     point[1],
-                    coefficients_by_point[i]["2022"]["intercept"],
-                    coefficients_by_point[i]["2022"]["cos"],
-                    coefficients_by_point[i]["2022"]["sin"],
-                    coefficients_by_point[i]["2023"]["intercept"],
-                    coefficients_by_point[i]["2023"]["cos"],
-                    coefficients_by_point[i]["2023"]["sin"],
+                    *[coefficients_by_point[i][year]["intercept"] for year in YEARS],
+                    *[coefficients_by_point[i][year]["cos"] for year in YEARS],
+                    *[coefficients_by_point[i][year]["sin"] for year in YEARS],
                 ]
             )
 
@@ -230,13 +231,15 @@ def fitted_coefficients_and_dates(points, fitted_coefficiets_filename):
 
 def create_points_file(points_filename, coefficients_by_point):
     with open(points_filename, "w", newline="") as file:
-        for idx, point in enumerate(coefficients_by_point):
+        for _, point in enumerate(coefficients_by_point):
             longitude = point["coordinates"][0]
             latitude = point["coordinates"][1]
 
-            intercept = point["2022"]["intercept"]
-            cos = point["2022"]["cos"]
-            sin = point["2022"]["sin"]
+            year = YEARS[0]
+
+            intercept = point[year]["intercept"]
+            cos = point[year]["cos"]
+            sin = point[year]["sin"]
 
             file.write(f"{longitude},{latitude},{intercept},{cos},{sin}\n")
 
@@ -256,9 +259,12 @@ def build_observations(coefficients_by_point, output_filename):
                     time = (
                         pd.Timestamp(date, unit="ms") - pd.Timestamp("2016-01-01")
                     ).total_seconds() / (365.25 * 24 * 60 * 60)
+
                     phi = 6.283 * time
+
                     phi_cos = math.cos(phi)
                     phi_sin = math.sin(phi)
+
                     estimate = intercept + cos * phi_cos + sin * phi_sin
 
                     observations.append(
@@ -269,27 +275,25 @@ def build_observations(coefficients_by_point, output_filename):
                     observations.append(
                         (f"estimate_{int(index)}_{observation_index}", estimate)
                     )
+
                     csv_writer.writerow([index, date, intercept, cos, sin, estimate])
                     observation_index += 1
 
-            coefficients_2022 = dic["2022"]
-            coefficients_2023 = dic["2023"]
-
-            create_observation_from_coefficients(
-                coefficients_2022["dates"],
-                coefficients_2022["intercept"],
-                coefficients_2022["cos"],
-                coefficients_2022["sin"],
-            )
-            create_observation_from_coefficients(
-                coefficients_2023["dates"],
-                coefficients_2023["intercept"],
-                coefficients_2023["cos"],
-                coefficients_2023["sin"],
-            )
+            for year in YEARS:
+                coefficients = dic[year]
+                create_observation_from_coefficients(
+                    coefficients["dates"],
+                    coefficients["intercept"],
+                    coefficients["cos"],
+                    coefficients["sin"],
+                )
 
         return observations
 
+
+if INCLUDE_CCDC_COEFFICIENTS:
+    append_ccdc_coefficients(f"{run_directory}/eeek_output.csv")
+    exit(0)
 
 if __name__ == "__main__":
     # Define filenames for output

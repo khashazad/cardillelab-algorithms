@@ -124,7 +124,9 @@ def main(args):
             "num_params": num_params,
         }
 
-        with open("eeek_params.json", "w") as f:
+        with open(
+            os.path.join(os.path.dirname(args["output"]), "eeek_params.json"), "w"
+        ) as f:
             json.dump(parameters, f, indent=4)
 
     #################################################
@@ -184,8 +186,12 @@ def main(args):
 
         return shard_path
 
-    with ProcessPool(nodes=40) as pool:
-        all_output_files = pool.map(process_point, points)
+    # with ProcessPool(nodes=40) as pool:
+    #   all_output_files = pool.map(process_point, points)
+
+    all_output_files = []
+    for point in points:
+        all_output_files.append(process_point(point))
 
     # result = process_point(points[0])
     # all_output_files = [result]
@@ -195,7 +201,9 @@ def main(args):
     #################################################
     output_by_point = map(pd.read_csv, all_output_files)
 
-    if args["include_ccdc_coefficients"]:
+    print("Kalman filter complete")
+
+    if "include_ccdc_coefficients" in args and args["include_ccdc_coefficients"]:
         output_by_point = map(ccdc_utils.add_ccdc_coefficients, output_by_point)
 
     all_results = pd.concat(output_by_point, ignore_index=True)
