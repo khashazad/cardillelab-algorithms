@@ -12,7 +12,7 @@ EPOCH_DAYS = 719529
 
 def ms_to_days(ms):
     """Convert milliseconds since epoch (01-01-1970) to number of days."""
-    return ms / MS_TO_DAYS
+    return ee.Number(ms).divide(MS_TO_DAYS)
 
 
 def date_to_jdays(str_date):
@@ -20,13 +20,13 @@ def date_to_jdays(str_date):
     if not str_date:
         raise ValueError("Required parameter [str_date] missing")
     date = ee.Date(str_date)
-    return ms_to_days(date.millis()) + EPOCH_DAYS
+    return ms_to_days(date.millis()).add(EPOCH_DAYS)
 
 
 def jdays_to_ms(jdays):
     """Convert Julian day in common era to ms since 1970-01-01."""
-    days_since_epoch = jdays - EPOCH_DAYS
-    return days_since_epoch * MS_TO_DAYS
+    days_since_epoch = ee.Number(jdays).subtract(EPOCH_DAYS)
+    return days_since_epoch.multiply(MS_TO_DAYS)
 
 
 def jdays_to_date(jdays):
@@ -36,21 +36,21 @@ def jdays_to_date(jdays):
 
 def ms_to_jdays(ms):
     """Convert ms since 1970-01-01 to Julian day in common era."""
-    return ms_to_days(ms) + EPOCH_DAYS
+    return ms_to_days(ms).add(EPOCH_DAYS)
 
 
 def ms_to_frac(ms):
     """Convert ms since 1970-01-01 to fractional year."""
     year = ee.Date(ms).get("year")
     frac = ee.Date(ms).getFraction("year")
-    return year + frac
+    return year.add(frac)
 
 
 def frac_to_ms(frac):
     """Convert fractional time to ms since 1970-01-01."""
-    fyear = frac
-    year = int(fyear)
-    d = (fyear - year) * 365.25
+    fyear = ee.Number(frac)
+    year = fyear.floor()
+    d = fyear.subtract(year).multiply(365.25)
     day_one = ee.Date.fromYMD(year, 1, 1)
     return day_one.advance(d, "day").millis()
 
