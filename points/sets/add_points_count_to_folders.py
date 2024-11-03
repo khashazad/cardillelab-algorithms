@@ -11,4 +11,9 @@ for folder in os.listdir(script_directory):
             total_count += points_count
 
             prefix = dir.split(" - ")[0]
-            os.rename(os.path.join(script_directory, folder, dir), os.path.join(script_directory, folder, f"{prefix} - {points_count} points"))
+            os.rename(
+                os.path.join(script_directory, folder, dir),
+                os.path.join(
+                    script_directory, folder, f"{prefix} - {points_count} points"
+                ),
+            )

@@ -19,6 +19,8 @@ to use for the given run.
 
 import ee
 
+from lib.study_areas import PNW, RANDONIA
+
 ee.Initialize()
 
 from pprint import pprint
@@ -42,7 +44,6 @@ L8 = (
 EXPORTED_LANDSAT8_FROM_JS = ee.ImageCollection(
     "projects/api-project-269347469410/assets/kalman-value-collection-60-180"
 )
-
 
 L8_GATHER_COLLECTIONS = gather_collections_and_reduce(
     {
@@ -133,11 +134,7 @@ L8_L9_2022_2023_DSS_1 = gather_collections_and_reduce(
             "last_doy": 250,
             "cloud_cover_threshold": 20,
         },
-        "default_study_area": (
-            ee.Geometry.Polygon(
-                [(-126.04, 49.59), (-126.04, 40.76), (-118.93, 40.76), (-118.93, 49.59)]
-            )
-        ),
+        "default_study_area": ee.Geometry.Polygon(PNW),
         "band_name_reduction": "swir",
         "which_reduction": "SWIR",
         "day_step_size": 1,
@@ -171,11 +168,7 @@ L8_L9_2022 = gather_collections_and_reduce(
             "last_doy": 250,
             "cloud_cover_threshold": 20,
         },
-        "default_study_area": (
-            ee.Geometry.Polygon(
-                [(-126.04, 49.59), (-126.04, 40.76), (-118.93, 40.76), (-118.93, 49.59)]
-            )
-        ),
+        "default_study_area": (ee.Geometry.Polygon(PNW)),
         "band_name_reduction": "swir",
         "which_reduction": "SWIR",
         "day_step_size": 4,
@@ -233,11 +226,49 @@ L8_L9_2023 = gather_collections_and_reduce(
     }
 )
 
+CCDC_RANDONIA = ee.Image("projects/GLANCE/RESULTS/CHANGEDETECTION/SA/Rondonia_example")
+
+L8_L9_RANDONIA_SWIR_2017_2018 = gather_collections_and_reduce(
+    {
+        "L8dictionary": {
+            "years_list": [2017, 2018],
+            "first_doy": 150,
+            "last_doy": 250,
+            "cloud_cover_threshold": 20,
+        },
+        "L9dictionary": {
+            "years_list": [2017, 2018],
+            "first_doy": 150,
+            "last_doy": 250,
+            "cloud_cover_threshold": 20,
+        },
+        "default_study_area": (ee.Geometry.Polygon(RANDONIA)),
+        "band_name_reduction": "swir",
+        "which_reduction": "SWIR",
+        "day_step_size": 6,
+        "verbose": False,
+        "dataset_selection": {
+            "L5": False,
+            "L7": False,
+            "L8": True,
+            "L9": True,
+            "MO": False,
+            "S2": False,
+            "S1": False,
+            "DW": False,
+        },
+        "first_expectation_year": 2017,
+        "verbose": False,
+    }
+)
+
 COLLECTIONS = {
     "L8_L9_2022_2023": L8_L9_2022_2023,
     "L8_L9_2022_2023_DSS_1": L8_L9_2022_2023_DSS_1,
     "L8_L9_2022": L8_L9_2022,
     "L8_L9_2023": L8_L9_2023,
+    "CCDC_Randonia": CCDC_RANDONIA,
+    "Randonia_l8_l9_2017_2018_swir": L8_L9_RANDONIA_SWIR_2017_2018,
 }
 
 if __name__ == "__main__":

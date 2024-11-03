@@ -4,9 +4,29 @@ import math
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import numpy as np
+import enum
 
 FIXED_Y_AXIS_LIMIT = 0.4
 ASPECT_RATIO = (12, 8)
+
+
+class ChartType(enum.Enum):
+    KALMAN_VS_HARMONIC_FIT = "kalman vs harmonic fit"
+    ESTIMATES_INTERCEPT_COS_SIN = "estimates intercept cos sin"
+    RESIDUALS_OVER_TIME = "residuals over time"
+    AMPLITUDE = "amplitude"
+    BULC_PROBS = "bulc probs"
+    KALMAN_VS_CCDC = "kalman vs ccdc"
+
+
+CHART_TITLES = {
+    ChartType.KALMAN_VS_HARMONIC_FIT: "Kalman vs Harmonic Fit",
+    ChartType.ESTIMATES_INTERCEPT_COS_SIN: "Estimates Intercept Cos Sin",
+    ChartType.RESIDUALS_OVER_TIME: "Residuals Over Time",
+    ChartType.AMPLITUDE: "Amplitude",
+    ChartType.BULC_PROBS: "Bulc Probs",
+    ChartType.KALMAN_VS_CCDC: "Kalman vs CCDC",
+}
 
 
 def estimate(
@@ -245,6 +265,57 @@ def bulc_probs(axes, actual, point_index, title):
     axes.set_title(title)
 
 
+def estimate_vs_ccdc(axes, actual, point_index, title, fixed_y_axis=False):
+    actual["time"] = (
+        pd.to_datetime(actual["date"], unit="ms") - pd.to_datetime("2016-01-01")
+    ).dt.total_seconds() / (365.25 * 24 * 60 * 60)
+
+    phi = 6.283 * actual["time"]
+    phi_cos = phi.apply(math.cos)
+    phi_sin = phi.apply(math.sin)
+
+    actual["ccdc_estimate"] = (
+        actual["CCDC_INTP"]
+        + actual["CCDC_COS"] * phi_cos
+        + actual["CCDC_SIN"] * phi_sin
+    )
+
+    actual["date"] = pd.to_datetime(actual["date"], unit="ms")
+
+    filtered_data = actual[(actual["point"] == point_index)]
+
+    axes.plot(
+        filtered_data["date"],
+        filtered_data["estimate"],
+        label="Estimate - Optimized",
+        linestyle="-",
+        color="blue",
+    )
+    axes.plot(
+        filtered_data["date"],
+        filtered_data["ccdc_estimate"],
+        label="CCDC",
+        linestyle="--",
+        color="green",
+    )
+    axes.scatter(
+        filtered_data[(filtered_data["z"] != 0)]["date"],
+        filtered_data[(filtered_data["z"] != 0)]["z"],
+        label="Observed",
+        s=13,
+        color="red",
+    )
+
+    axes.xaxis.set_major_locator(mdates.AutoDateLocator())
+    axes.xaxis.set_major_formatter(mdates.DateFormatter("%b %Y"))
+    axes.tick_params(axis="x", labelsize=8)
+
+    if fixed_y_axis:
+        axes.set_ylim(0, FIXED_Y_AXIS_LIMIT)
+
+    axes.set_title(title)
+
+
 def get_labels_and_handles(axs):
     handles, labels = axs.get_legend_handles_labels()
     unique_labels = []
@@ -360,73 +431,107 @@ def generate_charts_single_run(
 
         plots = []
 
-        if "estimate" in flags and flags["estimate"]:
+        if (
+            ChartType.KALMAN_VS_HARMONIC_FIT in flags
+            and flags[ChartType.KALMAN_VS_HARMONIC_FIT]
+        ):
             fig_estimate_vs_target, axs_estimate_vs_target = plt.subplots(
                 1, 1, figsize=ASPECT_RATIO
             )
             plots.append(
-                (fig_estimate_vs_target, axs_estimate_vs_target, "estimate vs target")
+                (
+                    fig_estimate_vs_target,
+                    axs_estimate_vs_target,
+                    ChartType.KALMAN_VS_HARMONIC_FIT,
+                )
             )
-        if "intercept_cos_sin" in flags and flags["intercept_cos_sin"]:
+        if (
+            ChartType.ESTIMATES_INTERCEPT_COS_SIN in flags
+            and flags[ChartType.ESTIMATES_INTERCEPT_COS_SIN]
+        ):
             fig_intercept_cos_sin, axs_intercept_cos_sin = plt.subplots(
-                1, 1, figsize=(12, 8)
+                1, 1, figsize=ASPECT_RATIO
             )
             plots.append(
-                (fig_intercept_cos_sin, axs_intercept_cos_sin, "intercept cos sin")
+                (
+                    fig_intercept_cos_sin,
+                    axs_intercept_cos_sin,
+                    ChartType.ESTIMATES_INTERCEPT_COS_SIN,
+                )
             )
-        if "residuals" in flags and flags["residuals"]:
-            fig_residuals, axs_residuals = plt.subplots(1, 1, figsize=(12, 8))
-            plots.append((fig_residuals, axs_residuals, "residuals over time"))
-        if "amplitude" in flags and flags["amplitude"]:
-            fig_amplitude, axs_amplitude = plt.subplots(1, 1, figsize=(12, 8))
-            plots.append((fig_amplitude, axs_amplitude, "amplitude"))
-        if "bulc_probs" in flags and flags["bulc_probs"]:
-            fig_bulc_probs, axs_bulc_probs = plt.subplots(1, 1, figsize=(12, 8))
-            plots.append((fig_bulc_probs, axs_bulc_probs, "bulc probs"))
+        if (
+            ChartType.RESIDUALS_OVER_TIME in flags
+            and flags[ChartType.RESIDUALS_OVER_TIME]
+        ):
+            fig_residuals, axs_residuals = plt.subplots(1, 1, figsize=ASPECT_RATIO)
+            plots.append((fig_residuals, axs_residuals, ChartType.RESIDUALS_OVER_TIME))
+
+        if ChartType.AMPLITUDE in flags and flags[ChartType.AMPLITUDE]:
+            fig_amplitude, axs_amplitude = plt.subplots(1, 1, figsize=ASPECT_RATIO)
+            plots.append((fig_amplitude, axs_amplitude, ChartType.AMPLITUDE))
+
+        if ChartType.BULC_PROBS in flags and flags[ChartType.BULC_PROBS]:
+            fig_bulc_probs, axs_bulc_probs = plt.subplots(1, 1, figsize=ASPECT_RATIO)
+            plots.append((fig_bulc_probs, axs_bulc_probs, ChartType.BULC_PROBS))
+
+        if ChartType.KALMAN_VS_CCDC in flags and flags[ChartType.KALMAN_VS_CCDC]:
+            fig_kalman_vs_ccdc, axs_kalman_vs_ccdc = plt.subplots(
+                1, 1, figsize=ASPECT_RATIO
+            )
+            plots.append(
+                (fig_kalman_vs_ccdc, axs_kalman_vs_ccdc, ChartType.KALMAN_VS_CCDC)
+            )
 
         eeek_output = pd.read_csv(data_file)
 
         for fig, axes, graph_type in plots:
-            if graph_type == "estimate vs target":
+            if graph_type == ChartType.KALMAN_VS_HARMONIC_FIT:
                 estimate(
                     axes,
                     eeek_output.copy(),
                     target_observations.copy(),
                     point_index,
-                    "",
-                    include_2022_fit=flags["final_2022_fit"],
-                    include_2023_fit=flags["final_2023_fit"],
+                    CHART_TITLES[graph_type],
+                    include_2022_fit=False,
+                    include_2023_fit=False,
                 )
-            elif graph_type == "intercept cos sin":
+            elif graph_type == ChartType.ESTIMATES_INTERCEPT_COS_SIN:
                 intercept_cos_sin(
                     axes,
                     eeek_output.copy(),
                     target_observations.copy(),
                     point_index,
-                    "",
+                    CHART_TITLES[graph_type],
                 )
-            elif graph_type == "residuals over time":
+            elif graph_type == ChartType.RESIDUALS_OVER_TIME:
                 residuals_over_time(
                     axes,
                     eeek_output.copy(),
                     target_observations.copy(),
                     point_index,
-                    "",
+                    CHART_TITLES[graph_type],
                 )
-            elif graph_type == "amplitude":
+            elif graph_type == ChartType.AMPLITUDE:
                 amplitude(
                     axes,
                     eeek_output.copy(),
                     target_observations.copy(),
                     point_index,
-                    "",
+                    CHART_TITLES[graph_type],
                 )
-            elif graph_type == "bulc probs":
+            elif graph_type == ChartType.BULC_PROBS:
                 bulc_probs(
                     axes,
                     eeek_output.copy(),
                     point_index,
-                    "",
+                    CHART_TITLES[graph_type],
+                )
+            elif graph_type == ChartType.KALMAN_VS_CCDC:
+                estimate_vs_ccdc(
+                    axes,
+                    eeek_output.copy(),
+                    point_index,
+                    CHART_TITLES[graph_type],
                 )
 
         for fig, axs, graph_type in plots:
@@ -434,5 +539,5 @@ def generate_charts_single_run(
             fig.legend(handles, labels, loc="upper center", ncol=5)
 
             plt.tight_layout()
-            save_chart(fig, point_index, graph_type, output_directory)
+            save_chart(fig, point_index, CHART_TITLES[graph_type], output_directory)
             plt.close(fig)
