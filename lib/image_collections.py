@@ -43,7 +43,6 @@ EXPORTED_LANDSAT8_FROM_JS = ee.ImageCollection(
     "projects/api-project-269347469410/assets/kalman-value-collection-60-180"
 )
 
-
 L8_GATHER_COLLECTIONS = gather_collections_and_reduce(
     {
         "L8dictionary": {
@@ -233,11 +232,58 @@ L8_L9_2023 = gather_collections_and_reduce(
     }
 )
 
+CCDC_RANDONIA = ee.Image("projects/GLANCE/RESULTS/CHANGEDETECTION/SA/Rondonia_example")
+
+L8_L9_RANDONIA_SWIR_2017_2018 = gather_collections_and_reduce(
+    {
+        "L8dictionary": {
+            "years_list": [2017, 2018],
+            "first_doy": 150,
+            "last_doy": 250,
+            "cloud_cover_threshold": 20,
+        },
+        "L9dictionary": {
+            "years_list": [2017, 2018],
+            "first_doy": 150,
+            "last_doy": 250,
+            "cloud_cover_threshold": 20,
+        },
+        "default_study_area": (
+            ee.Geometry.Polygon(
+                [
+                    (-64.14684834846416, -12.63869807976917),
+                    (-64.14684834846416, -13.222267116932125),
+                    (-63.55495992072979, -13.222267116932125),
+                    (-63.55495992072979, -12.63869807976917),
+                ]
+            )
+        ),
+        "band_name_reduction": "swir",
+        "which_reduction": "SWIR",
+        "day_step_size": 6,
+        "verbose": False,
+        "dataset_selection": {
+            "L5": False,
+            "L7": False,
+            "L8": True,
+            "L9": True,
+            "MO": False,
+            "S2": False,
+            "S1": False,
+            "DW": False,
+        },
+        "first_expectation_year": 2017,
+        "verbose": False,
+    }
+)
+
 COLLECTIONS = {
     "L8_L9_2022_2023": L8_L9_2022_2023,
     "L8_L9_2022_2023_DSS_1": L8_L9_2022_2023_DSS_1,
     "L8_L9_2022": L8_L9_2022,
     "L8_L9_2023": L8_L9_2023,
+    "CCDC_Randonia": CCDC_RANDONIA,
+    "Randonia_l8_l9_2017_2018_swir": L8_L9_RANDONIA_SWIR_2017_2018,
 }
 
 if __name__ == "__main__":

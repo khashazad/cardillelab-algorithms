@@ -5,7 +5,6 @@ import pandas as pd
 import math
 from lib.image_collections import COLLECTIONS
 from utils.visualization.charts import (
-    generate_charts_comparing_runs,
     generate_charts_single_run,
 )
 from utils.ee.harmonic_utils import (
@@ -15,44 +14,69 @@ from utils.ee.harmonic_utils import (
 )
 from utils import utils
 from datetime import datetime
-from pest.pest_eeek import main as run_eeek
+from kalman.kalman_helper import main as run_kalman
 import csv
 
-POINT_SET = 10
-POINTS_COUNT = 1
-VERSION = 1
 
+# Set the point set identifier
+POINT_SET = 12
+COLLECTION = "L8_L9_RANDONIA_SWIR_2017_2018"
+SINUSOID_PAIRS = 1
+FLAGS = {
+    "include_intercept": True,
+    "store_measurement": True,
+    "store_estimate": True,
+    "store_date": True,
+    "include_slope": False,
+    "store_amplitude": False,
+    "include_ccdc_coefficients": False,
+}
+
+# Get the directory of the current script
 script_directory = os.path.dirname(os.path.realpath(__file__))
-run_directory = f"{script_directory}/runs/kalman/set {POINT_SET} - {POINTS_COUNT} points/v{VERSION}/"
 
-parameters_file_path = f"{script_directory}/runs/kalman/eeek_input.csv"
+# Count the number of points in the specified point set
+POINTS_COUNT = sum(
+    [
+        int(x.split(" ")[1])
+        for x in os.listdir(f"{script_directory}/points/sets/{POINT_SET}")
+    ]
+)
 
-# run_version = len([f for f in os.listdir(run_directory) if f.startswith("v")]) + 1
+# Define the run directory based on the current timestamp
+run_directory = f"{script_directory}/runs/kalman/set {POINT_SET} - {POINTS_COUNT} points/{datetime.now().strftime('%Y%m%d_%H%M%S')}/"
 
-# run_directory = os.path.join(run_directory, f"v{run_version}")
+# Path to the parameters file containing the process noise, measurement noise, and initial state covariance
+parameters_file_path = f"{script_directory}/kalman/eeek_input.csv"
 
+# Path to the point set directory
 point_set_directory_path = f"{script_directory}/points/sets/{POINT_SET}"
 
+# Create the run directory if it doesn't exist
 os.makedirs(run_directory, exist_ok=True)
 
 
 def run_kalman():
     global run_directory
 
+    # Ensure the run directory exists
     os.makedirs(run_directory, exist_ok=True)
 
+    # Copy the parameters file to the run directory
     shutil.copy(parameters_file_path, os.path.join(run_directory, "eeek_input.csv"))
 
+    # Define file paths for input and output
     input_file_path = os.path.join(run_directory, "eeek_input.csv")
     output_file_path = os.path.join(run_directory, "eeek_output.csv")
     points_file_path = os.path.join(run_directory, "points.csv")
 
+    # Set up arguments for the Kalman process
     args = {
         "input": input_file_path,
         "output": output_file_path,
         "points": points_file_path,
-        "num_sinusoid_pairs": 1,
-        "collection": "L8_L9_2022_2023",
+        "num_sinusoid_pairs": SINUSOID_PAIRS,
+        "collection": COLLECTION,
         "include_intercept": True,
         "store_measurement": True,
         "store_estimate": True,
@@ -61,7 +85,8 @@ def run_kalman():
         "store_amplitude": False,
     }
 
-    run_eeek(args)
+    # Run the Kalman process with the specified arguments
+    run_kalman(args)
 
 
 def parse_point_coordinates():
@@ -69,9 +94,11 @@ def parse_point_coordinates():
 
     point_coordinates = []
 
+    # Iterate through folders in the point set directory
     for folder in os.listdir(point_set_directory_path):
         folder_path = os.path.join(point_set_directory_path, folder)
         if os.path.isdir(folder_path):
+            # Extract coordinates from files in the folder
             point_coordinates.extend(
                 [
                     (float(file.split(",")[0][1:]), float(file.split(",")[1][:-5]))
@@ -79,6 +106,7 @@ def parse_point_coordinates():
                 ]
             )
 
+    # Return sorted list of point coordinates
     return sorted(point_coordinates, key=lambda x: (x[0], x[1]))
 
 
@@ -142,10 +170,10 @@ def get_fitted_coefficients_for_point(collection, coords, year):
 
 
 def fitted_coefficients_and_dates(points, fitted_coefficiets_filename):
-
     output_list = []
     coefficients_by_point = {}
 
+    # Write fitted coefficients
     with open(fitted_coefficiets_filename, "w", newline="") as file:
         csv_writer = csv.writer(file)
         csv_writer.writerow(
@@ -180,6 +208,7 @@ def fitted_coefficients_and_dates(points, fitted_coefficiets_filename):
                 ),
             }
 
+            # Write coefficients to the CSV file
             csv_writer.writerow(
                 [
                     i,
@@ -263,27 +292,34 @@ def build_observations(coefficients_by_point, output_filename):
 
 
 if __name__ == "__main__":
+    # Define filenames for output
     fitted_coefficiets_filename = run_directory + "fitted_coefficients.csv"
     points_filename = run_directory + "points.csv"
     observations_filename = run_directory + "observations.csv"
 
+    # Parse point coordinates from the specified directory
     points = parse_point_coordinates()
 
+    # Check if fitted coefficients file exists, if not, create it
     if not os.path.exists(fitted_coefficiets_filename):
         fitted_coefficiets_by_point = fitted_coefficients_and_dates(
             points, fitted_coefficiets_filename
         )
 
+    # Check if points file exists, if not, create it
     if not os.path.exists(points_filename):
         create_points_file(points_filename, fitted_coefficiets_by_point)
 
+    # Check if observations file exists, if not, create it
     if not os.path.exists(observations_filename):
         observations = build_observations(
             fitted_coefficiets_by_point, observations_filename
         )
 
+    # Run the Kalman process
     run_kalman()
 
+    # Generate charts based on the output and observations
     generate_charts_single_run(
         f"{run_directory}/eeek_output.csv",
         f"{run_directory}/observations.csv",
