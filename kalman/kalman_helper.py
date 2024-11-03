@@ -201,8 +201,6 @@ def main(args):
     #################################################
     output_by_point = map(pd.read_csv, all_output_files)
 
-    print("Kalman filter complete")
-
     if "include_ccdc_coefficients" in args and args["include_ccdc_coefficients"]:
         output_by_point = map(ccdc_utils.add_ccdc_coefficients, output_by_point)
 
