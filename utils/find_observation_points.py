@@ -9,6 +9,8 @@ import matplotlib.dates as mdates
 from enum import Enum
 import sys
 
+from lib.study_areas import RANDONIA
+
 ee.Initialize(opt_url=ee.data.HIGH_VOLUME_API_BASE_URL)
 
 
@@ -17,23 +19,20 @@ class Stability(Enum):
     UNSTABLE = "unstable"
 
 
-# Configuration Block
-MODE = Stability(sys.argv[1]) if len(sys.argv) > 1 else Stability.STABLE
+DEFAULT_MODE = Stability.UNSTABLE
 
-NUMBER_OF_POINTS = 10
+MODE = Stability(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_MODE
 
-POLYGON_COORDINATES = [
-    (-64.14684834846416, -12.63869807976917),
-    (-64.14684834846416, -13.222267116932125),
-    (-63.55495992072979, -13.222267116932125),
-    (-63.55495992072979, -12.63869807976917),
-]
+NUMBER_OF_POINTS_IN_EACH_ITERATION = 10
+
+MINIMUM_MEASUREMENT_COUNT = 15
+
+STUDY_AREA = RANDONIA
 FIRST_YEAR = 2017
 LAST_YEAR = 2018
-MINIMUM_NUMBER_OF_MEASUREMENTS = 15
 
 if MODE == Stability.UNSTABLE:
-    MEAN_SWIR_THRESHOLD = 0.05
+    MEAN_SWIR_THRESHOLD = 0.15
 else:
     MEAN_SWIR_THRESHOLD = 0.01
 
@@ -74,9 +73,9 @@ def generate_random_points(polygon, num_points, scale=10):
 
 valid_points_counter = 0
 
-while valid_points_counter < NUMBER_OF_POINTS:
+while valid_points_counter < NUMBER_OF_POINTS_IN_EACH_ITERATION:
     geometries = ee.FeatureCollection(
-        ee.List(generate_random_points(POLYGON_COORDINATES, 100, 10)).map(
+        ee.List(generate_random_points(STUDY_AREA, 100, 10)).map(
             lambda coordinate: ee.Feature(ee.Geometry.Point(coordinate))
         )
     )
@@ -116,10 +115,10 @@ while valid_points_counter < NUMBER_OF_POINTS:
 
     for point, data in grouped_measurements:
 
-        if valid_points_counter > NUMBER_OF_POINTS:
+        if valid_points_counter > NUMBER_OF_POINTS_IN_EACH_ITERATION:
             break
 
-        if len(data) < MINIMUM_NUMBER_OF_MEASUREMENTS:
+        if len(data) < MINIMUM_MEASUREMENT_COUNT:
             continue
 
         data["year"] = pd.to_datetime(data["date"], unit="ms").dt.year

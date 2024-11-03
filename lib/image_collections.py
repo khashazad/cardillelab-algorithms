@@ -19,6 +19,8 @@ to use for the given run.
 
 import ee
 
+from lib.study_areas import PNW, RANDONIA
+
 ee.Initialize()
 
 from pprint import pprint
@@ -132,11 +134,7 @@ L8_L9_2022_2023_DSS_1 = gather_collections_and_reduce(
             "last_doy": 250,
             "cloud_cover_threshold": 20,
         },
-        "default_study_area": (
-            ee.Geometry.Polygon(
-                [(-126.04, 49.59), (-126.04, 40.76), (-118.93, 40.76), (-118.93, 49.59)]
-            )
-        ),
+        "default_study_area": ee.Geometry.Polygon(PNW),
         "band_name_reduction": "swir",
         "which_reduction": "SWIR",
         "day_step_size": 1,
@@ -170,11 +168,7 @@ L8_L9_2022 = gather_collections_and_reduce(
             "last_doy": 250,
             "cloud_cover_threshold": 20,
         },
-        "default_study_area": (
-            ee.Geometry.Polygon(
-                [(-126.04, 49.59), (-126.04, 40.76), (-118.93, 40.76), (-118.93, 49.59)]
-            )
-        ),
+        "default_study_area": (ee.Geometry.Polygon(PNW)),
         "band_name_reduction": "swir",
         "which_reduction": "SWIR",
         "day_step_size": 4,
@@ -248,16 +242,7 @@ L8_L9_RANDONIA_SWIR_2017_2018 = gather_collections_and_reduce(
             "last_doy": 250,
             "cloud_cover_threshold": 20,
         },
-        "default_study_area": (
-            ee.Geometry.Polygon(
-                [
-                    (-64.14684834846416, -12.63869807976917),
-                    (-64.14684834846416, -13.222267116932125),
-                    (-63.55495992072979, -13.222267116932125),
-                    (-63.55495992072979, -12.63869807976917),
-                ]
-            )
-        ),
+        "default_study_area": (ee.Geometry.Polygon(RANDONIA)),
         "band_name_reduction": "swir",
         "which_reduction": "SWIR",
         "day_step_size": 6,

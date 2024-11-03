@@ -431,7 +431,10 @@ def generate_charts_single_run(
 
         plots = []
 
-        if "estimate" in flags and flags["estimate"]:
+        if (
+            ChartType.KALMAN_VS_HARMONIC_FIT in flags
+            and flags[ChartType.KALMAN_VS_HARMONIC_FIT]
+        ):
             fig_estimate_vs_target, axs_estimate_vs_target = plt.subplots(
                 1, 1, figsize=ASPECT_RATIO
             )
@@ -442,9 +445,12 @@ def generate_charts_single_run(
                     ChartType.KALMAN_VS_HARMONIC_FIT,
                 )
             )
-        if "intercept_cos_sin" in flags and flags["intercept_cos_sin"]:
+        if (
+            ChartType.ESTIMATES_INTERCEPT_COS_SIN in flags
+            and flags[ChartType.ESTIMATES_INTERCEPT_COS_SIN]
+        ):
             fig_intercept_cos_sin, axs_intercept_cos_sin = plt.subplots(
-                1, 1, figsize=(12, 8)
+                1, 1, figsize=ASPECT_RATIO
             )
             plots.append(
                 (
@@ -453,20 +459,25 @@ def generate_charts_single_run(
                     ChartType.ESTIMATES_INTERCEPT_COS_SIN,
                 )
             )
-        if "residuals" in flags and flags["residuals"]:
-            fig_residuals, axs_residuals = plt.subplots(1, 1, figsize=(12, 8))
+        if (
+            ChartType.RESIDUALS_OVER_TIME in flags
+            and flags[ChartType.RESIDUALS_OVER_TIME]
+        ):
+            fig_residuals, axs_residuals = plt.subplots(1, 1, figsize=ASPECT_RATIO)
             plots.append((fig_residuals, axs_residuals, ChartType.RESIDUALS_OVER_TIME))
 
-        if "amplitude" in flags and flags["amplitude"]:
-            fig_amplitude, axs_amplitude = plt.subplots(1, 1, figsize=(12, 8))
+        if ChartType.AMPLITUDE in flags and flags[ChartType.AMPLITUDE]:
+            fig_amplitude, axs_amplitude = plt.subplots(1, 1, figsize=ASPECT_RATIO)
             plots.append((fig_amplitude, axs_amplitude, ChartType.AMPLITUDE))
 
-        if "bulc_probs" in flags and flags["bulc_probs"]:
-            fig_bulc_probs, axs_bulc_probs = plt.subplots(1, 1, figsize=(12, 8))
+        if ChartType.BULC_PROBS in flags and flags[ChartType.BULC_PROBS]:
+            fig_bulc_probs, axs_bulc_probs = plt.subplots(1, 1, figsize=ASPECT_RATIO)
             plots.append((fig_bulc_probs, axs_bulc_probs, ChartType.BULC_PROBS))
 
-        if "kalman_vs_ccdc" in flags and flags["kalman_vs_ccdc"]:
-            fig_kalman_vs_ccdc, axs_kalman_vs_ccdc = plt.subplots(1, 1, figsize=(12, 8))
+        if ChartType.KALMAN_VS_CCDC in flags and flags[ChartType.KALMAN_VS_CCDC]:
+            fig_kalman_vs_ccdc, axs_kalman_vs_ccdc = plt.subplots(
+                1, 1, figsize=ASPECT_RATIO
+            )
             plots.append(
                 (fig_kalman_vs_ccdc, axs_kalman_vs_ccdc, ChartType.KALMAN_VS_CCDC)
             )
@@ -481,8 +492,8 @@ def generate_charts_single_run(
                     target_observations.copy(),
                     point_index,
                     CHART_TITLES[graph_type],
-                    include_2022_fit=flags["final_2022_fit"],
-                    include_2023_fit=flags["final_2023_fit"],
+                    include_2022_fit=False,
+                    include_2023_fit=False,
                 )
             elif graph_type == ChartType.ESTIMATES_INTERCEPT_COS_SIN:
                 intercept_cos_sin(

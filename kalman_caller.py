@@ -5,6 +5,7 @@ import pandas as pd
 import math
 from lib.image_collections import COLLECTIONS
 from utils.visualization.charts import (
+    ChartType,
     generate_charts_single_run,
 )
 from utils.ee.harmonic_utils import (
@@ -390,12 +391,10 @@ if __name__ == "__main__":
         f"{run_directory}/observations.csv",
         f"{run_directory}/analysis",
         {
-            "estimate": True,
-            "final_2022_fit": False,
-            "final_2023_fit": False,
-            "intercept_cos_sin": True,
-            "residuals": True,
-            "amplitude": False,
-            "kalman_vs_ccdc": INCLUDE_CCDC_COEFFICIENTS,
+            ChartType.KALMAN_VS_HARMONIC_FIT: True,
+            ChartType.ESTIMATES_INTERCEPT_COS_SIN: True,
+            ChartType.RESIDUALS_OVER_TIME: True,
+            ChartType.AMPLITUDE: False,
+            ChartType.KALMAN_VS_CCDC: INCLUDE_CCDC_COEFFICIENTS,
         },
     )
