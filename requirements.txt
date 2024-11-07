@@ -8,4 +8,4 @@ pytest
 black
 IPython
 pathos
-
+geemap
