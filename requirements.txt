@@ -1,6 +1,7 @@
 earthengine-api
 numpy
 pandas
+matplotlib
 scipy
 filterpy
 pytest

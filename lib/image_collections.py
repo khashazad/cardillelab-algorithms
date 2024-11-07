@@ -25,7 +25,7 @@ ee.Initialize()
 
 from pprint import pprint
 
-from utils.ee.gather_collections import gather_collections_and_reduce
+from lib.utils.ee.gather_collections import gather_collections_and_reduce
 
 
 def scale_landsat8(image):

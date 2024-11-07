@@ -58,8 +58,8 @@ from pprint import pprint
 from kalman import kalman_filter
 from lib import constants
 from lib.image_collections import COLLECTIONS
-from utils.ee import ccdc_utils
-from utils import utils
+from lib.utils.ee import ccdc_utils
+from lib.utils import utils
 
 ee.Initialize(opt_url=ee.data.HIGH_VOLUME_API_BASE_URL)
 
