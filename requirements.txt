@@ -1,10 +1,11 @@
 earthengine-api
 numpy
 pandas
+matplotlib
 scipy
 filterpy
 pytest
 black
 IPython
 pathos
-
+geemap

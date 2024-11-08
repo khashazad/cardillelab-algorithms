@@ -1,65 +1,70 @@
 import os
 import shutil
-import ee.geometry, ee
+import ee
+import ee.geometry
 import pandas as pd
 import math
 from lib.image_collections import COLLECTIONS
-from utils.visualization.charts import (
+from lib.utils.ee.dates import get_timestamps_from_image_collection
+from lib.utils.visualization.charts import (
     ChartType,
     generate_charts_single_run,
 )
-from utils.ee.harmonic_utils import (
+from lib.utils.ee.harmonic_utils import (
     add_harmonic_bands_via_modality_dictionary,
     fit_harmonic_to_collection,
     determine_harmonic_independents_via_modality_dictionary,
 )
-from utils import utils
-from utils.ee import dates as date_utils
-from utils.ee import ccdc_utils
+from lib.utils import utils
+from lib.utils.ee import dates as date_utils
+from lib.utils.ee import ccdc_utils
 from datetime import datetime
 from kalman.kalman_helper import main as eeek
 import csv
 from pprint import pprint
 import concurrent.futures
+from lib.observations_points import STUDY_POINT_GROUPS, parse_point_coordinates
 
+# Parameters
 
-# Set the point set identifier
-POINT_SET = 12
+# the points that are for which the kalman process is run
+STUDY_GROUP_TAG = "randonia_4"
+POINTS = parse_point_coordinates(STUDY_POINT_GROUPS[STUDY_GROUP_TAG])
+
+# the image collection that is used for the kalman process
+COLLECTION_TAG = "Randonia_l8_l9_2017_2018_swir"
+COLLECTION = COLLECTIONS[COLLECTION_TAG]
+
+# the years included in the kalman process
+YEARS = [2017, 2018]
+
+# whether to include the ccdc coefficients in the output
+INCLUDE_CCDC_COEFFICIENTS = True
+
+# the number of sinusoid pairs used in the kalman process
 SINUSOID_PAIRS = 1
-FLAGS = {
+
+# the flags for the kalman process
+KALMAN_FLAGS = {
     "include_intercept": True,
     "store_measurement": True,
     "store_estimate": True,
     "store_date": True,
     "include_slope": False,
     "store_amplitude": False,
-    "include_ccdc_coefficients": False,
 }
-YEARS = [2017, 2018]
-
-COLLECTION_TAG = "Randonia_l8_l9_2017_2018_swir"
-COLLECTION = COLLECTIONS[COLLECTION_TAG]
-INCLUDE_CCDC_COEFFICIENTS = True
 
 # Get the directory of the current script
 script_directory = os.path.dirname(os.path.realpath(__file__))
 
-# Count the number of points in the specified point set
-POINTS_COUNT = sum(
-    [
-        int(x.split("-")[1].split("p")[0].strip())
-        for x in os.listdir(f"{script_directory}/points/sets/{POINT_SET}")
-    ]
-)
-
 # Define the run directory based on the current timestamp
-run_directory = f"{script_directory}/runs/kalman/set {POINT_SET} - {POINTS_COUNT} points/{datetime.now().strftime('%m-%d %H:%M')}/"
+run_directory = f"{script_directory}/tests/kalman/{STUDY_GROUP_TAG} - {len(POINTS)} points/{datetime.now().strftime('%m-%d %H:%M')}/"
 
 # Path to the parameters file containing the process noise, measurement noise, and initial state covariance
 parameters_file_path = f"{script_directory}/kalman/eeek_input.csv"
 
 # Path to the point set directory
-point_set_directory_path = f"{script_directory}/points/sets/{POINT_SET}"
+point_set_directory_path = f"{script_directory}/points/sets/{STUDY_GROUP_TAG}"
 
 # Create the run directory if it doesn't exist
 os.makedirs(run_directory, exist_ok=True)
@@ -68,7 +73,7 @@ os.makedirs(run_directory, exist_ok=True)
 def append_ccdc_coefficients(kalman_output_path, points):
     ccdc_asset = COLLECTIONS["CCDC_Randonia"]
     bands = ["SWIR1"]
-    coefs = ["INTP", "COS", "SIN"]
+    coefs = ["INTP", "SLP", "COS", "SIN", "COS2", "SIN2", "COS3", "SIN3"]
     segments_count = 10
     segments = ccdc_utils.build_segment_tag(segments_count)
 
@@ -85,7 +90,7 @@ def append_ccdc_coefficients(kalman_output_path, points):
         )
 
         ccdc_coefs_image = ccdc_utils.get_multi_coefs(
-            ccdc_image, formatted_date, bands, coefs, False, segments, "after"
+            ccdc_image, formatted_date, bands, coefs
         )
 
         ccdc_coefs_ic = ccdc_coefs_ic.merge(ee.ImageCollection([ccdc_coefs_image]))
@@ -101,6 +106,10 @@ def append_ccdc_coefficients(kalman_output_path, points):
             columns=[f"CCDC_{c}" for c in coefs],
         )
         ccdc_coefs_df["date"] = dates
+
+        ccdc_coefs_df["formatted_date"] = pd.to_datetime(
+            ccdc_coefs_df["date"], unit="ms"
+        ).dt.strftime("%Y-%m-%d")
 
         kalman_df = pd.DataFrame(kalman_output_df[kalman_output_df["point"] == i])
 
@@ -124,8 +133,8 @@ def append_ccdc_coefficients(kalman_output_path, points):
         ignore_index=True,
     )
 
-    # output_file_path = kalman_output_path.replace(".csv", "_ccdc.csv")
-    output_df.to_csv(kalman_output_path, index=False)
+    output_file_path = kalman_output_path.replace(".csv", "_ccdc.csv")
+    output_df.to_csv(output_file_path, index=False)
 
     # clean up temporary files
     for temp_file in temp_files:
@@ -166,42 +175,6 @@ def run_kalman():
     eeek(args)
 
 
-def parse_point_coordinates():
-    global point_set_directory_path
-
-    point_coordinates = []
-
-    # Iterate through folders in the point set directory
-    for folder in os.listdir(point_set_directory_path):
-        folder_path = os.path.join(point_set_directory_path, folder)
-        if os.path.isdir(folder_path):
-            # Extract coordinates from files in the folder
-            point_coordinates.extend(
-                [
-                    (float(file.split(",")[0][1:]), float(file.split(",")[1][:-5]))
-                    for file in os.listdir(folder_path)
-                ]
-            )
-
-    # Return sorted list of point coordinates
-    return sorted(point_coordinates, key=lambda x: (x[0], x[1]))
-
-
-def get_dates_from_image_collection(year, coords):
-    timestamps = [
-        image["properties"]["millis"]
-        for image in COLLECTION.filterBounds(ee.Geometry.Point(coords)).getInfo()[
-            "features"
-        ]
-    ]
-
-    return [
-        timestamp
-        for timestamp in timestamps
-        if datetime.fromtimestamp(timestamp / 1000.0).year == year
-    ]
-
-
 def harmonic_trend_coefficients(collection, coords):
     modality = {
         "constant": True,
@@ -236,7 +209,7 @@ def get_fitted_coefficients_for_point(collection, coords, year):
     request["expression"] = harmonic_trend_coefficients(collection, coords)
     coefficients = utils.compute_pixels_wrapper(request)
 
-    image_dates = get_dates_from_image_collection(year, coords)
+    image_dates = get_timestamps_from_image_collection(collection, year, coords)
 
     return {
         "intercept": coefficients[0],
@@ -360,13 +333,10 @@ if __name__ == "__main__":
     points_filename = run_directory + "points.csv"
     observations_filename = run_directory + "observations.csv"
 
-    # Parse point coordinates from the specified directory
-    points = parse_point_coordinates()
-
     # Check if fitted coefficients file exists, if not, create it
     if not os.path.exists(fitted_coefficiets_filename):
         fitted_coefficiets_by_point = fitted_coefficients_and_dates(
-            points, fitted_coefficiets_filename
+            POINTS, fitted_coefficiets_filename
         )
 
     # Check if points file exists, if not, create it
@@ -383,14 +353,18 @@ if __name__ == "__main__":
     run_kalman()
 
     if INCLUDE_CCDC_COEFFICIENTS:
-        append_ccdc_coefficients(f"{run_directory}/eeek_output.csv", points)
+        append_ccdc_coefficients(f"{run_directory}/eeek_output.csv", POINTS)
 
     # Generate charts based on the output and observations
     generate_charts_single_run(
-        f"{run_directory}/eeek_output.csv",
-        f"{run_directory}/observations.csv",
-        f"{run_directory}/analysis",
-        {
+        data_file_path=(
+            f"{run_directory}/eeek_output_ccdc.csv"
+            if INCLUDE_CCDC_COEFFICIENTS
+            else f"{run_directory}/eeek_output.csv"
+        ),
+        observation_file_path=f"{run_directory}/observations.csv",
+        output_directory=f"{run_directory}/analysis",
+        flags={
             ChartType.KALMAN_VS_HARMONIC_FIT: True,
             ChartType.ESTIMATES_INTERCEPT_COS_SIN: True,
             ChartType.RESIDUALS_OVER_TIME: True,

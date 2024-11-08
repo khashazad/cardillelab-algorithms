@@ -25,7 +25,7 @@ ee.Initialize()
 
 from pprint import pprint
 
-from utils.ee.gather_collections import gather_collections_and_reduce
+from lib.utils.ee.gather_collections import gather_collections_and_reduce
 
 
 def scale_landsat8(image):
@@ -82,7 +82,7 @@ L8_GATHER_COLLECTIONS = gather_collections_and_reduce(
     }
 )
 
-L8_L9_2022_2023 = gather_collections_and_reduce(
+PNW_L8_L9_2022_2023 = gather_collections_and_reduce(
     {
         "L8dictionary": {
             "years_list": [2022, 2023],
@@ -96,14 +96,10 @@ L8_L9_2022_2023 = gather_collections_and_reduce(
             "last_doy": 250,
             "cloud_cover_threshold": 20,
         },
-        "default_study_area": (
-            ee.Geometry.Polygon(
-                [(-126.04, 49.59), (-126.04, 40.76), (-118.93, 40.76), (-118.93, 49.59)]
-            )
-        ),
+        "default_study_area": (ee.Geometry.Polygon(PNW)),
         "band_name_reduction": "swir",
         "which_reduction": "SWIR",
-        "day_step_size": 4,
+        "day_step_size": 6,
         "verbose": False,
         "dataset_selection": {
             "L5": False,
@@ -120,7 +116,7 @@ L8_L9_2022_2023 = gather_collections_and_reduce(
     }
 )
 
-L8_L9_2022_2023_DSS_1 = gather_collections_and_reduce(
+PNW_L8_L9_2022_2023_DSS_1 = gather_collections_and_reduce(
     {
         "L8dictionary": {
             "years_list": [2022, 2023],
@@ -154,7 +150,7 @@ L8_L9_2022_2023_DSS_1 = gather_collections_and_reduce(
     }
 )
 
-L8_L9_2022 = gather_collections_and_reduce(
+PNW_L8_L9_2022 = gather_collections_and_reduce(
     {
         "L8dictionary": {
             "years_list": [2022],
@@ -188,7 +184,7 @@ L8_L9_2022 = gather_collections_and_reduce(
     }
 )
 
-L8_L9_2023 = gather_collections_and_reduce(
+PNW_L8_L9_2023 = gather_collections_and_reduce(
     {
         "L8dictionary": {
             "years_list": [2023],
@@ -263,10 +259,10 @@ L8_L9_RANDONIA_SWIR_2017_2018 = gather_collections_and_reduce(
 )
 
 COLLECTIONS = {
-    "L8_L9_2022_2023": L8_L9_2022_2023,
-    "L8_L9_2022_2023_DSS_1": L8_L9_2022_2023_DSS_1,
-    "L8_L9_2022": L8_L9_2022,
-    "L8_L9_2023": L8_L9_2023,
+    "PNW_L8_L9_2022_2023": PNW_L8_L9_2022_2023,
+    "PNW_L8_L9_2022_2023_DSS_1": PNW_L8_L9_2022_2023_DSS_1,
+    "PNW_L8_L9_2022": PNW_L8_L9_2022,
+    "PNW_L8_L9_2023": PNW_L8_L9_2023,
     "CCDC_Randonia": CCDC_RANDONIA,
     "Randonia_l8_l9_2017_2018_swir": L8_L9_RANDONIA_SWIR_2017_2018,
 }

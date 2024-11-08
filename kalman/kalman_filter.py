@@ -3,7 +3,6 @@ import ee.geometry
 from pprint import pprint
 
 from lib import constants
-from utils import utils
 
 ee.Initialize(opt_url=ee.data.HIGH_VOLUME_API_BASE_URL)
 
@@ -170,7 +169,7 @@ def kalman_filter(
             P.rename(constants.COV),
             estimate.rename(constants.ESTIMATE),
             amplitude.rename(constants.AMPLITUDE),
-            ee.Image(curr.date().millis()).rename(constants.DATE)
+            ee.Image(curr.date().millis()).rename(constants.DATE),
         ]
         outputs.extend(preprocess_results)
         outputs.extend(postprocess_results)
