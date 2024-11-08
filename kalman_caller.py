@@ -58,7 +58,7 @@ KALMAN_FLAGS = {
 script_directory = os.path.dirname(os.path.realpath(__file__))
 
 # Define the run directory based on the current timestamp
-run_directory = f"{script_directory}/tests/kalman/{STUDY_GROUP_TAG} - {len(STUDY_GROUP_TAG)} points/{datetime.now().strftime('%m-%d %H:%M')}/"
+run_directory = f"{script_directory}/tests/kalman/{STUDY_GROUP_TAG} - {len(POINTS)} points/{datetime.now().strftime('%m-%d %H:%M')}/"
 
 # Path to the parameters file containing the process noise, measurement noise, and initial state covariance
 parameters_file_path = f"{script_directory}/kalman/eeek_input.csv"

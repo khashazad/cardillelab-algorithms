@@ -35,7 +35,7 @@ def parse_point_coordinates(point_set_directory_path):
 
     def process_json_file(content_path):
         with open(content_path, "r") as file:
-            point_coordinates.append(json.load(file).get("points", []))
+            point_coordinates.extend(json.load(file).get("points", []))
 
     for folder in os.listdir(point_set_directory_path):
         content_path = os.path.join(point_set_directory_path, folder)
@@ -72,6 +72,8 @@ PNW_20 = build_path("pnw_20")
 PNW_30 = build_path("pnw_30")
 PNW_40 = build_path("pnw_40")
 RANDONIA_4 = build_path("randonia_4")
+RANDONIA_11 = build_path("randonia_11")
+RANDONIA_MIX = build_path("randonia_mix")
 
 STUDY_POINT_GROUPS = {
     "pnw_1": PNW_1,
@@ -82,4 +84,6 @@ STUDY_POINT_GROUPS = {
     "pnw_30": PNW_30,
     "pnw_40": PNW_40,
     "randonia_4": RANDONIA_4,
+    "randonia_11": RANDONIA_11,
+    "randonia_mix": RANDONIA_MIX,
 }
