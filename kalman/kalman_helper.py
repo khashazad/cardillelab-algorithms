@@ -180,6 +180,10 @@ def main(args):
         # put point as the first column
         df = df[["point"] + request_band_names]
 
+        df = df.rename(columns={"date": "timestamp"})
+
+        df["date"] = pd.to_datetime(df["timestamp"], unit="ms").dt.strftime("%Y-%m-%d")
+
         basename, ext = os.path.splitext(args["output"])
 
         directory = os.path.join(os.path.dirname(basename), "outputs")
@@ -203,9 +207,6 @@ def main(args):
     ## Combine results from all runs to single csv ##
     #################################################
     output_by_point = map(pd.read_csv, all_output_files)
-
-    if "include_ccdc_coefficients" in args and args["include_ccdc_coefficients"]:
-        output_by_point = map(ccdc_utils.add_ccdc_coefficients, output_by_point)
 
     all_results = pd.concat(output_by_point, ignore_index=True)
     all_results.to_csv(args["output"], index=False)

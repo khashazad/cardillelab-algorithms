@@ -7,7 +7,7 @@ from lib.constants import Index, Sensor
 ee.Initialize()
 
 
-def build_pnw_swir_2022_2023_1_point():
+def pnw_swir_2022_2023_1_points():
     index = Index.SWIR
     sensors = [Sensor.L8, Sensor.L9]
     years = [2022, 2023]
@@ -36,4 +36,30 @@ def build_pnw_swir_2022_2023_1_point():
     }
 
 
-PNW_SWIR_2022_2023_1_POINT = build_pnw_swir_2022_2023_1_point()
+def pnw_nbr_2017_2019_1_point():
+    index = Index.NBR
+    sensors = [Sensor.L7, Sensor.L8, Sensor.L9]
+    years = [2017, 2018, 2019]
+    point_group = "pnw_1"
+    study_area = PNW
+    day_step_size = 10
+    start_doy = 150
+    end_doy = 250
+    cloud_cover_threshold = 20
+
+    return {
+        "tag": f"{study_area['name']}_{index.value}_{years[0]}_{years[1]}",
+        "index": index,
+        "points": parse_point_coordinates(point_group),
+        "collection": build_collection(
+            study_area["coords"],
+            years,
+            index,
+            sensors,
+            day_step_size,
+            start_doy,
+            end_doy,
+            cloud_cover_threshold,
+        ),
+        "years": years,
+    }

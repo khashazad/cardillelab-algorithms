@@ -56,6 +56,8 @@ def build_collection(
             "cloud_cover_threshold": cloud_cover_threshold,
         }
 
+    print(args)
+
     return gather_collections_and_reduce(args)
 
 

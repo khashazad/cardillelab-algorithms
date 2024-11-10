@@ -1,32 +1,31 @@
+import csv
 import os
 import shutil
 import ee
 import ee.geometry
 import pandas as pd
-import math
+from lib.constants import Index
 from lib.image_collections import COLLECTIONS
-from lib.study_packages import build_pnw_swir_2022_2023_1_point
-from lib.utils.ee.dates import get_timestamps_from_image_collection
+from lib.study_packages import pnw_nbr_2017_2019_1_point
+from lib.utils.harmonic import (
+    calculate_harmonic_estimate,
+    fitted_coefficients,
+)
 from lib.utils.visualization.charts import (
     ChartType,
     generate_charts_single_run,
 )
-from lib.utils.ee.harmonic_utils import (
-    add_harmonic_bands_via_modality_dictionary,
-    fit_harmonic_to_collection,
-    determine_harmonic_independents_via_modality_dictionary,
-)
+
 from lib.utils import utils
 from lib.utils.ee import dates as date_utils
 from lib.utils.ee import ccdc_utils
 from datetime import datetime
 from kalman.kalman_helper import main as eeek
-import csv
 from pprint import pprint
 import concurrent.futures
 
 # Parameters
-TAG, INDEX, POINTS, COLLECTION, YEARS = build_pnw_swir_2022_2023_1_point().values()
+TAG, INDEX, POINTS, COLLECTION, YEARS = pnw_nbr_2017_2019_1_point().values()
 
 # whether to include the ccdc coefficients in the output
 INCLUDE_CCDC_COEFFICIENTS = True
@@ -95,22 +94,21 @@ def append_ccdc_coefficients(kalman_output_path, points):
         )
         ccdc_coefs_df["date"] = dates
 
-        ccdc_coefs_df["formatted_date"] = pd.to_datetime(
-            ccdc_coefs_df["date"], unit="ms"
-        ).dt.strftime("%Y-%m-%d")
-
         kalman_df = pd.DataFrame(kalman_output_df[kalman_output_df["point"] == i])
 
-        # Ensure both DataFrames have the same number of rows before concatenation
         kalman_ccdc_df = pd.merge(
             kalman_df,
             ccdc_coefs_df,
             on="date",
             how="inner",
         )
+
         # Save to a temporary CSV file
-        temp_file_path = f"{os.path.dirname(kalman_output_path)}/temp_output_{i}.csv"
+        temp_file_path = (
+            f"{os.path.dirname(kalman_output_path)}/outputs/{i:03d}_with_ccdc.csv"
+        )
         kalman_ccdc_df.to_csv(temp_file_path, index=False)
+
         return temp_file_path
 
     with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -121,13 +119,77 @@ def append_ccdc_coefficients(kalman_output_path, points):
         ignore_index=True,
     )
 
-    output_file_path = kalman_output_path.replace(".csv", "_ccdc.csv")
+    output_file_path = kalman_output_path.replace(".csv", "_with_ccdc.csv")
     output_df.to_csv(output_file_path, index=False)
 
     # clean up temporary files
-    for temp_file in temp_files:
-        if temp_file is not None:
-            os.remove(temp_file)
+    # for temp_file in temp_files:
+    #     if temp_file is not None:
+    #         os.remove(temp_file)
+
+
+def create_points_file(points_filename, coefficients_by_point, years: list[int]):
+    with open(points_filename, "w", newline="") as file:
+        for _, coefs in enumerate(coefficients_by_point):
+            longitude = coefs["coordinates"][0]
+            latitude = coefs["coordinates"][1]
+
+            year = years[0]
+
+            intercept = coefs[year]["intercept"]
+            cos = coefs[year]["cos"]
+            sin = coefs[year]["sin"]
+
+            file.write(f"{longitude},{latitude},{intercept},{cos},{sin}\n")
+
+
+def build_observations(coefficients_by_point, output_filename, years: list[int]):
+    observations = []
+
+    with open(output_filename, "w", newline="") as file:
+        csv_writer = csv.writer(file)
+        csv_writer.writerow(
+            ["point", "timestamp", "intercept", "cos", "sin", "estimate"]
+        )
+        for index, coefficient_set in enumerate(coefficients_by_point):
+            observation_index = 1
+
+            def create_observation_from_coefficients(timestamps, intercept, cos, sin):
+                nonlocal observation_index
+                for timestamp in timestamps:
+                    estimate = calculate_harmonic_estimate(
+                        {
+                            "intercept": intercept,
+                            "cos": cos,
+                            "sin": sin,
+                        },
+                        timestamp,
+                    )
+
+                    observations.append(
+                        (f"intercept_{int(index)}_{observation_index}", intercept)
+                    )
+                    observations.append((f"cos_{int(index)}_{observation_index}", cos))
+                    observations.append((f"sin_{int(index)}_{observation_index}", sin))
+                    observations.append(
+                        (f"estimate_{int(index)}_{observation_index}", estimate)
+                    )
+
+                    csv_writer.writerow(
+                        [index, timestamp, intercept, cos, sin, estimate]
+                    )
+                    observation_index += 1
+
+            for year in years:
+                coefficients = coefficient_set[year]
+                create_observation_from_coefficients(
+                    coefficients["timestamps"],
+                    coefficients["intercept"],
+                    coefficients["cos"],
+                    coefficients["sin"],
+                )
+
+        return observations
 
 
 def run_kalman():
@@ -164,179 +226,20 @@ def run_kalman():
     eeek(args)
 
 
-def harmonic_trend_coefficients(collection, coords):
-    modality = {
-        "constant": True,
-        "linear": False,
-        "unimodal": True,
-        "bimodal": False,
-        "trimodal": False,
-    }
-
-    image_collection = ee.ImageCollection(
-        collection.filterBounds(ee.Geometry.Point(coords))
-    )
-
-    reduced_image_collection_with_harmonics = (
-        add_harmonic_bands_via_modality_dictionary(image_collection, modality)
-    )
-
-    harmonic_independent_variables = (
-        determine_harmonic_independents_via_modality_dictionary(modality)
-    )
-
-    harmonic_one_time_regression = fit_harmonic_to_collection(
-        reduced_image_collection_with_harmonics, "swir", harmonic_independent_variables
-    )
-    fitted_coefficients = harmonic_one_time_regression["harmonic_trend_coefficients"]
-
-    return fitted_coefficients
-
-
-def get_fitted_coefficients_for_point(collection, coords, year):
-    request = utils.build_request(coords)
-    request["expression"] = harmonic_trend_coefficients(collection, coords)
-    coefficients = utils.compute_pixels_wrapper(request)
-
-    image_dates = get_timestamps_from_image_collection(collection, year, coords)
-
-    return {
-        "intercept": coefficients[0],
-        "cos": coefficients[1],
-        "sin": coefficients[2],
-        "dates": image_dates,
-    }
-
-
-def fitted_coefficients_and_dates(points, fitted_coefficiets_filename):
-    output_list = []
-    coefficients_by_point = {}
-
-    # Write fitted coefficients
-    with open(fitted_coefficiets_filename, "w", newline="") as file:
-        csv_writer = csv.writer(file)
-        csv_writer.writerow(
-            [
-                "point",
-                "longitude",
-                "latitude",
-                *[f"intercept_{year}" for year in YEARS],
-                *[f"cos_{year}" for year in YEARS],
-                *[f"sin_{year}" for year in YEARS],
-            ]
-        )
-        for i, point in enumerate(points):
-            coefficients_by_point[i] = {
-                "coordinates": (point[0], point[1]),
-            }
-
-            for year in YEARS:
-                coefficients_by_point[i][year] = get_fitted_coefficients_for_point(
-                    COLLECTION.filterBounds(ee.Geometry.Point(point[0], point[1])),
-                    (point[0], point[1]),
-                    year,
-                )
-
-            # Write coefficients to the CSV file
-            csv_writer.writerow(
-                [
-                    i,
-                    point[0],
-                    point[1],
-                    *[coefficients_by_point[i][year]["intercept"] for year in YEARS],
-                    *[coefficients_by_point[i][year]["cos"] for year in YEARS],
-                    *[coefficients_by_point[i][year]["sin"] for year in YEARS],
-                ]
-            )
-
-            output_list.append(coefficients_by_point[i])
-
-    return output_list
-
-
-def create_points_file(points_filename, coefficients_by_point):
-    with open(points_filename, "w", newline="") as file:
-        for _, point in enumerate(coefficients_by_point):
-            longitude = point["coordinates"][0]
-            latitude = point["coordinates"][1]
-
-            year = YEARS[0]
-
-            intercept = point[year]["intercept"]
-            cos = point[year]["cos"]
-            sin = point[year]["sin"]
-
-            file.write(f"{longitude},{latitude},{intercept},{cos},{sin}\n")
-
-
-def build_observations(coefficients_by_point, output_filename):
-    observations = []
-
-    with open(output_filename, "w", newline="") as file:
-        csv_writer = csv.writer(file)
-        csv_writer.writerow(["point", "date", "intercept", "cos", "sin", "estimate"])
-        for index, dic in enumerate(coefficients_by_point):
-            observation_index = 1
-
-            def create_observation_from_coefficients(dates, intercept, cos, sin):
-                nonlocal observation_index
-                for date in dates:
-                    time = (
-                        pd.Timestamp(date, unit="ms") - pd.Timestamp("2016-01-01")
-                    ).total_seconds() / (365.25 * 24 * 60 * 60)
-
-                    phi = 6.283 * time
-
-                    phi_cos = math.cos(phi)
-                    phi_sin = math.sin(phi)
-
-                    estimate = intercept + cos * phi_cos + sin * phi_sin
-
-                    observations.append(
-                        (f"intercept_{int(index)}_{observation_index}", intercept)
-                    )
-                    observations.append((f"cos_{int(index)}_{observation_index}", cos))
-                    observations.append((f"sin_{int(index)}_{observation_index}", sin))
-                    observations.append(
-                        (f"estimate_{int(index)}_{observation_index}", estimate)
-                    )
-
-                    csv_writer.writerow([index, date, intercept, cos, sin, estimate])
-                    observation_index += 1
-
-            for year in YEARS:
-                coefficients = dic[year]
-                create_observation_from_coefficients(
-                    coefficients["dates"],
-                    coefficients["intercept"],
-                    coefficients["cos"],
-                    coefficients["sin"],
-                )
-
-        return observations
-
-
 if __name__ == "__main__":
     # Define filenames for output
     fitted_coefficiets_filename = run_directory + "fitted_coefficients.csv"
     points_filename = run_directory + "points.csv"
     observations_filename = run_directory + "observations.csv"
 
-    # Check if fitted coefficients file exists, if not, create it
-    if not os.path.exists(fitted_coefficiets_filename):
-        fitted_coefficiets_by_point = fitted_coefficients_and_dates(
-            POINTS, fitted_coefficiets_filename
-        )
+    fitted_coefficiets_by_point = fitted_coefficients(
+        POINTS, fitted_coefficiets_filename, COLLECTION, YEARS, INDEX
+    )
+    create_points_file(points_filename, fitted_coefficiets_by_point, YEARS)
 
-    # Check if points file exists, if not, create it
-    if not os.path.exists(points_filename):
-        create_points_file(points_filename, fitted_coefficiets_by_point)
-
-    # Check if observations file exists, if not, create it
-    if not os.path.exists(observations_filename):
-        observations = build_observations(
-            fitted_coefficiets_by_point, observations_filename
-        )
+    observations = build_observations(
+        fitted_coefficiets_by_point, observations_filename, YEARS
+    )
 
     # Run the Kalman process
     run_kalman()
@@ -347,7 +250,7 @@ if __name__ == "__main__":
     # Generate charts based on the output and observations
     generate_charts_single_run(
         data_file_path=(
-            f"{run_directory}/eeek_output_ccdc.csv"
+            f"{run_directory}/eeek_output_with_ccdc.csv"
             if INCLUDE_CCDC_COEFFICIENTS
             else f"{run_directory}/eeek_output.csv"
         ),

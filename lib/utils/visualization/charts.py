@@ -40,7 +40,7 @@ def estimate(
     include_2023_fit=False,
 ):
     actual["time"] = (
-        pd.to_datetime(actual["date"], unit="ms") - pd.to_datetime("2016-01-01")
+        pd.to_datetime(actual["timestamp"], unit="ms") - pd.to_datetime("2016-01-01")
     ).dt.total_seconds() / (365.25 * 24 * 60 * 60)
 
     phi = 6.283 * actual["time"]
@@ -51,12 +51,12 @@ def estimate(
         expected["intercept"] + expected["cos"] * phi_cos + expected["sin"] * phi_sin
     )
 
-    actual["date"] = pd.to_datetime(actual["date"], unit="ms")
+    actual["timestamp"] = pd.to_datetime(actual["timestamp"], unit="ms")
 
     filtered_data = actual[(actual["point"] == point_index)]
 
     if include_2022_fit:
-        filtered_data_2022 = filtered_data[filtered_data["date"].dt.year == 2022]
+        filtered_data_2022 = filtered_data[filtered_data["timestamp"].dt.year == 2022]
         intercept = filtered_data_2022["INTP"].iloc[-1]
         cos0 = filtered_data_2022["COS0"].iloc[-1]
         sin0 = filtered_data_2022["SIN0"].iloc[-1]
@@ -68,10 +68,10 @@ def estimate(
 
         y = intercept + A * np.cos(2 * np.pi * x - phi)
 
-        axes.plot(filtered_data["date"], y, label="Final 2022 fit", color="orange")
+        axes.plot(filtered_data["timestamp"], y, label="Final 2022 fit", color="orange")
 
     if include_2023_fit:
-        filtered_data_2023 = filtered_data[filtered_data["date"].dt.year == 2023]
+        filtered_data_2023 = filtered_data[filtered_data["timestamp"].dt.year == 2023]
         intercept = filtered_data_2023["INTP"].iloc[-1]
         cos0 = filtered_data_2023["COS0"].iloc[-1]
         sin0 = filtered_data_2023["SIN0"].iloc[-1]
@@ -83,24 +83,24 @@ def estimate(
 
         y = intercept + A * np.cos(2 * np.pi * x - phi)
 
-        axes.plot(filtered_data["date"], y, label="Final 2023 fit", color="purple")
+        axes.plot(filtered_data["timestamp"], y, label="Final 2023 fit", color="purple")
 
     axes.plot(
-        filtered_data["date"],
+        filtered_data["timestamp"],
         filtered_data["estimate"],
         label="Estimate - Optimized",
         linestyle="-",
         color="blue",
     )
     axes.plot(
-        filtered_data["date"],
+        filtered_data["timestamp"],
         filtered_data["observation_estimate"],
         label="Target",
         linestyle="--",
         color="green",
     )
     axes.scatter(
-        filtered_data[(filtered_data["z"] != 0)]["date"],
+        filtered_data[(filtered_data["z"] != 0)]["timestamp"],
         filtered_data[(filtered_data["z"] != 0)]["z"],
         label="Observed",
         s=13,
@@ -120,15 +120,15 @@ def estimate(
 def intercept_cos_sin(axes, actual, expected, point_index, title, fixed_y_axis=False):
     actual = actual.merge(
         expected,
-        on=["point", "date"],
+        on=["point", "timestamp"],
         suffixes=("", "_target"),
     )
 
-    actual["date"] = pd.to_datetime(actual["date"], unit="ms")
+    actual["timestamp"] = pd.to_datetime(actual["timestamp"], unit="ms")
 
     filtered_data = actual[(actual["point"] == point_index)]
 
-    dates = filtered_data["date"]
+    dates = filtered_data["timestamp"]
     intp = filtered_data["INTP"]
     cos = filtered_data["COS0"]
     sin = filtered_data["SIN0"]
@@ -158,16 +158,16 @@ def intercept_cos_sin(axes, actual, expected, point_index, title, fixed_y_axis=F
 
 
 def residuals_over_time(axes, actual, expected, point_index, title, fixed_y_axis=False):
-    actual = actual.merge(expected, on=["point", "date"], suffixes=("", "_target"))
+    actual = actual.merge(expected, on=["point", "timestamp"], suffixes=("", "_target"))
 
-    actual["date"] = pd.to_datetime(actual["date"], unit="ms")
+    actual["timestamp"] = pd.to_datetime(actual["timestamp"], unit="ms")
 
     filtered_data = actual[(actual["point"] == point_index)]
 
     intercept_residual = filtered_data["INTP"] - filtered_data["intercept"]
     cos_residual = filtered_data["COS0"] - filtered_data["cos"]
     sin_residual = filtered_data["SIN0"] - filtered_data["sin"]
-    dates = filtered_data["date"]
+    dates = filtered_data["timestamp"]
 
     axes.scatter(
         dates, intercept_residual, label="intercept", linestyle="-", color="blue", s=10
@@ -185,7 +185,7 @@ def residuals_over_time(axes, actual, expected, point_index, title, fixed_y_axis
 
 
 def amplitude(axes, actual, expected, point_index, title, fixed_y_axis=False):
-    actual["date"] = pd.to_datetime(actual["date"], unit="ms")
+    actual["timestamp"] = pd.to_datetime(actual["timestamp"], unit="ms")
     actual["expected_cos"] = expected["cos"]
     actual["expected_sin"] = expected["sin"]
     actual["expected_amplitude"] = np.sqrt(expected["cos"] ** 2 + expected["sin"] ** 2)
@@ -194,7 +194,7 @@ def amplitude(axes, actual, expected, point_index, title, fixed_y_axis=False):
 
     cos = filtered_data["COS0"]
     sin = filtered_data["SIN0"]
-    dates = filtered_data["date"]
+    dates = filtered_data["timestamp"]
 
     amplitude_values = np.sqrt(cos**2 + sin**2)
     expected_amplitude = filtered_data["expected_amplitude"]
@@ -222,14 +222,14 @@ def amplitude(axes, actual, expected, point_index, title, fixed_y_axis=False):
 
 
 def bulc_probs(axes, actual, point_index, title):
-    actual["date"] = pd.to_datetime(actual["date"], unit="ms")
+    actual["timestamp"] = pd.to_datetime(actual["timestamp"], unit="ms")
 
     filtered_data = actual[(actual["point"] == point_index)]
 
     prob_decrease = filtered_data["prob_decrease"]
     prob_stable = filtered_data["prob_no_change"]
     prob_increase = filtered_data["prob_increase"]
-    dates = filtered_data["date"]
+    dates = filtered_data["timestamp"]
 
     axes.plot(
         dates,
@@ -302,31 +302,31 @@ def calculate_ccdc_estimate(actual):
 
 def estimate_vs_ccdc(axes, actual, point_index, title, fixed_y_axis=False):
     actual["time"] = (
-        pd.to_datetime(actual["date"], unit="ms") - pd.to_datetime("2016-01-01")
+        pd.to_datetime(actual["timestamp"], unit="ms") - pd.to_datetime("2016-01-01")
     ).dt.total_seconds() / (365.25 * 24 * 60 * 60)
 
     actual["ccdc_estimate"] = calculate_ccdc_estimate(actual)
 
-    actual["date"] = pd.to_datetime(actual["date"], unit="ms")
+    actual["timestamp"] = pd.to_datetime(actual["timestamp"], unit="ms")
 
     filtered_data = actual[(actual["point"] == point_index)]
 
     axes.plot(
-        filtered_data["date"],
+        filtered_data["timestamp"],
         filtered_data["estimate"],
         label="Estimate - Optimized",
         linestyle="-",
         color="blue",
     )
     axes.plot(
-        filtered_data["date"],
+        filtered_data["timestamp"],
         filtered_data["ccdc_estimate"],
         label="CCDC",
         linestyle="--",
         color="green",
     )
     axes.scatter(
-        filtered_data[(filtered_data["z"] != 0)]["date"],
+        filtered_data[(filtered_data["z"] != 0)]["timestamp"],
         filtered_data[(filtered_data["z"] != 0)]["z"],
         label="Observed",
         s=13,

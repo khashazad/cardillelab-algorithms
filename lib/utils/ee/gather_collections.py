@@ -380,13 +380,29 @@ def gather_collections_and_reduce(gather_collections_args):
                         cloud_mask_ic_l5_and_l7
                     )
                     if which_reduction == "NBR":
+
+                        def nbr_landsat_7(img):
+                            mySingleValue = img.normalizedDifference(
+                                ["SR_B4", "SR_B7"]
+                            ).rename(band_name_reduction)
+                            return ee.Image(mySingleValue.copyProperties(img)).toFloat()
+
                         one_time_slice_reduction = one_time_slice_cloud_masked.map(
-                            lambda img: img.normalizedDifference(["SR_B4", "SR_B7"])
+                            nbr_landsat_7
                         )
+
                     if which_reduction == "NDVI":
+
+                        def ndvi_landsat_7(img):
+                            mySingleValue = img.normalizedDifference(
+                                ["SR_B4", "SR_B3"]
+                            ).rename(band_name_reduction)
+                            return ee.Image(mySingleValue.copyProperties(img)).toFloat()
+
                         one_time_slice_reduction = one_time_slice_cloud_masked.map(
-                            lambda img: img.normalizedDifference(["SR_B4", "SR_B3"])
+                            ndvi_landsat_7
                         )
+
                     if which_reduction in ["count", "binary"]:
                         one_time_slice_reduction = (
                             one_time_slice_cloud_masked.select(0)
@@ -394,9 +410,17 @@ def gather_collections_and_reduce(gather_collections_args):
                             .toInt()
                             .rename([band_name_reduction])
                         )
+
                     if which_reduction == "SWIR":
+
+                        def swir_landsat_7(img):
+                            mySingleValue = img.select("SR_B5").rename(
+                                band_name_reduction
+                            )
+                            return ee.Image(mySingleValue.copyProperties(img)).toFloat()
+
                         one_time_slice_reduction = one_time_slice_cloud_masked.map(
-                            lambda img: img.select("SR_B5").rename(band_name_reduction)
+                            swir_landsat_7
                         )
                     multi_sensor_time_slice = multi_sensor_time_slice.merge(
                         one_time_slice_reduction
@@ -417,16 +441,26 @@ def gather_collections_and_reduce(gather_collections_args):
                         mask_sr_clouds_l8_and_l9
                     ).map(apply_scale_factors_l89)
                     if which_reduction == Index.NBR.value.upper():
-                        one_time_slice_reduction = one_time_slice_cloud_masked.map(
-                            lambda img: img.normalizedDifference(
+
+                        def nbr_landsat_8(img):
+                            mySingleValue = img.normalizedDifference(
                                 ["SR_B5", "SR_B7"]
-                            ).rename([band_name_reduction])
-                        ).rename(band_name_reduction)
-                    if which_reduction == Index.NDVI.value.upper():
+                            ).rename(band_name_reduction)
+                            return ee.Image(mySingleValue.copyProperties(img)).toFloat()
+
                         one_time_slice_reduction = one_time_slice_cloud_masked.map(
-                            lambda img: img.normalizedDifference(
+                            nbr_landsat_8
+                        )
+                    if which_reduction == Index.NDVI.value.upper():
+
+                        def ndvi_landsat_8(img):
+                            mySingleValue = img.normalizedDifference(
                                 ["SR_B5", "SR_B4"]
-                            ).rename([band_name_reduction])
+                            ).rename(band_name_reduction)
+                            return ee.Image(mySingleValue.copyProperties(img)).toFloat()
+
+                        one_time_slice_reduction = one_time_slice_cloud_masked.map(
+                            ndvi_landsat_8
                         )
                     if which_reduction in ["count", "binary"]:
                         one_time_slice_reduction = (
@@ -458,16 +492,26 @@ def gather_collections_and_reduce(gather_collections_args):
                         mask_sr_clouds_l8_and_l9
                     ).map(apply_scale_factors_l89)
                     if which_reduction == Index.NBR.value.upper():
-                        one_time_slice_reduction = one_time_slice_cloud_masked.map(
-                            lambda img: img.normalizedDifference(
+
+                        def nbr_landsat_9(img):
+                            mySingleValue = img.normalizedDifference(
                                 ["SR_B5", "SR_B7"]
-                            ).rename([band_name_reduction])
+                            ).rename(band_name_reduction)
+                            return ee.Image(mySingleValue.copyProperties(img)).toFloat()
+
+                        one_time_slice_reduction = one_time_slice_cloud_masked.map(
+                            nbr_landsat_9
                         )
                     if which_reduction == Index.NDVI.value.upper():
-                        one_time_slice_reduction = one_time_slice_cloud_masked.map(
-                            lambda img: img.normalizedDifference(
+
+                        def ndvi_landsat_9(img):
+                            mySingleValue = img.normalizedDifference(
                                 ["SR_B5", "SR_B4"]
-                            ).rename([band_name_reduction])
+                            ).rename(band_name_reduction)
+                            return ee.Image(mySingleValue.copyProperties(img)).toFloat()
+
+                        one_time_slice_reduction = one_time_slice_cloud_masked.map(
+                            ndvi_landsat_9
                         )
                     if which_reduction in ["count", "binary"]:
                         one_time_slice_reduction = (
