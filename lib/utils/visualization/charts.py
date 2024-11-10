@@ -118,21 +118,23 @@ def estimate(
 
 
 def intercept_cos_sin(axes, actual, expected, point_index, title, fixed_y_axis=False):
-    actual["target_intercept"] = expected["intercept"]
-    actual["target_cos"] = expected["cos"]
-    actual["target_sin"] = expected["sin"]
+    actual = actual.merge(
+        expected,
+        on=["point", "date"],
+        suffixes=("", "_target"),
+    )
 
     actual["date"] = pd.to_datetime(actual["date"], unit="ms")
 
-    filtered_data = actual[(actual["z"] != 0) & (actual["point"] == point_index)]
+    filtered_data = actual[(actual["point"] == point_index)]
 
     dates = filtered_data["date"]
     intp = filtered_data["INTP"]
     cos = filtered_data["COS0"]
     sin = filtered_data["SIN0"]
-    target_intercept = filtered_data["target_intercept"]
-    target_cos = filtered_data["target_cos"]
-    target_sin = filtered_data["target_sin"]
+    target_intercept = filtered_data["intercept"]
+    target_cos = filtered_data["cos"]
+    target_sin = filtered_data["sin"]
 
     axes.plot(dates, intp, label="intercept", linestyle="-", color="blue")
     axes.plot(
@@ -156,17 +158,15 @@ def intercept_cos_sin(axes, actual, expected, point_index, title, fixed_y_axis=F
 
 
 def residuals_over_time(axes, actual, expected, point_index, title, fixed_y_axis=False):
-    actual["intercept_residual"] = actual["INTP"] - expected["intercept"]
-    actual["cos_residual"] = actual["COS0"] - expected["cos"]
-    actual["sin_residual"] = actual["SIN0"] - expected["sin"]
+    actual = actual.merge(expected, on=["point", "date"], suffixes=("", "_target"))
 
     actual["date"] = pd.to_datetime(actual["date"], unit="ms")
 
-    filtered_data = actual[(actual["z"] != 0) & (actual["point"] == point_index)]
+    filtered_data = actual[(actual["point"] == point_index)]
 
-    intercept_residual = filtered_data["intercept_residual"]
-    cos_residual = filtered_data["cos_residual"]
-    sin_residual = filtered_data["sin_residual"]
+    intercept_residual = filtered_data["INTP"] - filtered_data["intercept"]
+    cos_residual = filtered_data["COS0"] - filtered_data["cos"]
+    sin_residual = filtered_data["SIN0"] - filtered_data["sin"]
     dates = filtered_data["date"]
 
     axes.scatter(
@@ -190,7 +190,7 @@ def amplitude(axes, actual, expected, point_index, title, fixed_y_axis=False):
     actual["expected_sin"] = expected["sin"]
     actual["expected_amplitude"] = np.sqrt(expected["cos"] ** 2 + expected["sin"] ** 2)
 
-    filtered_data = actual[(actual["z"] != 0) & (actual["point"] == point_index)]
+    filtered_data = actual[(actual["point"] == point_index)]
 
     cos = filtered_data["COS0"]
     sin = filtered_data["SIN0"]

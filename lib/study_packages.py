@@ -7,11 +7,11 @@ from lib.constants import Index, Sensor
 ee.Initialize()
 
 
-def build_pnw_swir_2022_2023_5_point():
+def build_pnw_swir_2022_2023_1_point():
     index = Index.SWIR
     sensors = [Sensor.L8, Sensor.L9]
     years = [2022, 2023]
-    point_group = "pnw_6"
+    point_group = "pnw_1"
     study_area = PNW
     day_step_size = 6
     start_doy = 150
@@ -36,4 +36,4 @@ def build_pnw_swir_2022_2023_5_point():
     }
 
 
-PNW_SWIR_2022_2023_5_POINT = build_pnw_swir_2022_2023_5_point()
+PNW_SWIR_2022_2023_1_POINT = build_pnw_swir_2022_2023_1_point()

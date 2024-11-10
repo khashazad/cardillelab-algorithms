@@ -5,7 +5,7 @@ import ee.geometry
 import pandas as pd
 import math
 from lib.image_collections import COLLECTIONS
-from lib.study_packages import build_pnw_swir_2022_2023_5_point
+from lib.study_packages import build_pnw_swir_2022_2023_1_point
 from lib.utils.ee.dates import get_timestamps_from_image_collection
 from lib.utils.visualization.charts import (
     ChartType,
@@ -26,7 +26,7 @@ from pprint import pprint
 import concurrent.futures
 
 # Parameters
-TAG, INDEX, POINTS, COLLECTION, YEARS = build_pnw_swir_2022_2023_5_point().values()
+TAG, INDEX, POINTS, COLLECTION, YEARS = build_pnw_swir_2022_2023_1_point().values()
 
 # whether to include the ccdc coefficients in the output
 INCLUDE_CCDC_COEFFICIENTS = True
@@ -157,7 +157,7 @@ def run_kalman():
         "store_date": True,
         "include_slope": False,
         "store_amplitude": False,
-        "individual_outputs": True
+        "individual_outputs": True,
     }
 
     # Run the Kalman process with the specified arguments
