@@ -154,7 +154,7 @@ def main(args):
 
         coords = (float(kwargs["longitude"]), float(kwargs["latitude"]))
 
-        col = COLLECTIONS[args["collection"]].filterBounds(ee.Geometry.Point(coords))
+        col = args["collection"].filterBounds(ee.Geometry.Point(coords))
 
         x0 = np.array(kwargs["x0"]).reshape(num_params, NUM_MEASURES)
         x0 = ee.Image(ee.Array(x0.tolist())).rename(constants.STATE)
@@ -181,7 +181,10 @@ def main(args):
         df = df[["point"] + request_band_names]
 
         basename, ext = os.path.splitext(args["output"])
-        shard_path = basename + f"-{index:06d}" + ext
+
+        directory = os.path.join(os.path.dirname(basename), "outputs")
+        os.makedirs(directory, exist_ok=True)
+        shard_path = os.path.join(directory, f"{index:03d}" + ext)
         df.to_csv(shard_path, index=False)
 
         return shard_path
@@ -208,8 +211,9 @@ def main(args):
     all_results.to_csv(args["output"], index=False)
 
     # delete intermediate files
-    for f in all_output_files:
-        os.remove(f)
+    if "individual_outputs" not in args or not args["individual_outputs"]:
+        for f in all_output_files:
+            os.remove(f)
 
 
 if __name__ == "__main__":

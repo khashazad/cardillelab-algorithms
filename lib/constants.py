@@ -1,5 +1,7 @@
 """ Constants used throughout project. """
 
+import enum
+
 # band names
 STATE = "state"
 COV = "P"
@@ -32,3 +34,16 @@ RECORDING_FLAGS = {
     "final_class": True,
     "final_probabilities": True,
 }
+
+
+class Index(enum.Enum):
+    SWIR = "swir"
+    NBR = "nbr"
+    NDVI = "ndvi"
+
+
+class Sensor(enum.Enum):
+    L7 = "L7"
+    L8 = "L8"
+    L9 = "L9"
+    S2 = "S2"

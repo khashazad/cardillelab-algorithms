@@ -5,6 +5,7 @@ import ee.geometry
 import pandas as pd
 import math
 from lib.image_collections import COLLECTIONS
+from lib.study_packages import build_pnw_swir_2022_2023_5_point
 from lib.utils.ee.dates import get_timestamps_from_image_collection
 from lib.utils.visualization.charts import (
     ChartType,
@@ -23,20 +24,9 @@ from kalman.kalman_helper import main as eeek
 import csv
 from pprint import pprint
 import concurrent.futures
-from lib.observations_points import STUDY_POINT_GROUPS, parse_point_coordinates
 
 # Parameters
-
-# the points that are for which the kalman process is run
-STUDY_GROUP_TAG = "randonia_4"
-POINTS = parse_point_coordinates(STUDY_POINT_GROUPS[STUDY_GROUP_TAG])
-
-# the image collection that is used for the kalman process
-COLLECTION_TAG = "Randonia_l8_l9_2017_2018_swir"
-COLLECTION = COLLECTIONS[COLLECTION_TAG]
-
-# the years included in the kalman process
-YEARS = [2017, 2018]
+TAG, INDEX, POINTS, COLLECTION, YEARS = build_pnw_swir_2022_2023_5_point().values()
 
 # whether to include the ccdc coefficients in the output
 INCLUDE_CCDC_COEFFICIENTS = True
@@ -58,13 +48,12 @@ KALMAN_FLAGS = {
 script_directory = os.path.dirname(os.path.realpath(__file__))
 
 # Define the run directory based on the current timestamp
-run_directory = f"{script_directory}/tests/kalman/{STUDY_GROUP_TAG} - {len(POINTS)} points/{datetime.now().strftime('%m-%d %H:%M')}/"
+run_directory = (
+    f"{script_directory}/tests/kalman/{TAG}/{datetime.now().strftime('%m-%d %H:%M')}/"
+)
 
 # Path to the parameters file containing the process noise, measurement noise, and initial state covariance
 parameters_file_path = f"{script_directory}/kalman/eeek_input.csv"
-
-# Path to the point set directory
-point_set_directory_path = f"{script_directory}/points/sets/{STUDY_GROUP_TAG}"
 
 # Create the run directory if it doesn't exist
 os.makedirs(run_directory, exist_ok=True)
@@ -75,7 +64,6 @@ def append_ccdc_coefficients(kalman_output_path, points):
     bands = ["SWIR1"]
     coefs = ["INTP", "SLP", "COS", "SIN", "COS2", "SIN2", "COS3", "SIN3"]
     segments_count = 10
-    segments = ccdc_utils.build_segment_tag(segments_count)
 
     kalman_output_df = pd.read_csv(kalman_output_path)
     dates = kalman_output_df[kalman_output_df["point"] == 0]["date"].to_numpy()
@@ -162,13 +150,14 @@ def run_kalman():
         "output": output_file_path,
         "points": points_file_path,
         "num_sinusoid_pairs": SINUSOID_PAIRS,
-        "collection": COLLECTION_TAG,
+        "collection": COLLECTION,
         "include_intercept": True,
         "store_measurement": True,
         "store_estimate": True,
         "store_date": True,
         "include_slope": False,
         "store_amplitude": False,
+        "individual_outputs": True
     }
 
     # Run the Kalman process with the specified arguments

@@ -30,8 +30,12 @@ def rename_point_group_folder(point_set_directory_path):
                 )
 
 
-def parse_point_coordinates(point_set_directory_path):
+def parse_point_coordinates(point_group):
+    point_set_directory_path = build_path(point_group)
     point_coordinates = []
+
+    if not os.path.exists(point_set_directory_path):
+        raise ValueError(f"Invalid point group directory: {point_set_directory_path}")
 
     def process_json_file(content_path):
         with open(content_path, "r") as file:
