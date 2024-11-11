@@ -89,45 +89,58 @@ def main(args):
     num_request_bands = len(request_band_names)
 
     #################################################
-    ########### Read in PEST parameters #############
+    ########### Read in parameters #############
     #################################################
-    with open(args["input"], "r") as f:
-        lines = f.readlines()
+
+    kalman_init = {}
+
+    if args["input"].endswith(".json"):
+        with open(args["input"], "r") as f:
+            params = json.load(f)
+
+            Q = np.array(params["Q"]).flatten()
+            R = np.array(params["R"]).flatten()
+            P = np.array(params["P"]).flatten()
+
+            if (
+                "initial_state" in params
+                and "initialization" in args
+                and args["initialization"] == "uninformative"
+            ):
+                print("using initial state", params["initial_state"])
+                kalman_init["init_image"] = np.array(params["initial_state"])
+    else:
+        with open(args["input"], "r") as f:
+            lines = f.readlines()
         assert len(lines) == 3, "PEST parameter file must specify Q, R, P"
 
-        parameters = {}
-
         Q, R, P = lines
-        Q = np.array([float(x) for x in Q.split(",")]).reshape(num_params, num_params)
-        parameters["process noise (Q)"] = Q.tolist()
 
-        R = np.array([float(x) for x in R.split(",")]).reshape(
-            NUM_MEASURES, NUM_MEASURES
-        )
-        parameters["measurement noise (R)"] = R.tolist()
+        Q = np.array([float(x) for x in Q.split(",")])
+        R = np.array([float(x) for x in R.split(",")])
+        P = np.array([float(x) for x in P.split(",")])
 
-        P = np.array([float(x) for x in P.split(",")]).reshape(num_params, num_params)
-        parameters["initial state covariance matrix (P)"] = P.tolist()
-        P = ee.Image(ee.Array(P.tolist())).rename("P")
+    Q = Q.reshape(num_params, num_params)
+    R = R.reshape(NUM_MEASURES, NUM_MEASURES)
+    P = P.reshape(num_params, num_params)
 
-        H = utils.sinusoidal(
-            args["num_sinusoid_pairs"],
-            include_slope=args["include_slope"],
-            include_intercept=args["include_intercept"],
-        )
+    P = ee.Image(ee.Array(P.tolist())).rename("P")
 
-        kalman_init = {
-            "F": utils.identity(num_params),
-            "Q": lambda **kwargs: ee.Image(ee.Array(Q.tolist())),
-            "H": H,
-            "R": lambda **kwargs: ee.Image(ee.Array(R.tolist())),
-            "num_params": num_params,
-        }
+    H = utils.sinusoidal(
+        args["num_sinusoid_pairs"],
+        include_slope=args["include_slope"],
+        include_intercept=args["include_intercept"],
+    )
 
-        with open(
-            os.path.join(os.path.dirname(args["output"]), "eeek_params.json"), "w"
-        ) as f:
-            json.dump(parameters, f, indent=4)
+
+    kalman_init = {
+       **kalman_init,
+        "F": utils.identity(num_params),
+        "Q": lambda **kwargs: ee.Image(ee.Array(Q.tolist())),
+        "H": H,
+        "R": lambda **kwargs: ee.Image(ee.Array(R.tolist())),
+        "num_params": num_params,
+    }
 
     #################################################
     # Create parameters to run filter on each point #
@@ -156,8 +169,15 @@ def main(args):
 
         col = args["collection"].filterBounds(ee.Geometry.Point(coords))
 
-        x0 = np.array(kwargs["x0"]).reshape(num_params, NUM_MEASURES)
-        x0 = ee.Image(ee.Array(x0.tolist())).rename(constants.STATE)
+        x0 = kalman_init["init_image"] if "init_image" in kalman_init else kwargs["x0"]
+
+        x0 = ee.Image(
+            ee.Array(
+                np.array([float(x) for x in x0])
+                .reshape(num_params, NUM_MEASURES)
+                .tolist()
+            )
+        ).rename(constants.STATE)
 
         kalman_init["init_image"] = ee.Image.cat([P, x0])
         kalman_init["point_coords"] = coords

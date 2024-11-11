@@ -6,7 +6,7 @@ import ee.geometry
 import pandas as pd
 from lib.constants import Index
 from lib.image_collections import COLLECTIONS
-from lib.study_packages import pnw_nbr_2017_2019_1_point
+from lib.study_packages import pnw_nbr_2017_2018_1_point, pnw_nbr_2017_2019_1_point
 from lib.utils.harmonic import (
     calculate_harmonic_estimate,
     fitted_coefficients,
@@ -25,10 +25,10 @@ from pprint import pprint
 import concurrent.futures
 
 # Parameters
-TAG, INDEX, POINTS, COLLECTION, YEARS = pnw_nbr_2017_2019_1_point().values()
+TAG, INDEX, POINTS, COLLECTION, YEARS = pnw_nbr_2017_2018_1_point().values()
 
 # whether to include the ccdc coefficients in the output
-INCLUDE_CCDC_COEFFICIENTS = True
+INCLUDE_CCDC_COEFFICIENTS = False
 
 # the number of sinusoid pairs used in the kalman process
 SINUSOID_PAIRS = 1
@@ -43,6 +43,8 @@ KALMAN_FLAGS = {
     "store_amplitude": False,
 }
 
+INITIALIZATION = "uninformative"
+
 # Get the directory of the current script
 script_directory = os.path.dirname(os.path.realpath(__file__))
 
@@ -52,14 +54,14 @@ run_directory = (
 )
 
 # Path to the parameters file containing the process noise, measurement noise, and initial state covariance
-parameters_file_path = f"{script_directory}/kalman/eeek_input.csv"
+parameters_file_path = f"{script_directory}/kalman/eeek_input.json"
 
 # Create the run directory if it doesn't exist
 os.makedirs(run_directory, exist_ok=True)
 
 
 def append_ccdc_coefficients(kalman_output_path, points):
-    ccdc_asset = COLLECTIONS["CCDC_Randonia"]
+    ccdc_asset = COLLECTIONS["CCDC_Global"]
     bands = ["SWIR1"]
     coefs = ["INTP", "SLP", "COS", "SIN", "COS2", "SIN2", "COS3", "SIN3"]
     segments_count = 10
@@ -199,10 +201,15 @@ def run_kalman():
     os.makedirs(run_directory, exist_ok=True)
 
     # Copy the parameters file to the run directory
-    shutil.copy(parameters_file_path, os.path.join(run_directory, "eeek_input.csv"))
+    shutil.copy(
+        parameters_file_path,
+        os.path.join(run_directory, os.path.basename(parameters_file_path)),
+    )
 
     # Define file paths for input and output
-    input_file_path = os.path.join(run_directory, "eeek_input.csv")
+    input_file_path = os.path.join(
+        run_directory, os.path.basename(parameters_file_path)
+    )
     output_file_path = os.path.join(run_directory, "eeek_output.csv")
     points_file_path = os.path.join(run_directory, "points.csv")
 
@@ -220,6 +227,7 @@ def run_kalman():
         "include_slope": False,
         "store_amplitude": False,
         "individual_outputs": True,
+        "initialization": INITIALIZATION,
     }
 
     # Run the Kalman process with the specified arguments

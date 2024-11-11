@@ -56,8 +56,6 @@ def build_collection(
             "cloud_cover_threshold": cloud_cover_threshold,
         }
 
-    print(args)
-
     return gather_collections_and_reduce(args)
 
 
@@ -291,6 +289,8 @@ L8_L9_RANDONIA_SWIR_2017_2018 = gather_collections_and_reduce(
     }
 )
 
+CCDC_GLOBAL = ee.ImageCollection("GOOGLE/GLOBAL_CCDC/V1")
+
 COLLECTIONS = {
     "PNW_L8_L9_2022_2023": PNW_L8_L9_2022_2023,
     "PNW_L8_L9_2022_2023_DSS_1": PNW_L8_L9_2022_2023_DSS_1,
@@ -298,7 +298,9 @@ COLLECTIONS = {
     "PNW_L8_L9_2023": PNW_L8_L9_2023,
     "CCDC_Randonia": CCDC_RANDONIA,
     "Randonia_l8_l9_2017_2018_swir": L8_L9_RANDONIA_SWIR_2017_2018,
+    "CCDC_Global": CCDC_GLOBAL,
 }
+
 
 if __name__ == "__main__":
     pprint(L8_GATHER_COLLECTIONS.getInfo())
