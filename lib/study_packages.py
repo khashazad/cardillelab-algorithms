@@ -20,7 +20,7 @@ def study_package(
     initialization=Initialization.POSTHOC,
 ):
     return {
-        "tag": f"{study_area['name']}_{'_'.join([s.value for s in sensors])}_{index.value}_{years[0]}_{years[1]}_{initialization.value}",
+        "tag": f"{study_area['name']}_{'_'.join([s.value for s in sensors])}_{index.value}_{'_'.join([str(y) for y in years])}_{initialization.value}",
         "index": index,
         "points": parse_point_coordinates(point_group),
         "study_area": study_area,

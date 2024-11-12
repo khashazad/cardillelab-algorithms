@@ -31,14 +31,14 @@ import concurrent.futures
 # Parameters
 TAG, INDEX, POINTS, STUDY_AREA, COLLECTION, YEARS, INITIALIZATION = study_package(
     **{
-        "index": Index.NBR,
+        "index": Index.SWIR,
         "sensors": [Sensor.L7, Sensor.L8],
-        "years": [2014, 2015, 2016],
+        "years": [2019],
         "point_group": "pnw_6",
         "study_area": PNW,
-        "day_step_size": 15,
+        "day_step_size": 6,
         "start_doy": 1,
-        "end_doy": 250,
+        "end_doy": 300,
         "cloud_cover_threshold": 20,
     }
 ).values()

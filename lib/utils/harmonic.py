@@ -14,7 +14,7 @@ import csv
 from lib.constants import Index
 
 
-def harmonic_trend_coefficients(collection, point_coords, index: Index):
+def harmonic_trend_coefficients(collection, point_coords, year: int, index: Index):
     modality = {
         "constant": True,
         "linear": False,
@@ -24,7 +24,9 @@ def harmonic_trend_coefficients(collection, point_coords, index: Index):
     }
 
     image_collection = ee.ImageCollection(
-        collection.filterBounds(ee.Geometry.Point(point_coords))
+        collection.filterBounds(ee.Geometry.Point(point_coords)).filter(
+            ee.Filter.calendarRange(year, year, "year")
+        )
     )
 
     reduced_image_collection_with_harmonics = (
@@ -50,7 +52,7 @@ def fitted_coefficients(
 ):
     def get_coefficients_for_point(collection, coords, year):
         request = utils.build_request(coords)
-        request["expression"] = harmonic_trend_coefficients(collection, coords, index)
+        request["expression"] = harmonic_trend_coefficients(collection, coords, year, index)
         coefficients = utils.compute_pixels_wrapper(request)
 
         timestamps = get_timestamps_from_image_collection(collection, year, coords)
