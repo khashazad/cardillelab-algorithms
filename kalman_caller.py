@@ -6,7 +6,12 @@ import ee.geometry
 import pandas as pd
 from lib.constants import Index
 from lib.image_collections import COLLECTIONS
-from lib.study_packages import pnw_nbr_2017_2018_1_point, pnw_nbr_2017_2019_1_point
+from lib.study_packages import (
+    pnw_nbr_2017_2018_1_point,
+    pnw_nbr_2017_2019_1_point,
+    pnw_swir_2017_2018_1_points,
+    pnw_swir_2022_2023_1_points,
+)
 from lib.utils.harmonic import (
     calculate_harmonic_estimate,
     fitted_coefficients,
@@ -25,10 +30,10 @@ from pprint import pprint
 import concurrent.futures
 
 # Parameters
-TAG, INDEX, POINTS, COLLECTION, YEARS = pnw_nbr_2017_2018_1_point().values()
+TAG, INDEX, POINTS, STUDY_AREA, COLLECTION, YEARS = pnw_nbr_2017_2019_1_point().values()
 
 # whether to include the ccdc coefficients in the output
-INCLUDE_CCDC_COEFFICIENTS = False
+INCLUDE_CCDC_COEFFICIENTS = True
 
 # the number of sinusoid pairs used in the kalman process
 SINUSOID_PAIRS = 1
@@ -43,7 +48,8 @@ KALMAN_FLAGS = {
     "store_amplitude": False,
 }
 
-INITIALIZATION = "uninformative"
+# the initialization method for the kalman process (uninformative or posthoc)
+INITIALIZATION = "posthoc"
 
 # Get the directory of the current script
 script_directory = os.path.dirname(os.path.realpath(__file__))
@@ -61,13 +67,22 @@ os.makedirs(run_directory, exist_ok=True)
 
 
 def append_ccdc_coefficients(kalman_output_path, points):
-    ccdc_asset = COLLECTIONS["CCDC_Global"]
-    bands = ["SWIR1"]
+    ccdc_asset = (
+        COLLECTIONS["CCDC_Global"]
+        .mosaic()
+        .clip(ee.Geometry.Polygon(STUDY_AREA["coords"]))
+    )
+    if INDEX == Index.SWIR:
+        bands = ["SWIR1"]
+    else:
+        bands = ["NIR", "SWIR1"]
+
     coefs = ["INTP", "SLP", "COS", "SIN", "COS2", "SIN2", "COS3", "SIN3"]
     segments_count = 10
+    segments = ccdc_utils.build_segment_tag(segments_count)
 
     kalman_output_df = pd.read_csv(kalman_output_path)
-    dates = kalman_output_df[kalman_output_df["point"] == 0]["date"].to_numpy()
+    dates = kalman_output_df[kalman_output_df["point"] == 0]["timestamp"].to_numpy()
 
     ccdc_image = ccdc_utils.build_ccd_image(ccdc_asset, segments_count, bands)
 
@@ -79,7 +94,7 @@ def append_ccdc_coefficients(kalman_output_path, points):
         )
 
         ccdc_coefs_image = ccdc_utils.get_multi_coefs(
-            ccdc_image, formatted_date, bands, coefs
+            ccdc_image, formatted_date, bands, coefs, segments, segments, "after"
         )
 
         ccdc_coefs_ic = ccdc_coefs_ic.merge(ee.ImageCollection([ccdc_coefs_image]))
@@ -91,17 +106,17 @@ def append_ccdc_coefficients(kalman_output_path, points):
         coef_list = utils.compute_pixels_wrapper(request)
 
         ccdc_coefs_df = pd.DataFrame(
-            coef_list.reshape(len(dates), len(coefs)),
-            columns=[f"CCDC_{c}" for c in coefs],
+            coef_list.reshape(len(dates), len(coefs) * len(bands)),
+            columns=[f"CCDC_{c}_{b}" for c in coefs for b in bands],
         )
-        ccdc_coefs_df["date"] = dates
+        ccdc_coefs_df["timestamp"] = dates
 
         kalman_df = pd.DataFrame(kalman_output_df[kalman_output_df["point"] == i])
 
         kalman_ccdc_df = pd.merge(
             kalman_df,
             ccdc_coefs_df,
-            on="date",
+            on="timestamp",
             how="inner",
         )
 

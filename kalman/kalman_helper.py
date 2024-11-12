@@ -107,7 +107,6 @@ def main(args):
                 and "initialization" in args
                 and args["initialization"] == "uninformative"
             ):
-                print("using initial state", params["initial_state"])
                 kalman_init["init_image"] = np.array(params["initial_state"])
     else:
         with open(args["input"], "r") as f:
@@ -132,9 +131,8 @@ def main(args):
         include_intercept=args["include_intercept"],
     )
 
-
     kalman_init = {
-       **kalman_init,
+        **kalman_init,
         "F": utils.identity(num_params),
         "Q": lambda **kwargs: ee.Image(ee.Array(Q.tolist())),
         "H": H,
