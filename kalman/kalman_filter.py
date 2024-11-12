@@ -70,7 +70,6 @@ def kalman_filter(
     postprocess_fn=lambda **kwargs: [],
     measurement_band=None,
     num_params=3,
-    point_coords=None,
 ):
     """Applies a Kalman Filter to the given image collection.
 
@@ -169,7 +168,7 @@ def kalman_filter(
             P.rename(constants.COV),
             estimate.rename(constants.ESTIMATE),
             amplitude.rename(constants.AMPLITUDE),
-            ee.Image(curr.date().millis()).rename(constants.DATE),
+            ee.Image(curr.date().millis()).rename(constants.TIMESTAMP),
         ]
         outputs.extend(preprocess_results)
         outputs.extend(postprocess_results)

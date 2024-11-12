@@ -9,7 +9,7 @@ MEASUREMENT = "z"
 RESIDUAL = "residual"
 CHANGE_PROB = "change_prob"
 ESTIMATE = "estimate"
-DATE = "date"
+TIMESTAMP = "timestamp"
 AMPLITUDE = "amplitude"
 PROBABILITY_LABEL = "probability_array"
 PROBABILITY_SELECTOR = "probability_class"
@@ -47,3 +47,8 @@ class Sensor(enum.Enum):
     L8 = "L8"
     L9 = "L9"
     S2 = "S2"
+
+
+class Initialization(enum.Enum):
+    UNIFORM = "uniform"
+    POSTHOC = "posthoc"

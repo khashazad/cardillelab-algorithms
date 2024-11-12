@@ -128,11 +128,6 @@ def apply_scale_factors_l89(image):
     thermal_bands = image.select("ST_B.*").multiply(0.00341802).add(149.0)
     return image.addBands(optical_bands, None, True).addBands(thermal_bands, None, True)
 
-
-def apply_scale_factors_l7(image):
-    return image.addBands(image.select("SR_B.").multiply(0.0001), None, True)
-
-
 def apply_scale_factors_s2(image):
     return image.addBands(image.select("B.").multiply(0.0001), None, True)
 
@@ -382,7 +377,7 @@ def gather_collections_and_reduce(gather_collections_args):
                     )
                     one_time_slice_cloud_masked = one_time_slice.map(
                         cloud_mask_ic_l5_and_l7
-                    ).map(apply_scale_factors_l7)
+                    ).map(apply_scale_factors_l89)
                     if which_reduction == "NBR":
 
                         def nbr_landsat_7(img):

@@ -1,7 +1,9 @@
 import os
 import json
 
-PREFIX = os.path.join(os.path.dirname(__file__), "point_groups", "groups")
+PREFIX = os.path.relpath(
+    os.path.join(os.path.dirname(__file__), "point_groups", "groups")
+)
 
 
 def build_path(file_name):

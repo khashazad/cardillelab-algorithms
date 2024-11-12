@@ -444,7 +444,7 @@ def hidden_bulc_iterate_with_options(
         x.rename(constants.STATE),
         P.rename(constants.COV),
         estimate.rename(constants.ESTIMATE),
-        ee.Image(curr.date().millis()).rename(constants.DATE),
+        ee.Image(curr.date().millis()).rename(constants.TIMESTAMP),
     ]
 
     accumulating_answer = accumulating_answer.addBands(ee.Image.cat(*result))

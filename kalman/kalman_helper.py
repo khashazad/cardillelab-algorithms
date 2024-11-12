@@ -78,13 +78,13 @@ def main(args):
 
     request_band_names = param_names.copy()
     if "store_estimate" in args and args["store_estimate"]:
-        request_band_names.append("estimate")
+        request_band_names.append(constants.ESTIMATE)
     if "store_amplitude" in args and args["store_amplitude"]:
-        request_band_names.append("amplitude")
+        request_band_names.append(constants.AMPLITUDE)
     if "store_measurement" in args and args["store_measurement"]:
-        request_band_names.append("z")
-    if "store_date" in args and args["store_date"]:
-        request_band_names.append("date")
+        request_band_names.append(constants.MEASUREMENT)
+    if "store_timestamp" in args and args["store_timestamp"]:
+        request_band_names.append(constants.TIMESTAMP)
 
     num_request_bands = len(request_band_names)
 
@@ -105,7 +105,7 @@ def main(args):
             if (
                 "initial_state" in params
                 and "initialization" in args
-                and args["initialization"] == "uninformative"
+                and args["initialization"] == constants.Initialization.UNIFORM.value
             ):
                 kalman_init["init_image"] = np.array(params["initial_state"])
     else:
@@ -159,7 +159,7 @@ def main(args):
     #################################################
     ##### Run Kalman filter across all points #######
     #################################################
-    @retry.Retry()
+    # @retry.Retry()
     def process_point(kwargs):
         index = kwargs["index"]
 
@@ -169,16 +169,11 @@ def main(args):
 
         x0 = kalman_init["init_image"] if "init_image" in kalman_init else kwargs["x0"]
 
-        x0 = ee.Image(
-            ee.Array(
-                np.array([float(x) for x in x0])
-                .reshape(num_params, NUM_MEASURES)
-                .tolist()
-            )
-        ).rename(constants.STATE)
+        x0 = np.array(x0).reshape(num_params, NUM_MEASURES).tolist()
+
+        x0 = ee.Image(ee.Array(x0)).rename(constants.STATE)
 
         kalman_init["init_image"] = ee.Image.cat([P, x0])
-        kalman_init["point_coords"] = coords
 
         kalman_result = kalman_filter.kalman_filter(col, **kalman_init)
 
@@ -211,12 +206,12 @@ def main(args):
 
         return shard_path
 
-    # with ProcessPool(nodes=40) as pool:
-    #   all_output_files = pool.map(process_point, points)
+    with ProcessPool(nodes=40) as pool:
+        all_output_files = pool.map(process_point, points)
 
-    all_output_files = []
-    for point in points:
-        all_output_files.append(process_point(point))
+    # all_output_files = []
+    # for point in points:
+    #     all_output_files.append(process_point(point))
 
     # result = process_point(points[0])
     # all_output_files = [result]

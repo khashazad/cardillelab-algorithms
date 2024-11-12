@@ -4,13 +4,12 @@ import shutil
 import ee
 import ee.geometry
 import pandas as pd
-from lib.constants import Index
+from lib.constants import Index, Sensor
 from lib.image_collections import COLLECTIONS
+from lib.study_areas import PNW
 from lib.study_packages import (
-    pnw_nbr_2017_2018_1_point,
-    pnw_nbr_2017_2019_1_point,
-    pnw_swir_2017_2018_1_points,
-    pnw_swir_2022_2023_1_points,
+    pnw_nbr_l7_l8_l9_2017_2019_6_point,
+    study_package,
 )
 from lib.utils.harmonic import (
     calculate_harmonic_estimate,
@@ -30,7 +29,19 @@ from pprint import pprint
 import concurrent.futures
 
 # Parameters
-TAG, INDEX, POINTS, STUDY_AREA, COLLECTION, YEARS = pnw_nbr_2017_2019_1_point().values()
+TAG, INDEX, POINTS, STUDY_AREA, COLLECTION, YEARS, INITIALIZATION = study_package(
+    **{
+        "index": Index.NBR,
+        "sensors": [Sensor.L7, Sensor.L8],
+        "years": [2014, 2015, 2016],
+        "point_group": "pnw_6",
+        "study_area": PNW,
+        "day_step_size": 15,
+        "start_doy": 1,
+        "end_doy": 250,
+        "cloud_cover_threshold": 20,
+    }
+).values()
 
 # whether to include the ccdc coefficients in the output
 INCLUDE_CCDC_COEFFICIENTS = True
@@ -47,9 +58,6 @@ KALMAN_FLAGS = {
     "include_slope": False,
     "store_amplitude": False,
 }
-
-# the initialization method for the kalman process (uninformative or posthoc)
-INITIALIZATION = "posthoc"
 
 # Get the directory of the current script
 script_directory = os.path.dirname(os.path.realpath(__file__))
@@ -238,11 +246,11 @@ def run_kalman():
         "include_intercept": True,
         "store_measurement": True,
         "store_estimate": True,
-        "store_date": True,
+        "store_timestamp": True,
         "include_slope": False,
         "store_amplitude": False,
         "individual_outputs": True,
-        "initialization": INITIALIZATION,
+        "initialization": INITIALIZATION.value,
     }
 
     # Run the Kalman process with the specified arguments
