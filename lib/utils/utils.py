@@ -6,6 +6,7 @@ import io
 import math
 
 import numpy as np
+from lib.constants import Kalman
 from numpy.lib.recfunctions import structured_to_unstructured
 import ee
 
@@ -269,32 +270,6 @@ def track_updated_measurement(x, H, **kwargs):
     return H(**kwargs).matrixMultiply(x)
 
 
-def unpack_arrays(image, param_names):
-    """Unpack array image into separate bands.
-
-    Can be mapped across the output of kalman_filter.
-
-    Currently only unpacks x and P. Names covariance bands as
-    cov_{param1}_{param2}
-
-    Args:
-        image: ee.Image
-        param_names: list[str], the names to give each parameter in the state
-
-    Returns:
-        ee.Image with bands for each state variable, and the covariance between
-        each pair of state variables and all bands from the original input
-        image.
-    """
-    z = image.select(constants.MEASUREMENT).arrayProject([0]).arrayFlatten(
-        [[constants.MEASUREMENT]]
-    )
-    x = image.select(constants.STATE).arrayProject([0]).arrayFlatten([param_names])
-    P = image.select(constants.COV).arrayFlatten(
-        [["cov_" + x for x in param_names], param_names]
-    )
-    return image.addBands(ee.Image.cat(z, x, P), overwrite=True)
-
 
 def prep_landsat_collection(
     region, start_date, end_date, max_cloud_cover=30, sensors=8
@@ -407,6 +382,13 @@ def compute_pixels_wrapper(request):
     return np.squeeze(
         structured_to_unstructured(np.load(io.BytesIO(result), allow_pickle=True))
     )
+
+
+def get_pixels(coords, image):
+    """Get the pixels at the given coordinates for the given image."""
+    request = build_request(coords)
+    request["expression"] = image
+    return compute_pixels_wrapper(request)
 
 
 def get_utm_from_lonlat(lon, lat):

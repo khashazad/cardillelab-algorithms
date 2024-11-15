@@ -13,7 +13,7 @@ from lib.study_packages import (
 )
 from lib.utils.harmonic import (
     calculate_harmonic_estimate,
-    fitted_coefficients,
+    harmonic_trend_coefficients,
 )
 from lib.utils.visualization.charts import (
     ChartType,
@@ -263,7 +263,7 @@ if __name__ == "__main__":
     points_filename = run_directory + "points.csv"
     observations_filename = run_directory + "observations.csv"
 
-    fitted_coefficiets_by_point = fitted_coefficients(
+    fitted_coefficiets_by_point = harmonic_trend_coefficients(
         POINTS, fitted_coefficiets_filename, COLLECTION, YEARS, INDEX
     )
     create_points_file(points_filename, fitted_coefficiets_by_point, YEARS)

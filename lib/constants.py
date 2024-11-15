@@ -2,15 +2,13 @@
 
 import enum
 
-# band names
-STATE = "state"
-COV = "P"
-MEASUREMENT = "z"
 RESIDUAL = "residual"
 CHANGE_PROB = "change_prob"
 ESTIMATE = "estimate"
 TIMESTAMP = "timestamp"
 AMPLITUDE = "amplitude"
+MEASUREMENT = "measurement"
+
 PROBABILITY_LABEL = "probability_array"
 PROBABILITY_SELECTOR = "probability_class"
 PER_PIXEL_IMAGE_COUNTER = "per_pixel_image_counter"
@@ -33,7 +31,26 @@ RECORDING_FLAGS = {
     "confidence": False,
     "final_class": True,
     "final_probabilities": True,
+    "ccdc_coefficients": True,
+    "estimate": True,
+    "measurement": True,
+    "timestamp": True,
 }
+
+
+class Recording(enum.Enum):
+    CCDC_COEFFICIENTS = "ccdc_coefficients"
+    ESTIMATE = ESTIMATE
+    TIMESTAMP = TIMESTAMP
+    AMPLITUDE = AMPLITUDE
+    ITERATION_NUMBER = "iteration_number"
+    EVENTS = "events"
+    CONDITIONALS = "conditionals"
+    PROBABILITIES = "probabilities"
+    BULC_LAYERS = "bulc_layers"
+    CONFIDENCE = "confidence"
+    FINAL_CLASS = "final_class"
+    FINAL_PROBABILITIES = "final_probabilities"
 
 
 class Index(enum.Enum):
@@ -49,6 +66,35 @@ class Sensor(enum.Enum):
     S2 = "S2"
 
 
+class Kalman(enum.Enum):
+    F = "F"  # state transition model
+    Q = "Q"  # process noise covariance
+    H = "H"  # observation model
+    R = "R"  # measurement noise covariance
+    P = "P"  # state covariance matrix
+    X = "X"  # state
+    Z = "z"  # observation
+    INITIAL_STATE = "initial_state"
+    COV_PREFIX = "cov_"
+
+
 class Initialization(enum.Enum):
     UNIFORM = "uniform"
     POSTHOC = "posthoc"
+
+
+class Harmonic(enum.Enum):
+    INTERCEPT = "intercept"
+    SLOPE = "slope"
+    COS = "cos"
+    SIN = "sin"
+    MODALITY = "modality"
+
+    PARAMETERS = "parameters"
+
+
+NUM_MEASURES = 1  # eeek only supports one band at a time
+
+MASK_VALUE = -999
+
+POINT_INDEX = "point_index"

@@ -7,6 +7,29 @@ from lib.constants import Index, Initialization, Sensor
 ee.Initialize()
 
 
+def get_tag(
+    **kwargs,
+):
+    return f"{kwargs['study_area']['name']}_{'_'.join([s.value for s in kwargs['sensors']])}_{kwargs['index'].value}_{'_'.join([str(y) for y in kwargs['years']])}_{kwargs['initialization'].value}"
+
+
+def get_collection(**kwargs):
+    return build_collection(
+        kwargs["study_area"]["coords"],
+        kwargs["years"],
+        kwargs["index"],
+        kwargs["sensors"],
+        kwargs["day_step_size"],
+        kwargs["start_doy"],
+        kwargs["end_doy"],
+        kwargs["cloud_cover_threshold"],
+    )
+
+
+def get_points(point_group):
+    return parse_point_coordinates(point_group)
+
+
 def study_package(
     study_area,
     index,
@@ -19,11 +42,32 @@ def study_package(
     cloud_cover_threshold,
     initialization=Initialization.POSTHOC,
 ):
+    tag = get_tag(
+        study_area,
+        index,
+        sensors,
+        years,
+        point_group,
+        day_step_size,
+        start_doy,
+        end_doy,
+        cloud_cover_threshold,
+        initialization,
+    )
+
     return {
-        "tag": f"{study_area['name']}_{'_'.join([s.value for s in sensors])}_{index.value}_{'_'.join([str(y) for y in years])}_{initialization.value}",
-        "index": index,
-        "points": parse_point_coordinates(point_group),
+        "tag": tag,
         "study_area": study_area,
+        "index": index,
+        "sensors": sensors,
+        "years": years,
+        "point_group": point_group,
+        "day_step_size": day_step_size,
+        "start_doy": start_doy,
+        "end_doy": end_doy,
+        "cloud_cover_threshold": cloud_cover_threshold,
+        "initialization": initialization,
+        "points": parse_point_coordinates(point_group),
         "collection": build_collection(
             study_area["coords"],
             years,
@@ -37,171 +81,3 @@ def study_package(
         "years": years,
         "initialization": initialization,
     }
-
-
-def pnw_swir_2022_2023_1_points():
-    index = Index.SWIR
-    sensors = [Sensor.L8, Sensor.L9]
-    years = [2022, 2023]
-    point_group = "pnw_1"
-    study_area = PNW
-    day_step_size = 6
-    start_doy = 150
-    end_doy = 250
-    cloud_cover_threshold = 20
-
-    return study_package(
-        study_area,
-        index,
-        sensors,
-        years,
-        point_group,
-        day_step_size,
-        start_doy,
-        end_doy,
-        cloud_cover_threshold,
-    )
-
-
-def pnw_swir_2017_2018_1_points():
-    index = Index.SWIR
-    sensors = [Sensor.L7, Sensor.L8, Sensor.L9]
-    years = [2017, 2018]
-    point_group = "pnw_1"
-    study_area = PNW
-    day_step_size = 6
-    start_doy = 150
-    end_doy = 250
-    cloud_cover_threshold = 20
-
-    return study_package(
-        study_area,
-        index,
-        sensors,
-        years,
-        point_group,
-        day_step_size,
-        start_doy,
-        end_doy,
-        cloud_cover_threshold,
-    )
-
-
-def pnw_nbr_l7_l8_l9_2017_2019_1_point():
-    index = Index.NBR
-    sensors = [Sensor.L7, Sensor.L8, Sensor.L9]
-    years = [2017, 2018, 2019]
-    point_group = "pnw_1"
-    study_area = PNW
-    day_step_size = 10
-    start_doy = 150
-    end_doy = 250
-    cloud_cover_threshold = 20
-
-    return study_package(
-        study_area,
-        index,
-        sensors,
-        years,
-        point_group,
-        day_step_size,
-        start_doy,
-        end_doy,
-        cloud_cover_threshold,
-    )
-
-
-def pnw_swir_l7_l8_l9_2017_2019_1_point():
-    index = Index.SWIR
-    sensors = [Sensor.L7, Sensor.L8, Sensor.L9]
-    years = [2017, 2018]
-    point_group = "pnw_1"
-    study_area = PNW
-    day_step_size = 10
-    start_doy = 1
-    end_doy = 365
-    cloud_cover_threshold = 20
-
-    return study_package(
-        study_area,
-        index,
-        sensors,
-        years,
-        point_group,
-        day_step_size,
-        start_doy,
-        end_doy,
-        cloud_cover_threshold,
-    )
-
-
-def pnw_nbr_l7_l8_l9_2017_2019_6_point():
-    index = Index.NBR
-    sensors = [Sensor.L7, Sensor.L8, Sensor.L9]
-    years = [2017, 2018]
-    point_group = "pnw_6"
-    study_area = PNW
-    day_step_size = 6
-    start_doy = 100
-    end_doy = 200
-    cloud_cover_threshold = 20
-
-    return study_package(
-        study_area,
-        index,
-        sensors,
-        years,
-        point_group,
-        day_step_size,
-        start_doy,
-        end_doy,
-        cloud_cover_threshold,
-    )
-
-
-def pnw_nbr_l7_l8_l9_2017_2019_6_point():
-    index = Index.NBR
-    sensors = [Sensor.L7, Sensor.L8, Sensor.L9]
-    years = [2017, 2018]
-    point_group = "pnw_6"
-    study_area = PNW
-    day_step_size = 6
-    start_doy = 100
-    end_doy = 200
-    cloud_cover_threshold = 20
-
-    return study_package(
-        study_area,
-        index,
-        sensors,
-        years,
-        point_group,
-        day_step_size,
-        start_doy,
-        end_doy,
-        cloud_cover_threshold,
-    )
-
-
-def pnw_nbr_2017_2018_1_point():
-    index = Index.NBR
-    sensors = [Sensor.L7, Sensor.L8, Sensor.L9]
-    years = [2017, 2018]
-    point_group = "pnw_1"
-    study_area = PNW
-    day_step_size = 10
-    start_doy = 150
-    end_doy = 250
-    cloud_cover_threshold = 20
-
-    return study_package(
-        study_area,
-        index,
-        sensors,
-        years,
-        point_group,
-        day_step_size,
-        start_doy,
-        end_doy,
-        cloud_cover_threshold,
-    )

@@ -14,7 +14,9 @@ import csv
 from lib.constants import Index
 
 
-def harmonic_trend_coefficients(collection, point_coords, year: int, index: Index):
+def harmonic_trend_coefficients(
+    collection, point_coords, years: list[int], index: Index
+):
     modality = {
         "constant": True,
         "linear": False,
@@ -25,7 +27,7 @@ def harmonic_trend_coefficients(collection, point_coords, year: int, index: Inde
 
     image_collection = ee.ImageCollection(
         collection.filterBounds(ee.Geometry.Point(point_coords)).filter(
-            ee.Filter.calendarRange(year, year, "year")
+            ee.Filter.calendarRange(years[0], years[-1], "year")
         )
     )
 
@@ -47,13 +49,33 @@ def harmonic_trend_coefficients(collection, point_coords, year: int, index: Inde
     return fitted_coefficients
 
 
-def fitted_coefficients(
+def harmonic_trend_coefficients_for_year(
+    collection,
+    point_coords,
+    year: int,
+    index: Index,
+    output_file: str = None,
+):
+    coefficients = utils.get_pixels(
+        point_coords,
+        harmonic_trend_coefficients(collection, point_coords, [year], index),
+    )
+
+    if output_file:
+        with open(output_file, "a", newline="") as file:
+            csv_writer = csv.writer(file)
+            csv_writer.writerow([year, *coefficients])
+
+    return coefficients
+
+
+def harmonic_trend_coefficients_for_points(
     points, fitted_coefficiets_filename, collection, years: list[int], index: Index
 ):
     def get_coefficients_for_point(collection, coords, year):
-        request = utils.build_request(coords)
-        request["expression"] = harmonic_trend_coefficients(collection, coords, year, index)
-        coefficients = utils.compute_pixels_wrapper(request)
+        coefficients = utils.get_pixels(
+            coords, harmonic_trend_coefficients(collection, coords, year, index)
+        )
 
         timestamps = get_timestamps_from_image_collection(collection, year, coords)
 
@@ -68,7 +90,7 @@ def fitted_coefficients(
     coefficients_by_point = {}
 
     # Write fitted coefficients
-    with open(fitted_coefficiets_filename, "w", newline="") as file:
+    with open(fitted_coefficiets_filename, "a", newline="") as file:
         csv_writer = csv.writer(file)
         csv_writer.writerow(
             [
