@@ -8,7 +8,6 @@ from lib.constants import (
     KalmanRecordingFlags,
     Kalman,
     ESTIMATE,
-    AMPLITUDE,
     TIMESTAMP,
 )
 from lib.constants import NUM_MEASURES
@@ -94,43 +93,6 @@ def parse_band_names(recording_flags, harmonic_flags):
         band_names.append(TIMESTAMP)
 
     return band_names
-
-
-def get_harmonic_params(harmonic_params):
-    params = []
-
-    return ["intercept", "cos0", "sin0"]
-
-    if harmonic_params.get(Harmonic.INTERCEPT.value):
-        params.append(Harmonic.INTERCEPT.value)
-    if harmonic_params.get(Harmonic.SLOPE.value):
-        params.append(Harmonic.SLOPE.value)
-    for i in range(harmonic_params.get(Harmonic.MODALITY.value, 1)):
-        params.extend(
-            [
-                f"{Harmonic.COS.value}{i}",
-                f"{Harmonic.SIN.value}{i}",
-            ]
-        )
-
-    return params
-
-
-def parse_parameters_and_bands(harmonic_params, flags):
-    param_names = get_harmonic_params(harmonic_params)
-
-    band_names = param_names.copy()
-
-    if flags.get(KalmanRecordingFlags.ESTIMATE, False):
-        band_names.append(ESTIMATE)
-    if flags.get(KalmanRecordingFlags.AMPLITUDE, False):
-        band_names.append(AMPLITUDE)
-    if flags.get(KalmanRecordingFlags.TIMESTAMP, False):
-        band_names.append(TIMESTAMP)
-
-    band_names.append(Kalman.Z.value)
-
-    return param_names, band_names
 
 
 def setup_kalman_init(kalman_parameters, harmonic_flags):

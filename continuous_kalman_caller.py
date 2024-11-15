@@ -6,7 +6,7 @@ import ee
 import ee.geometry
 import pandas as pd
 from kalman.kalman_helper import parse_band_names
-from lib.constants import NUM_MEASURES, Index, Initialization, Sensor
+from lib.constants import NUM_MEASURES, Index, Initialization, Kalman, Sensor
 from lib.study_areas import PNW
 from lib.study_packages import (
     get_tag,
@@ -37,6 +37,7 @@ from lib.paths import (
     HARMONIC_TREND_COEFS_DIRECTORY,
     RESULTS_DIRECTORY,
 )
+from kalman.kalman_helper import parse_harmonic_params
 
 from datetime import datetime
 from kalman.kalman_module import main as eeek
@@ -46,7 +47,7 @@ from pprint import pprint
 COLLECTION_PARAMETERS = {
     "index": Index.SWIR,
     "sensors": [Sensor.L7, Sensor.L8],
-    "years": [2015, 2016],
+    "years": [2012, 2013, 2014, 2015, 2016],
     "point_group": "pnw_1",
     "study_area": PNW,
     "day_step_size": 6,
@@ -70,7 +71,7 @@ INDEX = COLLECTION_PARAMETERS["index"]
 
 # whether to include the ccdc coefficients in the output
 INCLUDE_CCDC_COEFFICIENTS = False
-
+INITIALIZATION = Initialization.POSTHOC
 
 # Get the directory of the current script
 script_directory = os.path.dirname(os.path.realpath(__file__))
@@ -192,7 +193,7 @@ def run_kalman(parameters, collection, point):
             KalmanRecordingFlags.ESTIMATE: True,
             KalmanRecordingFlags.AMPLITUDE: False,
             KalmanRecordingFlags.STATE: True,
-            KalmanRecordingFlags.STATE_COV: False,
+            KalmanRecordingFlags.STATE_COV: True,
             KalmanRecordingFlags.CCDC_COEFFICIENTS: INCLUDE_CCDC_COEFFICIENTS,
         },
     }
@@ -211,6 +212,16 @@ def run_kalman(parameters, collection, point):
     return df
 
 
+def update_kalman_parameters_with_last_run(kalman_parameters, data):
+    harmonic_params, _ = parse_harmonic_params(HARMONIC_FLAGS)
+
+    kalman_parameters[Kalman.X.value] = data.iloc[-1][harmonic_params].tolist()
+
+    kalman_parameters[Kalman.P.value] = data.iloc[-1][
+        [f"{Kalman.COV_PREFIX.value}_{x}" for x in harmonic_params]
+    ].tolist()
+
+
 def process_point(kalman_parameters, point):
     global run_directory
 
@@ -226,7 +237,7 @@ def process_point(kalman_parameters, point):
         run_directory, RESULTS_DIRECTORY, f"{KALMAN_OUTPUT_FILE_PREFIX}_{index}.csv"
     )
 
-    def process_year(kalman_parameters, year):
+    def process_year(year):
         collection = get_collection(
             **{
                 **COLLECTION_PARAMETERS,
@@ -234,7 +245,7 @@ def process_point(kalman_parameters, point):
             }
         )
 
-        harmonic_trend_coefficients_for_year(
+        coefficients = harmonic_trend_coefficients_for_year(
             collection,
             point,
             year,
@@ -242,12 +253,20 @@ def process_point(kalman_parameters, point):
             output_file=harmonic_trend_coefs_path,
         )
 
+        if (
+            INITIALIZATION == Initialization.POSTHOC
+            and year == COLLECTION_PARAMETERS["years"][0]
+        ):
+            kalman_parameters[Kalman.X.value] = coefficients
+
         data = run_kalman(kalman_parameters, collection, point)
+
+        update_kalman_parameters_with_last_run(kalman_parameters, data)
 
         data.to_csv(result_path, mode="a", index=False)
 
     for year in COLLECTION_PARAMETERS["years"]:
-        process_year(kalman_parameters, year)
+        process_year(year)
 
 
 def post_run_processing(kalman_parameters, point):

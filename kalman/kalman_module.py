@@ -57,7 +57,6 @@ from kalman import kalman_filter
 from kalman.kalman_helper import (
     parse_harmonic_params,
     parse_band_names,
-    parse_parameters_and_bands,
     setup_kalman_init,
     unpack_kalman_results,
 )
