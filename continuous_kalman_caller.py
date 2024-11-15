@@ -179,7 +179,6 @@ def build_observations(coefficients_by_point, output_filename, years: list[int])
 def run_kalman(parameters, collection, point):
     global run_directory
 
-    print(f"Filtering collection to point {point}")
     collection = collection.filterBounds(ee.Geometry.Point(point))
 
     # Set up arguments for the Kalman process
