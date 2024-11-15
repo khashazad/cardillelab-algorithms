@@ -5,7 +5,7 @@ from lib import constants
 from lib.utils import utils
 from lib.constants import (
     Harmonic,
-    Recording,
+    KalmanRecordingFlags,
     Kalman,
     ESTIMATE,
     AMPLITUDE,
@@ -26,8 +26,80 @@ def read_parameters_from_file(parameters_file_path):
         }
 
 
+def get_num_sinusoid_pairs(harmonic_flags):
+    NUM_SINUSOID_PAIRS = 1
+
+    if harmonic_flags.get(Harmonic.BIMODAL.value):
+        NUM_SINUSOID_PAIRS *= 2
+    if harmonic_flags.get(Harmonic.TRIMODAL.value):
+        NUM_SINUSOID_PAIRS *= 3
+
+    return NUM_SINUSOID_PAIRS
+
+
+def parse_harmonic_params(harmonic_flags):
+    param_names = []
+
+    NUM_SINUSOID_PAIRS = get_num_sinusoid_pairs(harmonic_flags)
+
+    if harmonic_flags.get(Harmonic.INTERCEPT.value):
+        param_names.append(Harmonic.INTERCEPT.value)
+    if harmonic_flags.get(Harmonic.SLOPE.value):
+        param_names.append(Harmonic.SLOPE.value)
+
+    for i in range(NUM_SINUSOID_PAIRS):
+        param_names.extend(
+            [
+                f"{Harmonic.COS.value}{i}",
+                f"{Harmonic.SIN.value}{i}",
+            ]
+        )
+
+    return param_names, NUM_SINUSOID_PAIRS
+
+
+def parse_band_names(recording_flags, harmonic_flags):
+    band_names = []
+
+    harmonic_params, _ = parse_harmonic_params(harmonic_flags)
+
+    # state
+    if recording_flags.get(KalmanRecordingFlags.STATE, False):
+        band_names.extend(harmonic_params)
+
+    # state covariance
+    if recording_flags.get(KalmanRecordingFlags.STATE_COV, False):
+        band_names.extend([f"{Kalman.COV_PREFIX.value}_{x}" for x in harmonic_params])
+
+    # estimate
+    if recording_flags.get(KalmanRecordingFlags.ESTIMATE, False):
+        band_names.append(ESTIMATE)
+
+    # measurement
+    if recording_flags.get(KalmanRecordingFlags.MEASUREMENT, False):
+        band_names.append(Kalman.Z.value)
+
+    # ccdc coefficients
+    if recording_flags.get(KalmanRecordingFlags.CCDC_COEFFICIENTS, False):
+        band_names.extend(
+            [
+                f"{Harmonic.COS.value}{i}",
+                f"{Harmonic.SIN.value}{i}",
+            ]
+            for i in range(3)
+        )
+
+    # timestamp
+    if recording_flags.get(KalmanRecordingFlags.TIMESTAMP, False):
+        band_names.append(TIMESTAMP)
+
+    return band_names
+
+
 def get_harmonic_params(harmonic_params):
     params = []
+
+    return ["intercept", "cos0", "sin0"]
 
     if harmonic_params.get(Harmonic.INTERCEPT.value):
         params.append(Harmonic.INTERCEPT.value)
@@ -49,11 +121,11 @@ def parse_parameters_and_bands(harmonic_params, flags):
 
     band_names = param_names.copy()
 
-    if flags.get(Recording.ESTIMATE, False):
+    if flags.get(KalmanRecordingFlags.ESTIMATE, False):
         band_names.append(ESTIMATE)
-    if flags.get(Recording.AMPLITUDE, False):
+    if flags.get(KalmanRecordingFlags.AMPLITUDE, False):
         band_names.append(AMPLITUDE)
-    if flags.get(Recording.TIMESTAMP, False):
+    if flags.get(KalmanRecordingFlags.TIMESTAMP, False):
         band_names.append(TIMESTAMP)
 
     band_names.append(Kalman.Z.value)
@@ -61,9 +133,11 @@ def parse_parameters_and_bands(harmonic_params, flags):
     return param_names, band_names
 
 
-def setup_kalman_init(kalman_parameters, harmonic_params):
-    harmonic_params_names = get_harmonic_params(harmonic_params)
-    num_params = len(harmonic_params_names)
+def setup_kalman_init(kalman_parameters, harmonic_flags):
+
+    harmonic_params, NUM_SINUSOID_PAIRS = parse_harmonic_params(harmonic_flags)
+
+    num_params = len(harmonic_params)
 
     Q = np.array(kalman_parameters.get("Q", [])).flatten()
     R = np.array(kalman_parameters.get("R", [])).flatten()
@@ -80,9 +154,9 @@ def setup_kalman_init(kalman_parameters, harmonic_params):
     assert len(X) == num_params, f"X_0 must be a vector of size {num_params}"
 
     H = utils.sinusoidal(
-        harmonic_params.get(Harmonic.MODALITY.value, 1),
-        include_slope=harmonic_params.get(Harmonic.SLOPE.value, False),
-        include_intercept=harmonic_params.get(Harmonic.INTERCEPT.value, False),
+        NUM_SINUSOID_PAIRS,
+        include_slope=harmonic_flags.get(Harmonic.SLOPE.value, False),
+        include_intercept=harmonic_flags.get(Harmonic.INTERCEPT.value, False),
     )
 
     Q = np.array([float(x) for x in Q]).reshape(num_params, num_params)
@@ -103,7 +177,11 @@ def setup_kalman_init(kalman_parameters, harmonic_params):
     }
 
 
-def unpack_kalman_results(image, param_names):
+def unpack_kalman_results(
+    image,
+    harmonic_params,
+    recording_flags=[KalmanRecordingFlags.ESTIMATE, KalmanRecordingFlags.MEASUREMENT],
+):
     """Unpack array image into separate bands.
 
     Can be mapped across the output of kalman_filter.
@@ -117,10 +195,54 @@ def unpack_kalman_results(image, param_names):
         each pair of state variables and all bands from the original input
         image.
     """
+
+    bands = []
+    # if recording_flags.get(KalmanRecordingFlags.MEASUREMENT, False):
+    #     z = (
+    #         image.select(Kalman.Z.value)
+    #         .arrayProject([0])
+    #         .arrayFlatten([[Kalman.Z.value]])
+    #     )
+    #     bands.append(z)
+
+    # if recording_flags.get(KalmanRecordingFlags.STATE, False):
+    #     x = (
+    #         image.select(Kalman.X.value)
+    #         .arrayProject([0])
+    #         .arrayFlatten([harmonic_params])
+    #     )
+    #     bands.append(x)
+
+    # if recording_flags.get(KalmanRecordingFlags.ESTIMATE, False):
+    #     estimate = image.select(ESTIMATE).arrayProject([0]).arrayFlatten([[ESTIMATE]])
+    #     bands.append(estimate)
+
+    # if recording_flags.get(KalmanRecordingFlags.TIMESTAMP, False):
+    #     timestamp = (
+    #         image.select(TIMESTAMP).arrayProject([0]).arrayFlatten([[TIMESTAMP]])
+    #     )
+    #     bands.append(timestamp)
+
+    # if recording_flags.get(KalmanRecordingFlags.STATE_COV, False):
+    #     P = (
+    #         image.select(Kalman.P.value)
+    #         .arrayFlatten(
+    #             [
+    #                 [f"{Kalman.COV_PREFIX.value}_{x}" for x in harmonic_params],
+    #                 harmonic_params,
+    #             ]
+    #         )
+    #         .select(
+    #             [f"{Kalman.COV_PREFIX.value}_{x}_{x}" for x in harmonic_params],
+    #             [f"{Kalman.COV_PREFIX.value}_{x}" for x in harmonic_params],
+    #         )
+    #     )
+    #     bands.append(P)
+
     z = image.select(Kalman.Z.value).arrayProject([0]).arrayFlatten([[Kalman.Z.value]])
-    x = image.select(Kalman.X.value).arrayProject([0]).arrayFlatten([param_names])
+    x = image.select(Kalman.X.value).arrayProject([0]).arrayFlatten([harmonic_params])
     P = image.select(Kalman.P.value).arrayFlatten(
-        [[Kalman.COV_PREFIX.value + x for x in param_names], param_names]
+        [[Kalman.COV_PREFIX.value + x for x in harmonic_params], harmonic_params]
     )
     estimate = image.select(ESTIMATE).arrayProject([0]).arrayFlatten([[ESTIMATE]])
 

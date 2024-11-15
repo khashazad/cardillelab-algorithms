@@ -55,13 +55,15 @@ import pyperclip
 
 from kalman import kalman_filter
 from kalman.kalman_helper import (
+    parse_harmonic_params,
+    parse_band_names,
     parse_parameters_and_bands,
     setup_kalman_init,
     unpack_kalman_results,
 )
 from lib import constants
 from lib.utils import utils
-from lib.constants import Harmonic, Kalman, Recording, Index
+from lib.constants import Harmonic, Kalman, KalmanRecordingFlags, Index
 from lib.image_collections import COLLECTIONS
 from lib.utils.ee.ccdc_utils import build_ccd_image, get_multi_coefs, build_segment_tag
 from lib.utils.ee.dates import convert_date
@@ -152,17 +154,17 @@ def append_ccdc_coefficients(kalman_output_path, points, index: Index, study_are
 def main(
     kalman_parameters,
     value_collection,
-    harmonic_params: dict[Harmonic, any],
-    recording_flags: dict[Recording, bool],
+    harmonic_flags: dict[Harmonic, any],
+    recording_flags: dict[KalmanRecordingFlags, bool],
 ):
+    band_names = parse_band_names(recording_flags, harmonic_flags)
+    harmonic_params, _ = parse_harmonic_params(harmonic_flags)
+
     harmonic_params_name, band_names = parse_parameters_and_bands(
         harmonic_params, recording_flags
     )
 
-    print("harmonic_params_name", harmonic_params_name)
-    print("band_names", band_names)
-
-    kalman_init = setup_kalman_init(kalman_parameters, harmonic_params)
+    kalman_init = setup_kalman_init(kalman_parameters, harmonic_flags)
 
     kalman_result = kalman_filter.kalman_filter(
         collection=value_collection,
@@ -171,13 +173,15 @@ def main(
         Q=kalman_init.get(Kalman.Q.value),
         H=kalman_init.get(Kalman.H.value),
         R=kalman_init.get(Kalman.R.value),
-        num_params=len(harmonic_params_name),
+        num_params=len(harmonic_flags),
     )
 
     states = (
-        kalman_result.map(lambda im: unpack_kalman_results(im, harmonic_params_name))
+        kalman_result.map(
+            lambda im: unpack_kalman_results(im, harmonic_params_name, recording_flags)
+        )
         .select(band_names)
         .toBands()
     )
 
-    return states, band_names
+    return states

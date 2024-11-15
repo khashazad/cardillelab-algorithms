@@ -38,11 +38,17 @@ RECORDING_FLAGS = {
 }
 
 
-class Recording(enum.Enum):
-    CCDC_COEFFICIENTS = "ccdc_coefficients"
+class KalmanRecordingFlags(enum.Enum):
+    STATE = "state"
+    STATE_COV = "state_covariance"
     ESTIMATE = ESTIMATE
     TIMESTAMP = TIMESTAMP
     AMPLITUDE = AMPLITUDE
+    MEASUREMENT = MEASUREMENT
+    CCDC_COEFFICIENTS = "ccdc_coefficients"
+
+
+class BulcRecordingFlags(enum.Enum):
     ITERATION_NUMBER = "iteration_number"
     EVENTS = "events"
     CONDITIONALS = "conditionals"
@@ -75,7 +81,7 @@ class Kalman(enum.Enum):
     X = "X"  # state
     Z = "z"  # observation
     INITIAL_STATE = "initial_state"
-    COV_PREFIX = "cov_"
+    COV_PREFIX = "cov"
 
 
 class Initialization(enum.Enum):
@@ -88,9 +94,9 @@ class Harmonic(enum.Enum):
     SLOPE = "slope"
     COS = "cos"
     SIN = "sin"
-    MODALITY = "modality"
-
-    PARAMETERS = "parameters"
+    UNIMODAL = "unimodal"
+    BIMODAL = "bimodal"
+    TRIMODAL = "trimodal"
 
 
 NUM_MEASURES = 1  # eeek only supports one band at a time

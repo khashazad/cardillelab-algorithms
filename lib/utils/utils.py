@@ -270,7 +270,6 @@ def track_updated_measurement(x, H, **kwargs):
     return H(**kwargs).matrixMultiply(x)
 
 
-
 def prep_landsat_collection(
     region, start_date, end_date, max_cloud_cover=30, sensors=8
 ):
@@ -379,6 +378,7 @@ def compute_pixels_wrapper(request):
         np.ndarray
     """
     result = ee.data.computePixels(request)
+
     return np.squeeze(
         structured_to_unstructured(np.load(io.BytesIO(result), allow_pickle=True))
     )

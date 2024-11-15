@@ -5,6 +5,7 @@ import shutil
 import ee
 import ee.geometry
 import pandas as pd
+from kalman.kalman_helper import parse_band_names
 from lib.constants import NUM_MEASURES, Index, Initialization, Sensor
 from lib.study_areas import PNW
 from lib.study_packages import (
@@ -21,7 +22,13 @@ from lib.utils.visualization.charts import (
     generate_charts_single_run,
 )
 from lib.utils import utils
-from lib.constants import Harmonic, Recording, ESTIMATE, TIMESTAMP, POINT_INDEX
+from lib.constants import (
+    Harmonic,
+    KalmanRecordingFlags,
+    ESTIMATE,
+    TIMESTAMP,
+    POINT_INDEX,
+)
 from lib.paths import (
     ANALYSIS_DIRECTORY,
     KALMAN_OUTPUT_FILE_PREFIX,
@@ -40,7 +47,7 @@ COLLECTION_PARAMETERS = {
     "index": Index.SWIR,
     "sensors": [Sensor.L7, Sensor.L8],
     "years": [2015, 2016],
-    "point_group": "pnw_6",
+    "point_group": "pnw_1",
     "study_area": PNW,
     "day_step_size": 6,
     "start_doy": 1,
@@ -49,10 +56,12 @@ COLLECTION_PARAMETERS = {
     "initialization": Initialization.POSTHOC,
 }
 
-HARMONIC_PARAMS = {
+HARMONIC_FLAGS = {
     Harmonic.INTERCEPT.value: True,
     Harmonic.SLOPE.value: False,
-    Harmonic.MODALITY.value: 1,  # number of sinusoid pairs
+    Harmonic.UNIMODAL.value: True,
+    Harmonic.BIMODAL.value: False,
+    Harmonic.TRIMODAL.value: False,
 }
 
 TAG = get_tag(**COLLECTION_PARAMETERS)
@@ -60,7 +69,7 @@ POINTS = get_points(COLLECTION_PARAMETERS["point_group"])
 INDEX = COLLECTION_PARAMETERS["index"]
 
 # whether to include the ccdc coefficients in the output
-INCLUDE_CCDC_COEFFICIENTS = True
+INCLUDE_CCDC_COEFFICIENTS = False
 
 
 # Get the directory of the current script
@@ -177,20 +186,28 @@ def run_kalman(parameters, collection, point):
     args = {
         "kalman_parameters": parameters,
         "value_collection": collection,
-        "harmonic_params": HARMONIC_PARAMS,
+        "harmonic_flags": HARMONIC_FLAGS,
         "recording_flags": {
-            Recording.TIMESTAMP: True,
-            Recording.ESTIMATE: True,
-            Recording.AMPLITUDE: False,
+            KalmanRecordingFlags.MEASUREMENT: True,
+            KalmanRecordingFlags.TIMESTAMP: True,
+            KalmanRecordingFlags.ESTIMATE: True,
+            KalmanRecordingFlags.AMPLITUDE: False,
+            KalmanRecordingFlags.STATE: True,
+            KalmanRecordingFlags.STATE_COV: False,
+            KalmanRecordingFlags.CCDC_COEFFICIENTS: INCLUDE_CCDC_COEFFICIENTS,
         },
     }
 
-    states, band_names = eeek(**args)
+    band_names = parse_band_names(args["recording_flags"], args["harmonic_flags"])
 
-    data = utils.get_pixels(point, states).reshape(-1, len(band_names))
+    # call the kalman filter
+    states = eeek(**args)
+
+    # process the output
+    data = utils.get_pixels(point, states)
+    # .reshape(-1, len(band_names))
 
     df = pd.DataFrame(data, columns=band_names)
-
     df["date"] = pd.to_datetime(df["timestamp"], unit="ms").dt.strftime("%Y-%m-%d")
 
     return df
