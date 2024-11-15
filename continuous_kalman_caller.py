@@ -204,8 +204,7 @@ def run_kalman(parameters, collection, point):
     states = eeek(**args)
 
     # process the output
-    data = utils.get_pixels(point, states)
-    # .reshape(-1, len(band_names))
+    data = utils.get_pixels(point, states).reshape(-1, len(band_names))
 
     df = pd.DataFrame(data, columns=band_names)
     df["date"] = pd.to_datetime(df["timestamp"], unit="ms").dt.strftime("%Y-%m-%d")

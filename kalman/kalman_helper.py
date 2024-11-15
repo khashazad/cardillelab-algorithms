@@ -197,53 +197,44 @@ def unpack_kalman_results(
     """
 
     bands = []
-    # if recording_flags.get(KalmanRecordingFlags.MEASUREMENT, False):
-    #     z = (
-    #         image.select(Kalman.Z.value)
-    #         .arrayProject([0])
-    #         .arrayFlatten([[Kalman.Z.value]])
-    #     )
-    #     bands.append(z)
 
-    # if recording_flags.get(KalmanRecordingFlags.STATE, False):
-    #     x = (
-    #         image.select(Kalman.X.value)
-    #         .arrayProject([0])
-    #         .arrayFlatten([harmonic_params])
-    #     )
-    #     bands.append(x)
+    if recording_flags.get(KalmanRecordingFlags.MEASUREMENT, False):
+        z = (
+            image.select(Kalman.Z.value)
+            .arrayProject([0])
+            .arrayFlatten([[Kalman.Z.value]])
+        )
+        bands.append(z)
 
-    # if recording_flags.get(KalmanRecordingFlags.ESTIMATE, False):
-    #     estimate = image.select(ESTIMATE).arrayProject([0]).arrayFlatten([[ESTIMATE]])
-    #     bands.append(estimate)
+    if recording_flags.get(KalmanRecordingFlags.STATE, False):
+        x = (
+            image.select(Kalman.X.value)
+            .arrayProject([0])
+            .arrayFlatten([harmonic_params])
+        )
+        bands.append(x)
 
-    # if recording_flags.get(KalmanRecordingFlags.TIMESTAMP, False):
-    #     timestamp = (
-    #         image.select(TIMESTAMP).arrayProject([0]).arrayFlatten([[TIMESTAMP]])
-    #     )
-    #     bands.append(timestamp)
+    if recording_flags.get(KalmanRecordingFlags.ESTIMATE, False):
+        estimate = image.select(ESTIMATE).arrayProject([0]).arrayFlatten([[ESTIMATE]])
+        bands.append(estimate)
 
-    # if recording_flags.get(KalmanRecordingFlags.STATE_COV, False):
-    #     P = (
-    #         image.select(Kalman.P.value)
-    #         .arrayFlatten(
-    #             [
-    #                 [f"{Kalman.COV_PREFIX.value}_{x}" for x in harmonic_params],
-    #                 harmonic_params,
-    #             ]
-    #         )
-    #         .select(
-    #             [f"{Kalman.COV_PREFIX.value}_{x}_{x}" for x in harmonic_params],
-    #             [f"{Kalman.COV_PREFIX.value}_{x}" for x in harmonic_params],
-    #         )
-    #     )
-    #     bands.append(P)
+    if recording_flags.get(KalmanRecordingFlags.TIMESTAMP, False):
+        bands.append(image.select(TIMESTAMP))
 
-    z = image.select(Kalman.Z.value).arrayProject([0]).arrayFlatten([[Kalman.Z.value]])
-    x = image.select(Kalman.X.value).arrayProject([0]).arrayFlatten([harmonic_params])
-    P = image.select(Kalman.P.value).arrayFlatten(
-        [[Kalman.COV_PREFIX.value + x for x in harmonic_params], harmonic_params]
-    )
-    estimate = image.select(ESTIMATE).arrayProject([0]).arrayFlatten([[ESTIMATE]])
+    if recording_flags.get(KalmanRecordingFlags.STATE_COV, False):
+        P = (
+            image.select(Kalman.P.value)
+            .arrayFlatten(
+                [
+                    [f"{Kalman.COV_PREFIX.value}_{x}" for x in harmonic_params],
+                    harmonic_params,
+                ]
+            )
+            .select(
+                [f"{Kalman.COV_PREFIX.value}_{x}_{x}" for x in harmonic_params],
+                [f"{Kalman.COV_PREFIX.value}_{x}" for x in harmonic_params],
+            )
+        )
+        bands.append(P)
 
-    return image.addBands(ee.Image.cat(z, x, P, estimate), overwrite=True)
+    return ee.Image.cat(bands).copyProperties(image)

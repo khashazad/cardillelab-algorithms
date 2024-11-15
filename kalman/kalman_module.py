@@ -160,10 +160,6 @@ def main(
     band_names = parse_band_names(recording_flags, harmonic_flags)
     harmonic_params, _ = parse_harmonic_params(harmonic_flags)
 
-    harmonic_params_name, band_names = parse_parameters_and_bands(
-        harmonic_params, recording_flags
-    )
-
     kalman_init = setup_kalman_init(kalman_parameters, harmonic_flags)
 
     kalman_result = kalman_filter.kalman_filter(
@@ -173,12 +169,12 @@ def main(
         Q=kalman_init.get(Kalman.Q.value),
         H=kalman_init.get(Kalman.H.value),
         R=kalman_init.get(Kalman.R.value),
-        num_params=len(harmonic_flags),
+        num_params=len(harmonic_params),
     )
 
     states = (
         kalman_result.map(
-            lambda im: unpack_kalman_results(im, harmonic_params_name, recording_flags)
+            lambda im: unpack_kalman_results(im, harmonic_params, recording_flags)
         )
         .select(band_names)
         .toBands()
