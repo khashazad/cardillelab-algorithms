@@ -2,6 +2,7 @@ import pandas as pd
 import math
 import numpy as np
 import matplotlib.dates as mdates
+import csv
 
 from lib.utils.harmonic import calculate_harmonic_estimate
 from lib.utils.visualization.constant import FIXED_Y_AXIS_LIMIT, FRAC_OF_YEAR
@@ -11,6 +12,7 @@ from lib.constants import (
     FRACTION_OF_YEAR,
     MEASUREMENT,
     TIMESTAMP,
+    Harmonic,
     Kalman,
 )
 
@@ -22,13 +24,43 @@ def get_harmonic_trend_coefficients(options):
         harmonic_trend is not None
     ), "harmonic trend coefficients are required for generating kalman estimate vs harmonic trend plot"
 
-    return pd.read_csv(harmonic_trend)
+    coef_dic = dict()
+
+    with open(harmonic_trend, "r") as file:
+        reader = csv.reader(file)
+
+        for line in reader:
+            if len(line) == 4:
+                coef_dic[line[0]] = [line[1], line[2], line[3]]
+
+    return coef_dic
 
 
-def get_harmonic_trend_estimates(harmonic_trend, timestamp):
-    harmonic_trend[TIMESTAMP] = pd.to_datetime(timestamp, unit="ms")
+def get_harmonic_trend_estimates(harmonic_trend_coefs, frac_of_year):
 
-    return harmonic_trend.groupby(harmonic_trend[TIMESTAMP].dt.year).size()
+    harmonic_trend_estimates = [
+        [frac_of_year, *harmonic_trend_coefs.get(str(int(frac_of_year)))]
+        for frac_of_year in list(frac_of_year)
+    ]
+
+    estimates = []
+
+    for [frac_of_year, intercept, cos, sin] in harmonic_trend_estimates:
+        estimates.append(
+            [
+                frac_of_year,
+                calculate_harmonic_estimate(
+                    {
+                        Harmonic.INTERCEPT: intercept,
+                        Harmonic.COS: cos,
+                        Harmonic.SIN: sin,
+                    },
+                    frac_of_year,
+                ),
+            ]
+        )
+
+    return pd.DataFrame(estimates, columns=[FRACTION_OF_YEAR, Harmonic.FIT.value])
 
 
 def kalman_estimate_vs_harmonic_trend(
@@ -38,11 +70,11 @@ def kalman_estimate_vs_harmonic_trend(
 ):
     harmonic_trend = get_harmonic_trend_coefficients(options)
 
-    print(data[DATE])
-    input()
-    data["harmonic_trend"] = calculate_harmonic_estimate(
+    harmonic_fit_df = get_harmonic_trend_estimates(
         harmonic_trend, data[FRACTION_OF_YEAR]
     )
+
+    data = data.merge(harmonic_fit_df, on=FRACTION_OF_YEAR, how="inner")
 
     data[DATE] = pd.to_datetime(data[DATE])
 
@@ -56,7 +88,7 @@ def kalman_estimate_vs_harmonic_trend(
 
     axs.plot(
         data[DATE],
-        data["harmonic_trend"],
+        data[Harmonic.FIT.value],
         label="Harmonic Trend",
         linestyle="--",
         color="green",

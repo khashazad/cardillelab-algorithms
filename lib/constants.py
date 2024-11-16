@@ -104,6 +104,7 @@ class Harmonic(enum.Enum):
     UNIMODAL = "unimodal"
     BIMODAL = "bimodal"
     TRIMODAL = "trimodal"
+    FIT = "fit"
 
 
 NUM_MEASURES = 1  # eeek only supports one band at a time

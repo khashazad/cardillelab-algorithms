@@ -138,30 +138,25 @@ def calculate_harmonic_estimate(coefficients, frac_of_year):
     phi_cos = np.cos(phi)
     phi_sin = np.sin(phi)
 
-    y = coefficients.get(Harmonic.INTERCEPT)
+    y = float(coefficients.get(Harmonic.INTERCEPT))
 
     if coefficients.get(Harmonic.SLOPE):
-        y += coefficients.get(Harmonic.SLOPE) * frac_of_year
+        y += float(coefficients.get(Harmonic.SLOPE)) * frac_of_year
 
     if coefficients.get(Harmonic.COS) and coefficients.get(Harmonic.SIN):
-        print("cos and sin")
         y += (
-            coefficients.get(Harmonic.COS) * phi_cos
-            + coefficients.get(Harmonic.SIN) * phi_sin
+            float(coefficients.get(Harmonic.COS)) * phi_cos
+            + float(coefficients.get(Harmonic.SIN)) * phi_sin
         )
 
     if coefficients.get(Harmonic.COS1) and coefficients.get(Harmonic.SIN1):
-        print("cos1 and sin1")
-        y += (
-            coefficients.get(Harmonic.COS1) * phi_cos**2
-            + coefficients.get(Harmonic.SIN1) * phi_sin**2
-        )
+        y += float(coefficients.get(Harmonic.COS1)) * np.cos(2 * phi) + float(
+            coefficients.get(Harmonic.SIN1)
+        ) * np.sin(2 * phi)
 
     if coefficients.get(Harmonic.COS2) and coefficients.get(Harmonic.SIN2):
-        print("cos2 and sin2")
-        y += (
-            coefficients.get(Harmonic.COS2) * phi_cos * phi_sin
-            + coefficients.get(Harmonic.SIN2) * phi_sin**2
-        )
+        y += float(coefficients.get(Harmonic.COS2)) * np.cos(3 * phi) + float(
+            coefficients.get(Harmonic.SIN2)
+        ) * np.sin(3 * phi)
 
     return y
