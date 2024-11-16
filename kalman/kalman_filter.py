@@ -131,7 +131,7 @@ def kalman_filter(
         P_prev = last.select(Kalman.P.value)
 
         z = curr.select(measurement_band).toArray().toArray(1)
-        t = curr.date().difference(START_DATE, "year")
+        t = ee.Number(curr.date().getRelative("day", "year")).divide(365)
 
         preprocess_results = preprocess_fn(**locals())
 

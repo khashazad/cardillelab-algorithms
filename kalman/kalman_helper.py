@@ -153,9 +153,6 @@ def unpack_kalman_results(
         estimate = image.select(ESTIMATE).arrayProject([0]).arrayFlatten([[ESTIMATE]])
         bands.append(estimate)
 
-    if recording_flags.get(KalmanRecordingFlags.TIMESTAMP, False):
-        bands.append(image.select(TIMESTAMP))
-
     if recording_flags.get(KalmanRecordingFlags.STATE_COV, False):
         P = (
             image.select(Kalman.P.value)
@@ -172,7 +169,4 @@ def unpack_kalman_results(
         )
         bands.append(P)
 
-    if recording_flags.get(KalmanRecordingFlags.FRACTION_OF_YEAR, False):
-        bands.append(image.select(FRACTION_OF_YEAR))
-
-    return ee.Image.cat(bands).copyProperties(image)
+    return image.addBands(ee.Image.cat(bands), overwrite=True)

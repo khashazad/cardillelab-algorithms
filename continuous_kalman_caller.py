@@ -7,7 +7,7 @@ import ee.geometry
 import numpy as np
 import pandas as pd
 from kalman.kalman_helper import parse_band_names
-from lib.constants import DATE, NUM_MEASURES, Index, Initialization, Kalman, Sensor
+from lib.constants import DATE, Index, Initialization, Kalman, Sensor
 from lib.study_areas import PNW
 from lib.study_packages import (
     get_tag,
@@ -22,12 +22,11 @@ from lib.utils import utils
 from lib.constants import (
     Harmonic,
     KalmanRecordingFlags,
-    ESTIMATE,
     TIMESTAMP,
-    POINT_INDEX,
 )
 from lib.paths import (
     ANALYSIS_DIRECTORY,
+    END_OF_YEAR_KALMAN_STATE_FILE_PREFIX,
     KALMAN_OUTPUT_FILE_PREFIX,
     POINTS_FILE_PREFIX,
     HARMONIC_TREND_COEFS_FILE_PREFIX,
@@ -47,8 +46,8 @@ from lib.utils.visualization.plot_generator import generate_plots
 COLLECTION_PARAMETERS = {
     "index": Index.SWIR,
     "sensors": [Sensor.L8, Sensor.L9],
-    "years": list(range(2015, 2023)),
-    "point_group": "pnw_1_unstable",
+    "years": list(range(2021, 2023)),
+    "point_group": "pnw_1",
     "study_area": PNW,
     "day_step_size": 6,
     "start_doy": 1,
@@ -136,18 +135,6 @@ def run_kalman(parameters, collection, point):
     return df
 
 
-def update_kalman_parameters_with_last_run(kalman_parameters, data):
-    harmonic_params, _ = parse_harmonic_params(HARMONIC_FLAGS)
-
-    kalman_parameters[Kalman.X.value] = data.iloc[-1][harmonic_params].tolist()
-
-    kalman_parameters[Kalman.P.value] = np.diag(
-        data.iloc[-1][
-            [f"{Kalman.COV_PREFIX.value}_{x}" for x in harmonic_params]
-        ].tolist()
-    )
-
-
 def process_point(kalman_parameters, point):
     global run_directory
 
@@ -162,6 +149,33 @@ def process_point(kalman_parameters, point):
     result_path = os.path.join(
         run_directory, RESULTS_DIRECTORY, f"{KALMAN_OUTPUT_FILE_PREFIX}_{index}.csv"
     )
+
+    end_of_year_kalman_state_path = os.path.join(
+        run_directory,
+        RESULTS_DIRECTORY,
+        f"{END_OF_YEAR_KALMAN_STATE_FILE_PREFIX}_{index}.csv",
+    )
+
+    with open(end_of_year_kalman_state_path, "w") as file:
+        state_labels, _ = parse_harmonic_params(HARMONIC_FLAGS)
+        covariance_labels = [f"{Kalman.COV_PREFIX.value}_{x}" for x in state_labels]
+
+        csv.writer(file).writerow(["year", *state_labels, *covariance_labels])
+
+    def update_kalman_parameters_with_last_run(data, year):
+        harmonic_params, _ = parse_harmonic_params(HARMONIC_FLAGS)
+
+        state = data.iloc[-1][harmonic_params].tolist()
+        covariance = data.iloc[-1][
+            [f"{Kalman.COV_PREFIX.value}_{x}" for x in harmonic_params]
+        ].tolist()
+
+        kalman_parameters[Kalman.X.value] = state
+        kalman_parameters[Kalman.P.value] = np.diag(covariance)
+
+        with open(end_of_year_kalman_state_path, "a") as file:
+            writer = csv.writer(file)
+            writer.writerow([year, *state, *covariance])
 
     def process_year(year):
 
@@ -188,12 +202,14 @@ def process_point(kalman_parameters, point):
 
         data = run_kalman(kalman_parameters, collection, point)
 
-        update_kalman_parameters_with_last_run(kalman_parameters, data)
+        update_kalman_parameters_with_last_run(data, year)
 
-        if is_first_year:
-            data.to_csv(result_path, mode="w", index=False)
-        else:
-            data.to_csv(result_path, mode="a", header=False, index=False)
+        data.to_csv(
+            result_path,
+            mode="a" if not is_first_year else "w",
+            header=True if is_first_year else False,
+            index=False,
+        )
 
     for year in COLLECTION_PARAMETERS["years"]:
         process_year(year)
