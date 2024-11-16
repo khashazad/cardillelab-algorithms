@@ -48,10 +48,10 @@ from lib.utils.visualization.plot_generator import generate_plots
 COLLECTION_PARAMETERS = {
     "index": Index.SWIR,
     "sensors": [Sensor.L7, Sensor.L8],
-    "years": list(range(2011, 2017)),
+    "years": list(range(2015, 2017)),
     "point_group": "pnw_1",
     "study_area": PNW,
-    "day_step_size": 4,
+    "day_step_size": 6,
     "start_doy": 1,
     "end_doy": 365,
     "cloud_cover_threshold": 20,
@@ -62,7 +62,7 @@ HARMONIC_FLAGS = {
     Harmonic.INTERCEPT.value: True,
     Harmonic.SLOPE.value: False,
     Harmonic.UNIMODAL.value: True,
-    Harmonic.BIMODAL.value: False,
+    Harmonic.BIMODAL.value: True,
     Harmonic.TRIMODAL.value: False,
 }
 
@@ -89,7 +89,7 @@ run_directory = (
 )
 
 # Path to the parameters file containing the process noise, measurement noise, and initial state covariance
-parameters_file_path = f"{script_directory}/kalman/kalman_parameters.json"
+parameters_file_path = f"{script_directory}/kalman/kalman_parameters_bimodal.json"
 
 
 def create_points_file(points_filename, coefficients_by_point, years: list[int]):
@@ -105,72 +105,6 @@ def create_points_file(points_filename, coefficients_by_point, years: list[int])
             sin = coefs[year][Harmonic.SIN.value]
 
             file.write(f"{longitude},{latitude},{intercept},{cos},{sin}\n")
-
-
-def build_observations(coefficients_by_point, output_filename, years: list[int]):
-    observations = []
-
-    with open(output_filename, "a", newline="") as file:
-        csv_writer = csv.writer(file)
-        csv_writer.writerow(
-            [
-                POINT_INDEX,
-                TIMESTAMP,
-                Harmonic.INTERCEPT.value,
-                Harmonic.COS.value,
-                Harmonic.SIN.value,
-                ESTIMATE,
-            ]
-        )
-        for index, coefficient_set in enumerate(coefficients_by_point):
-            observation_index = 1
-
-            def create_observation_from_coefficients(timestamps, intercept, cos, sin):
-                nonlocal observation_index
-                for timestamp in timestamps:
-                    estimate = calculate_harmonic_estimate(
-                        {
-                            Harmonic.INTERCEPT.value: intercept,
-                            Harmonic.COS.value: cos,
-                            Harmonic.SIN.value: sin,
-                        },
-                        timestamp,
-                    )
-
-                    observations.append(
-                        (
-                            f"{Harmonic.INTERCEPT.value}_{int(index)}_{observation_index}",
-                            intercept,
-                        )
-                    )
-                    observations.append(
-                        (f"{Harmonic.COS.value}_{int(index)}_{observation_index}", cos)
-                    )
-                    observations.append(
-                        (f"{Harmonic.SIN.value}_{int(index)}_{observation_index}", sin)
-                    )
-                    observations.append(
-                        (
-                            f"{ESTIMATE}_{int(index)}_{observation_index}",
-                            estimate,
-                        )
-                    )
-
-                    csv_writer.writerow(
-                        [index, timestamp, intercept, cos, sin, estimate]
-                    )
-                    observation_index += 1
-
-            for year in years:
-                coefficients = coefficient_set[year]
-                create_observation_from_coefficients(
-                    coefficients[TIMESTAMP],
-                    coefficients[Harmonic.INTERCEPT.value],
-                    coefficients[Harmonic.COS.value],
-                    coefficients[Harmonic.SIN.value],
-                )
-
-        return observations
 
 
 def run_kalman(parameters, collection, point):
@@ -252,6 +186,7 @@ def process_point(kalman_parameters, point):
             point,
             year,
             INDEX,
+            harmonic_flags=HARMONIC_FLAGS,
             output_file=harmonic_trend_coefs_path,
         )
 
@@ -277,6 +212,7 @@ def process_point(kalman_parameters, point):
             PlotType.KALMAN_VS_HARMONIC: {
                 "title": f"Kalman vs Harmonic Trend",
                 "harmonic_trend": harmonic_trend_coefs_path,
+                "harmonic_flags": HARMONIC_FLAGS,
             },
         },
     )

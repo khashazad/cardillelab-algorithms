@@ -1,9 +1,11 @@
 from pprint import pprint
+from matplotlib import pyplot as plt
 import pandas as pd
 import math
 import numpy as np
 import matplotlib.dates as mdates
 import csv
+from lib.utils.harmonic import parse_harmonic_params
 
 from lib.utils.harmonic import calculate_harmonic_estimate
 from lib.utils.visualization.constant import FIXED_Y_AXIS_LIMIT, FRAC_OF_YEAR
@@ -11,8 +13,6 @@ from lib.constants import (
     DATE,
     ESTIMATE,
     FRACTION_OF_YEAR,
-    MEASUREMENT,
-    TIMESTAMP,
     Harmonic,
     Kalman,
 )
@@ -31,37 +31,66 @@ def get_harmonic_trend_coefficients(options):
         reader = csv.reader(file)
 
         for line in reader:
-            if len(line) == 4:
-                coef_dic[line[0]] = [line[1], line[2], line[3]]
+            coef_dic[line[0]] = line[1:]
 
     return coef_dic
 
 
-def get_harmonic_trend_estimates(harmonic_trend_coefs, frac_of_year):
-    harmonic_trend_estimates = [
+def get_harmonic_trend_estimates(harmonic_trend_coefs, frac_of_year, harmonic_flags):
+    harmonic_params, _ = parse_harmonic_params(harmonic_flags)
+
+    harmonic_trend_coefs_by_year = []
+
+    for frac_year in list(frac_of_year):
+        year = int(frac_year)
+        coefs = harmonic_trend_coefs.get(str(year), [])
+
+        invalid_coefs = False
+
+        if len(coefs) != len(harmonic_params):
+            invalid_coefs = True
+
+        index = 0
+
+        args = {}
+
+        if harmonic_flags.get(Harmonic.INTERCEPT.value, False):
+            args[Harmonic.INTERCEPT.value] = 0 if invalid_coefs else coefs[index]
+            index += 1
+
+        if harmonic_flags.get(Harmonic.SLOPE.value, False):
+            args[Harmonic.SLOPE.value] = 0 if invalid_coefs else coefs[index]
+            index += 1
+
+        args[Harmonic.COS.value] = 0 if invalid_coefs else coefs[index]
+        index += 1
+
+        args[Harmonic.SIN.value] = 0 if invalid_coefs else coefs[index]
+        index += 1
+
+        if harmonic_flags.get(Harmonic.BIMODAL.value, False):
+            args[Harmonic.COS2.value] = 0 if invalid_coefs else coefs[index]
+            index += 1
+
+            args[Harmonic.SIN2.value] = 0 if invalid_coefs else coefs[index]
+            index += 1
+
+        if harmonic_flags.get(Harmonic.TRIMODAL.value, False):
+            args[Harmonic.COS3.value] = 0 if invalid_coefs else coefs[index]
+            index += 1
+
+            args[Harmonic.SIN3.value] = 0 if invalid_coefs else coefs[index]
+            index += 1
+
+        harmonic_trend_coefs_by_year.append((frac_year, args))
+
+    estimates = [
         [
-            frac_of_year,
-            *harmonic_trend_coefs.get(str(int(frac_of_year)), [0, 0, 0]),
+            frac_year,
+            calculate_harmonic_estimate(coefs, frac_year),
         ]
-        for frac_of_year in list(frac_of_year)
+        for frac_year, coefs in harmonic_trend_coefs_by_year
     ]
-
-    estimates = []
-
-    for [frac_of_year, intercept, cos, sin] in harmonic_trend_estimates:
-        estimates.append(
-            [
-                frac_of_year,
-                calculate_harmonic_estimate(
-                    {
-                        Harmonic.INTERCEPT: intercept,
-                        Harmonic.COS: cos,
-                        Harmonic.SIN: sin,
-                    },
-                    frac_of_year,
-                ),
-            ]
-        )
 
     return pd.DataFrame(estimates, columns=[FRACTION_OF_YEAR, Harmonic.FIT.value])
 
@@ -71,10 +100,11 @@ def kalman_estimate_vs_harmonic_trend(
     data,
     options,
 ):
-    harmonic_trend = get_harmonic_trend_coefficients(options)
-
+    harmonic_trend_coefs = get_harmonic_trend_coefficients(options)
     harmonic_fit_df = get_harmonic_trend_estimates(
-        harmonic_trend, data[FRACTION_OF_YEAR]
+        harmonic_trend_coefs,
+        data[FRACTION_OF_YEAR],
+        options.get("harmonic_flags", {}),
     )
 
     data = data.merge(harmonic_fit_df, on=FRACTION_OF_YEAR, how="inner")
@@ -113,3 +143,5 @@ def kalman_estimate_vs_harmonic_trend(
         axs.set_ylim(0, options.get("fixed_y_axis_limit", FIXED_Y_AXIS_LIMIT))
 
     axs.set_title(options.get("title", ""))
+
+    plt.show()

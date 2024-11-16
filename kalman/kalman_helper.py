@@ -12,6 +12,7 @@ from lib.constants import (
     TIMESTAMP,
 )
 from lib.constants import NUM_MEASURES
+from lib.utils.harmonic import parse_harmonic_params
 
 
 def read_parameters_from_file(parameters_file_path):
@@ -24,38 +25,6 @@ def read_parameters_from_file(parameters_file_path):
             Kalman.P: parameters.get(Kalman.P.value, []),
             Kalman.X: parameters.get(Kalman.X.value, []),
         }
-
-
-def get_num_sinusoid_pairs(harmonic_flags):
-    NUM_SINUSOID_PAIRS = 1
-
-    if harmonic_flags.get(Harmonic.BIMODAL.value):
-        NUM_SINUSOID_PAIRS *= 2
-    if harmonic_flags.get(Harmonic.TRIMODAL.value):
-        NUM_SINUSOID_PAIRS *= 3
-
-    return NUM_SINUSOID_PAIRS
-
-
-def parse_harmonic_params(harmonic_flags):
-    param_names = []
-
-    NUM_SINUSOID_PAIRS = get_num_sinusoid_pairs(harmonic_flags)
-
-    if harmonic_flags.get(Harmonic.INTERCEPT.value):
-        param_names.append(Harmonic.INTERCEPT.value)
-    if harmonic_flags.get(Harmonic.SLOPE.value):
-        param_names.append(Harmonic.SLOPE.value)
-
-    for i in range(NUM_SINUSOID_PAIRS):
-        param_names.extend(
-            [
-                f"{Harmonic.COS.value}{i}",
-                f"{Harmonic.SIN.value}{i}",
-            ]
-        )
-
-    return param_names, NUM_SINUSOID_PAIRS
 
 
 def parse_band_names(recording_flags, harmonic_flags):

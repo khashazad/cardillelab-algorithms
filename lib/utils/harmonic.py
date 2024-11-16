@@ -3,27 +3,62 @@ import ee
 import numpy as np
 import pandas as pd
 from lib.utils import utils
-from lib.utils.date import timestamp_to_frac_of_year
 from lib.utils.ee.harmonic_utils import (
     add_harmonic_bands_via_modality_dictionary,
     fit_harmonic_to_collection,
     determine_harmonic_independents_via_modality_dictionary,
 )
 from lib.utils.ee.dates import get_timestamps_from_image_collection
-import math
 import csv
 from lib.constants import Harmonic, Index
 
 
+def get_num_sinusoid_pairs(harmonic_flags):
+    NUM_SINUSOID_PAIRS = 1
+
+    if harmonic_flags.get(Harmonic.BIMODAL.value):
+        NUM_SINUSOID_PAIRS *= 2
+    if harmonic_flags.get(Harmonic.TRIMODAL.value):
+        NUM_SINUSOID_PAIRS *= 3
+
+    return NUM_SINUSOID_PAIRS
+
+
+def parse_harmonic_params(harmonic_flags):
+    param_names = []
+
+    NUM_SINUSOID_PAIRS = get_num_sinusoid_pairs(harmonic_flags)
+
+    if harmonic_flags.get(Harmonic.INTERCEPT.value):
+        param_names.append(Harmonic.INTERCEPT.value)
+    if harmonic_flags.get(Harmonic.SLOPE.value):
+        param_names.append(Harmonic.SLOPE.value)
+
+    if harmonic_flags.get(Harmonic.UNIMODAL.value):
+        param_names.extend([Harmonic.COS.value, Harmonic.SIN.value])
+
+    if harmonic_flags.get(Harmonic.BIMODAL.value):
+        param_names.extend([Harmonic.COS2.value, Harmonic.SIN2.value])
+
+    if harmonic_flags.get(Harmonic.TRIMODAL.value):
+        param_names.extend([Harmonic.COS3.value, Harmonic.SIN3.value])
+
+    return param_names, NUM_SINUSOID_PAIRS
+
+
 def harmonic_trend_coefficients(
-    collection, point_coords, years: list[int], index: Index
+    collection,
+    point_coords,
+    years: list[int],
+    index: Index,
+    harmonic_flags={Harmonic.INTERCEPT: True, Harmonic.UNIMODAL: True},
 ):
     modality = {
-        "constant": True,
-        "linear": False,
-        "unimodal": True,
-        "bimodal": False,
-        "trimodal": False,
+        "constant": harmonic_flags.get(Harmonic.INTERCEPT.value, False),
+        "linear": harmonic_flags.get(Harmonic.SLOPE.value, False),
+        "unimodal": harmonic_flags.get(Harmonic.UNIMODAL.value, False),
+        "bimodal": harmonic_flags.get(Harmonic.BIMODAL.value, False),
+        "trimodal": harmonic_flags.get(Harmonic.TRIMODAL.value, False),
     }
 
     image_collection = ee.ImageCollection(
@@ -55,11 +90,14 @@ def harmonic_trend_coefficients_for_year(
     point_coords,
     year: int,
     index: Index,
+    harmonic_flags={Harmonic.INTERCEPT: True, Harmonic.UNIMODAL: True},
     output_file: str = None,
 ):
     coefficients = utils.get_pixels(
         point_coords,
-        harmonic_trend_coefficients(collection, point_coords, [year], index),
+        harmonic_trend_coefficients(
+            collection, point_coords, [year], index, harmonic_flags=harmonic_flags
+        ),
     )
 
     if output_file:
@@ -138,25 +176,27 @@ def calculate_harmonic_estimate(coefficients, frac_of_year):
     phi_cos = np.cos(phi)
     phi_sin = np.sin(phi)
 
-    y = float(coefficients.get(Harmonic.INTERCEPT))
+    y = float(coefficients.get(Harmonic.INTERCEPT.value, 0))
 
-    if coefficients.get(Harmonic.SLOPE):
-        y += float(coefficients.get(Harmonic.SLOPE)) * frac_of_year
+    if coefficients.get(Harmonic.SLOPE.value, None):
+        y += float(coefficients.get(Harmonic.SLOPE.value, 0)) * frac_of_year
 
-    if coefficients.get(Harmonic.COS) and coefficients.get(Harmonic.SIN):
-        y += (
-            float(coefficients.get(Harmonic.COS)) * phi_cos
-            + float(coefficients.get(Harmonic.SIN)) * phi_sin
-        )
+    if coefficients.get(Harmonic.COS.value, None) and coefficients.get(
+        Harmonic.SIN.value, None
+    ):
+        y += float(coefficients.get(Harmonic.COS.value, 0)) * phi_cos
+        y += float(coefficients.get(Harmonic.SIN.value, 0)) * phi_sin
 
-    if coefficients.get(Harmonic.COS1) and coefficients.get(Harmonic.SIN1):
-        y += float(coefficients.get(Harmonic.COS1)) * np.cos(2 * phi) + float(
-            coefficients.get(Harmonic.SIN1)
-        ) * np.sin(2 * phi)
+    if coefficients.get(Harmonic.COS2.value, None) and coefficients.get(
+        Harmonic.SIN2.value, None
+    ):
+        y += float(coefficients.get(Harmonic.COS2.value, 0)) * np.cos(2 * phi)
+        y += float(coefficients.get(Harmonic.SIN2.value, 0)) * np.sin(2 * phi)
 
-    if coefficients.get(Harmonic.COS2) and coefficients.get(Harmonic.SIN2):
-        y += float(coefficients.get(Harmonic.COS2)) * np.cos(3 * phi) + float(
-            coefficients.get(Harmonic.SIN2)
-        ) * np.sin(3 * phi)
+    if coefficients.get(Harmonic.COS3.value, None) and coefficients.get(
+        Harmonic.SIN3.value, None
+    ):
+        y += float(coefficients.get(Harmonic.COS3.value, 0)) * np.cos(3 * phi)
+        y += float(coefficients.get(Harmonic.SIN3.value, 0)) * np.sin(3 * phi)
 
     return y
