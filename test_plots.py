@@ -3,7 +3,9 @@ import shutil
 from lib.utils.visualization.constant import PlotType
 from lib.utils.visualization.plot_generator import generate_plots
 
-run_directory = "./tests/kalman/PNW_L7_L8_swir_2012_2013_2014_posthoc/11-15 20:02"
+run_directory = (
+    "./tests/kalman/PNW_L7_L8_swir_2011_2012_2013_2014_2015_2016_posthoc/11-15 21:13"
+)
 
 data = f"{run_directory}/result/eeek_0.csv"
 harmonic_trend = f"{run_directory}/harmonic_coefficients/fitted_coefficients_0.csv"

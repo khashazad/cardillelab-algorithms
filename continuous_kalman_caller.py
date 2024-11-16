@@ -48,12 +48,12 @@ from lib.utils.visualization.plot_generator import generate_plots
 COLLECTION_PARAMETERS = {
     "index": Index.SWIR,
     "sensors": [Sensor.L7, Sensor.L8],
-    "years": [2012, 2013, 2014],
+    "years": list(range(2011, 2017)),
     "point_group": "pnw_1",
     "study_area": PNW,
-    "day_step_size": 6,
+    "day_step_size": 4,
     "start_doy": 1,
-    "end_doy": 300,
+    "end_doy": 365,
     "cloud_cover_threshold": 20,
     "initialization": Initialization.POSTHOC,
 }
@@ -270,17 +270,15 @@ def process_point(kalman_parameters, point):
     for year in COLLECTION_PARAMETERS["years"]:
         process_year(year)
 
-
-def post_run_processing(kalman_parameters, point):
     generate_plots(
-        data=(
-            f"{run_directory}/eeek_output_with_ccdc.csv"
-            if INCLUDE_CCDC_COEFFICIENTS
-            else f"{run_directory}/eeek_output.csv"
-        ),
-        observation_file_path=f"{run_directory}/observations.csv",
-        output_directory=f"{run_directory}/analysis",
-        options=PLOT_OPTIONS,
+        data=result_path,
+        output_directory=os.path.join(run_directory, ANALYSIS_DIRECTORY, f"{index}"),
+        options={
+            PlotType.KALMAN_VS_HARMONIC: {
+                "title": f"Kalman vs Harmonic Trend",
+                "harmonic_trend": harmonic_trend_coefs_path,
+            },
+        },
     )
 
 

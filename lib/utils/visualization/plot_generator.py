@@ -68,7 +68,6 @@ def generate_plots(data, output_directory, options):
 
     for fig, axes, plot_type in plots:
         if plot_type == PlotType.KALMAN_VS_HARMONIC:
-
             kalman_estimate_vs_harmonic_trend(
                 axes,
                 kalman_output.copy(),
@@ -84,8 +83,6 @@ def generate_plots(data, output_directory, options):
     for fig, axs, plot_type in plots:
         labels, handles = get_labels_and_handles(axs)
         fig.legend(handles, labels, loc="upper center", ncol=5)
-
-        plt.show()
 
         plt.tight_layout()
         save_chart(fig, plot_type.value, output_directory)

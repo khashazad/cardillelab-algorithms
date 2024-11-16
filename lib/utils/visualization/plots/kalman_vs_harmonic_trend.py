@@ -1,3 +1,4 @@
+from pprint import pprint
 import pandas as pd
 import math
 import numpy as np
@@ -37,9 +38,11 @@ def get_harmonic_trend_coefficients(options):
 
 
 def get_harmonic_trend_estimates(harmonic_trend_coefs, frac_of_year):
-
     harmonic_trend_estimates = [
-        [frac_of_year, *harmonic_trend_coefs.get(str(int(frac_of_year)))]
+        [
+            frac_of_year,
+            *harmonic_trend_coefs.get(str(int(frac_of_year)), [0, 0, 0]),
+        ]
         for frac_of_year in list(frac_of_year)
     ]
 
