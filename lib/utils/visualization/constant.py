@@ -5,6 +5,7 @@ ASPECT_RATIO = (12, 8)
 
 
 class PlotType(enum.Enum):
+    KALMAN_FIT = "Kalman Fit"
     KALMAN_VS_HARMONIC = "Kalman vs Harmonic Trend"
     KALMAN_COEFS = "Kalman Coefficients"
     KALMAN_COEFS_VS_CCDC = "Kalman vs CCDC - Coefficients"
@@ -14,6 +15,7 @@ class PlotType(enum.Enum):
 
 
 PLOT_TYPES = [
+    PlotType.KALMAN_FIT,
     PlotType.KALMAN_VS_HARMONIC,
     PlotType.RESIDUALS_OVER_TIME,
     PlotType.KALMAN_AMPLITUDE,

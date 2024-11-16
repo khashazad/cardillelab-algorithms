@@ -15,7 +15,6 @@ from lib.study_packages import (
     get_collection,
 )
 from lib.utils.harmonic import (
-    calculate_harmonic_estimate,
     harmonic_trend_coefficients_for_year,
 )
 from lib.utils.visualization.plot_generator import generate_plots
@@ -47,9 +46,9 @@ from lib.utils.visualization.plot_generator import generate_plots
 # Parameters
 COLLECTION_PARAMETERS = {
     "index": Index.SWIR,
-    "sensors": [Sensor.L7, Sensor.L8, Sensor.L9],
-    "years": list(range(2013, 2017)),
-    "point_group": "pnw_1",
+    "sensors": [Sensor.L8, Sensor.L9],
+    "years": list(range(2015, 2023)),
+    "point_group": "pnw_1_unstable",
     "study_area": PNW,
     "day_step_size": 6,
     "start_doy": 1,
@@ -64,12 +63,6 @@ HARMONIC_FLAGS = {
     Harmonic.UNIMODAL.value: True,
     Harmonic.BIMODAL.value: True,
     Harmonic.TRIMODAL.value: False,
-}
-
-PLOT_OPTIONS = {
-    PlotType.KALMAN_VS_HARMONIC: {
-        "final_yearly_fit": False,
-    },
 }
 
 TAG = get_tag(**COLLECTION_PARAMETERS)
@@ -213,6 +206,9 @@ def process_point(kalman_parameters, point):
                 "title": f"Kalman vs Harmonic Trend",
                 "harmonic_trend": harmonic_trend_coefs_path,
                 "harmonic_flags": HARMONIC_FLAGS,
+            },
+            PlotType.KALMAN_FIT: {
+                "title": "Kalman Fit",
             },
         },
     )

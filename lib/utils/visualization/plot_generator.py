@@ -15,6 +15,7 @@ from lib.utils.visualization.plots.kalman_estimate_of_coefs import (
 from lib.utils.visualization.plots.kalman_vs_harmonic_trend import (
     kalman_estimate_vs_harmonic_trend,
 )
+from lib.utils.visualization.plots.kalman_fit import kalman_fit
 
 
 def save_chart(fig, name, output_directory):
@@ -73,8 +74,8 @@ def generate_plots(data, output_directory, options):
                 kalman_output.copy(),
                 options[plot_type],
             )
-        elif plot_type == PlotType.KALMAN_COEFS:
-            kalman_estimate_of_coefficients(
+        elif plot_type == PlotType.KALMAN_FIT:
+            kalman_fit(
                 axes,
                 kalman_output.copy(),
                 options[plot_type],
