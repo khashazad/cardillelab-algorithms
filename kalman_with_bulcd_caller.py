@@ -25,7 +25,7 @@ from utils.prepare_optimization_run import (
     fitted_coefficients_and_dates,
     parse_point_coordinates,
 )
-from utils.visualization.charts import generate_charts_single_run
+from utils.visualization.charts import generate_charts
 
 ee.Initialize(opt_url=ee.data.HIGH_VOLUME_API_BASE_URL)
 
@@ -309,7 +309,7 @@ if __name__ == "__main__":
 
     main()
 
-    generate_charts_single_run(
+    generate_charts(
         f"{RUN_DIR}/output.csv",
         f"{PARENT_RUN_DIR}/observations.csv",
         f"{RUN_DIR}/analysis",

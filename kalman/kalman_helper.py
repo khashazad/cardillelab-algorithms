@@ -4,6 +4,7 @@ import numpy as np
 from lib import constants
 from lib.utils import utils
 from lib.constants import (
+    FRACTION_OF_YEAR,
     Harmonic,
     KalmanRecordingFlags,
     Kalman,
@@ -18,10 +19,10 @@ def read_parameters_from_file(parameters_file_path):
         parameters = json.load(file)
 
         return {
-            Kalman.Q: parameters.get("Q", []),
-            Kalman.R: parameters.get("R", []),
-            Kalman.P: parameters.get("P", []),
-            Kalman.X: parameters.get("X", []),
+            Kalman.Q: parameters.get(Kalman.Q.value, []),
+            Kalman.R: parameters.get(Kalman.R.value, []),
+            Kalman.P: parameters.get(Kalman.P.value, []),
+            Kalman.X: parameters.get(Kalman.X.value, []),
         }
 
 
@@ -92,6 +93,9 @@ def parse_band_names(recording_flags, harmonic_flags):
     if recording_flags.get(KalmanRecordingFlags.TIMESTAMP, False):
         band_names.append(TIMESTAMP)
 
+    if recording_flags.get(KalmanRecordingFlags.FRACTION_OF_YEAR, False):
+        band_names.append(FRACTION_OF_YEAR)
+
     return band_names
 
 
@@ -101,19 +105,19 @@ def setup_kalman_init(kalman_parameters, harmonic_flags):
 
     num_params = len(harmonic_params)
 
-    Q = np.array(kalman_parameters.get("Q", [])).flatten()
-    R = np.array(kalman_parameters.get("R", [])).flatten()
-    P = np.array(kalman_parameters.get("P_0", [])).flatten()
-    X = np.array(kalman_parameters.get("X_0", [])).flatten()
+    Q = np.array(kalman_parameters.get(Kalman.Q.value, [])).flatten()
+    R = np.array(kalman_parameters.get(Kalman.R.value, [])).flatten()
+    P = np.array(kalman_parameters.get(Kalman.P.value, [])).flatten()
+    X = np.array(kalman_parameters.get(Kalman.X.value, [])).flatten()
 
     assert (
         len(Q) == num_params * num_params
     ), f"Q must be a square matrix of size {num_params}x{num_params}"
     assert len(R) == NUM_MEASURES, f"R must be a vector of size {NUM_MEASURES}"
     assert (
-        len(P) == num_params * num_params
-    ), f"P_0 must be a square matrix of size {num_params}x{num_params}"
-    assert len(X) == num_params, f"X_0 must be a vector of size {num_params}"
+        len(P) == num_params**2
+    ), f"P must be a square matrix of size {num_params} x {num_params}"
+    assert len(X) == num_params, f"X must be a vector of size {num_params}"
 
     H = utils.sinusoidal(
         NUM_SINUSOID_PAIRS,
@@ -198,5 +202,8 @@ def unpack_kalman_results(
             )
         )
         bands.append(P)
+
+    if recording_flags.get(KalmanRecordingFlags.FRACTION_OF_YEAR, False):
+        bands.append(image.select(FRACTION_OF_YEAR))
 
     return ee.Image.cat(bands).copyProperties(image)

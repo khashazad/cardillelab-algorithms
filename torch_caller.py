@@ -14,7 +14,7 @@ import torch.optim as optim
 from pytorch.torch_eeek import main as run_eeek
 import numpy as np
 import json
-from utils.visualization.charts import generate_charts_single_run
+from utils.visualization.charts import generate_charts
 from pprint import pprint
 import torch.multiprocessing as mp
 
@@ -353,7 +353,7 @@ def run_torch_eeek(parent_run_directory, param_set):
 
     optimize_parameters(parent_run_directory, run_directory, **param_set)
 
-    generate_charts_single_run(
+    generate_charts(
         f"{run_directory}/eeek_output.csv",
         f"{parent_run_directory}/observations.csv",
         f"{run_directory}/analysis",

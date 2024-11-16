@@ -17,7 +17,7 @@ from lib.utils.harmonic import (
 )
 from lib.utils.visualization.charts import (
     ChartType,
-    generate_charts_single_run,
+    generate_charts,
 )
 
 from lib.utils import utils
@@ -279,8 +279,8 @@ if __name__ == "__main__":
         append_ccdc_coefficients(f"{run_directory}/eeek_output.csv", POINTS)
 
     # Generate charts based on the output and observations
-    generate_charts_single_run(
-        data_file_path=(
+    generate_charts(
+        output_file_path=(
             f"{run_directory}/eeek_output_with_ccdc.csv"
             if INCLUDE_CCDC_COEFFICIENTS
             else f"{run_directory}/eeek_output.csv"

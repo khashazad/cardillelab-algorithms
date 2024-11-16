@@ -6,6 +6,8 @@ RESIDUAL = "residual"
 CHANGE_PROB = "change_prob"
 ESTIMATE = "estimate"
 TIMESTAMP = "timestamp"
+FRACTION_OF_YEAR = "frac_of_year"
+DATE = "date"
 AMPLITUDE = "amplitude"
 MEASUREMENT = "measurement"
 
@@ -43,6 +45,7 @@ class KalmanRecordingFlags(enum.Enum):
     STATE_COV = "state_covariance"
     ESTIMATE = ESTIMATE
     TIMESTAMP = TIMESTAMP
+    FRACTION_OF_YEAR = FRACTION_OF_YEAR
     AMPLITUDE = AMPLITUDE
     MEASUREMENT = MEASUREMENT
     CCDC_COEFFICIENTS = "ccdc_coefficients"
@@ -92,8 +95,12 @@ class Initialization(enum.Enum):
 class Harmonic(enum.Enum):
     INTERCEPT = "intercept"
     SLOPE = "slope"
-    COS = "cos"
-    SIN = "sin"
+    COS = "cos0"
+    SIN = "sin0"
+    COS1 = "cos1"
+    SIN1 = "sin1"
+    COS2 = "cos2"
+    SIN2 = "sin2"
     UNIMODAL = "unimodal"
     BIMODAL = "bimodal"
     TRIMODAL = "trimodal"

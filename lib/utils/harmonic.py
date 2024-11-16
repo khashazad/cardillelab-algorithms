@@ -1,8 +1,9 @@
 from datetime import datetime
 import ee
+import numpy as np
 import pandas as pd
 from lib.utils import utils
-from lib.utils.date import convert_to_fraction_of_year
+from lib.utils.date import timestamp_to_frac_of_year
 from lib.utils.ee.harmonic_utils import (
     add_harmonic_bands_via_modality_dictionary,
     fit_harmonic_to_collection,
@@ -11,7 +12,7 @@ from lib.utils.ee.harmonic_utils import (
 from lib.utils.ee.dates import get_timestamps_from_image_collection
 import math
 import csv
-from lib.constants import Index
+from lib.constants import Harmonic, Index
 
 
 def harmonic_trend_coefficients(
@@ -131,18 +132,36 @@ def harmonic_trend_coefficients_for_points(
     return output_list
 
 
-def calculate_harmonic_estimate(coefficients, date):
-    date = pd.Timestamp(date)
+def calculate_harmonic_estimate(coefficients, frac_of_year):
+    phi = np.pi * 2 * frac_of_year
 
-    fraction_of_year = convert_to_fraction_of_year(date)
+    phi_cos = np.cos(phi)
+    phi_sin = np.sin(phi)
 
-    phi = 6.283 * fraction_of_year
+    y = coefficients.get(Harmonic.INTERCEPT)
 
-    phi_cos = math.cos(phi)
-    phi_sin = math.sin(phi)
+    if coefficients.get(Harmonic.SLOPE):
+        y += coefficients.get(Harmonic.SLOPE) * frac_of_year
 
-    return (
-        coefficients["intercept"]
-        + coefficients["cos"] * phi_cos
-        + coefficients["sin"] * phi_sin
-    )
+    if coefficients.get(Harmonic.COS) and coefficients.get(Harmonic.SIN):
+        print("cos and sin")
+        y += (
+            coefficients.get(Harmonic.COS) * phi_cos
+            + coefficients.get(Harmonic.SIN) * phi_sin
+        )
+
+    if coefficients.get(Harmonic.COS1) and coefficients.get(Harmonic.SIN1):
+        print("cos1 and sin1")
+        y += (
+            coefficients.get(Harmonic.COS1) * phi_cos**2
+            + coefficients.get(Harmonic.SIN1) * phi_sin**2
+        )
+
+    if coefficients.get(Harmonic.COS2) and coefficients.get(Harmonic.SIN2):
+        print("cos2 and sin2")
+        y += (
+            coefficients.get(Harmonic.COS2) * phi_cos * phi_sin
+            + coefficients.get(Harmonic.SIN2) * phi_sin**2
+        )
+
+    return y
