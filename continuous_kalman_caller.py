@@ -47,8 +47,8 @@ from lib.utils.visualization.plot_generator import generate_plots
 # Parameters
 COLLECTION_PARAMETERS = {
     "index": Index.SWIR,
-    "sensors": [Sensor.L7, Sensor.L8],
-    "years": list(range(2015, 2017)),
+    "sensors": [Sensor.L7, Sensor.L8, Sensor.L9],
+    "years": list(range(2013, 2017)),
     "point_group": "pnw_1",
     "study_area": PNW,
     "day_step_size": 6,
@@ -60,7 +60,7 @@ COLLECTION_PARAMETERS = {
 
 HARMONIC_FLAGS = {
     Harmonic.INTERCEPT.value: True,
-    Harmonic.SLOPE.value: False,
+    Harmonic.SLOPE.value: True,
     Harmonic.UNIMODAL.value: True,
     Harmonic.BIMODAL.value: True,
     Harmonic.TRIMODAL.value: False,
@@ -89,7 +89,7 @@ run_directory = (
 )
 
 # Path to the parameters file containing the process noise, measurement noise, and initial state covariance
-parameters_file_path = f"{script_directory}/kalman/kalman_parameters_bimodal.json"
+parameters_file_path = f"{script_directory}/kalman/kalman_parameters_slope_bimodal.json"
 
 
 def create_points_file(points_filename, coefficients_by_point, years: list[int]):

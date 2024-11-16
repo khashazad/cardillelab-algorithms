@@ -179,7 +179,7 @@ def calculate_harmonic_estimate(coefficients, frac_of_year):
     y = float(coefficients.get(Harmonic.INTERCEPT.value, 0))
 
     if coefficients.get(Harmonic.SLOPE.value, None):
-        y += float(coefficients.get(Harmonic.SLOPE.value, 0)) * frac_of_year
+        y += float(coefficients.get(Harmonic.SLOPE.value, 0)) * np.modf(frac_of_year)[0]
 
     if coefficients.get(Harmonic.COS.value, None) and coefficients.get(
         Harmonic.SIN.value, None

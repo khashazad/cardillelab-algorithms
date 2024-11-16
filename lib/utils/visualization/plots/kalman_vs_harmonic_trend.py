@@ -143,5 +143,3 @@ def kalman_estimate_vs_harmonic_trend(
         axs.set_ylim(0, options.get("fixed_y_axis_limit", FIXED_Y_AXIS_LIMIT))
 
     axs.set_title(options.get("title", ""))
-
-    plt.show()
