@@ -132,7 +132,17 @@ def run_kalman(parameters, collection, point):
     )
 
     df = pd.DataFrame(data, columns=band_names)
+
+    # add date column
     df[DATE] = pd.to_datetime(df[TIMESTAMP], unit="ms").dt.strftime("%Y-%m-%d")
+
+    # drop rows outside of the collection years
+    df = df[
+        df[DATE]
+        .str.slice(0, 4)
+        .astype(int)
+        .between(COLLECTION_PARAMETERS["years"][0], COLLECTION_PARAMETERS["years"][-1])
+    ]
 
     return df
 

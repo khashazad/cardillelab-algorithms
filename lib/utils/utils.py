@@ -413,7 +413,6 @@ def get_image_collection_pixels(coords, collection):
 
         all_pixels = np.append(all_pixels, pixels)
 
-    print(all_pixels.shape)
     return all_pixels
 
 
