@@ -49,9 +49,9 @@ def save_chart(fig, name, output_directory):
     fig.savefig(f"{output_directory}/{name}.png")
 
 
-def generate_plots(data, output_directory, options):
+def generate_plots(data, output_path, options):
     # create output directory
-    os.makedirs(output_directory, exist_ok=True)
+    os.makedirs(output_path, exist_ok=True)
 
     plots = []
 
@@ -87,5 +87,5 @@ def generate_plots(data, output_directory, options):
         fig.legend(handles, labels, loc="upper center", ncol=5)
 
         plt.tight_layout()
-        save_chart(fig, plot_type.value, output_directory)
+        save_chart(fig, plot_type.value, output_path)
         plt.close(fig)

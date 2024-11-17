@@ -25,13 +25,16 @@ from lib.constants import (
     TIMESTAMP,
 )
 from lib.paths import (
-    ANALYSIS_DIRECTORY,
-    END_OF_YEAR_KALMAN_STATE_FILE_PREFIX,
-    KALMAN_OUTPUT_FILE_PREFIX,
-    POINTS_FILE_PREFIX,
-    HARMONIC_TREND_COEFS_FILE_PREFIX,
-    HARMONIC_TREND_COEFS_DIRECTORY,
-    RESULTS_DIRECTORY,
+    HARMONIC_TREND_SUBDIRECTORY,
+    KALMAN_END_OF_YEAR_STATE_SUBDIRECTORY,
+    KALMAN_STATE_SUBDIRECTORY,
+    build_end_of_year_kalman_state_path,
+    build_kalman_analysis_path,
+    build_harmonic_trend_path,
+    build_kalman_result_path,
+    build_points_path,
+    kalman_analysis_directory,
+    kalman_result_directory,
 )
 from kalman.kalman_helper import parse_harmonic_params
 
@@ -41,15 +44,16 @@ from pprint import pprint
 
 from lib.utils.visualization.constant import PlotType
 from lib.utils.visualization.plot_generator import generate_plots
+import threading
 
 # Parameters
 COLLECTION_PARAMETERS = {
     "index": Index.SWIR,
     "sensors": [Sensor.L7, Sensor.L8, Sensor.L9],
-    "years": list(range(2015, 2016)),
-    "point_group": "pnw_1",
+    "years": list(range(2016, 2019)),
+    "point_group": "pnw_6",
     "study_area": PNW,
-    "day_step_size": 6,
+    "day_step_size": 4,
     "start_doy": 1,
     "end_doy": 365,
     "cloud_cover_threshold": 20,
@@ -152,20 +156,12 @@ def process_point(kalman_parameters, point):
 
     index, point = point
 
-    harmonic_trend_coefs_path = os.path.join(
-        run_directory,
-        HARMONIC_TREND_COEFS_DIRECTORY,
-        f"{HARMONIC_TREND_COEFS_FILE_PREFIX}_{index}.csv",
-    )
+    harmonic_trend_coefs_path = build_harmonic_trend_path(run_directory, index)
 
-    result_path = os.path.join(
-        run_directory, RESULTS_DIRECTORY, f"{KALMAN_OUTPUT_FILE_PREFIX}_{index}.csv"
-    )
+    result_path = build_kalman_result_path(run_directory, index)
 
-    end_of_year_kalman_state_path = os.path.join(
-        run_directory,
-        RESULTS_DIRECTORY,
-        f"{END_OF_YEAR_KALMAN_STATE_FILE_PREFIX}_{index}.csv",
+    end_of_year_kalman_state_path = build_end_of_year_kalman_state_path(
+        run_directory, index
     )
 
     with open(end_of_year_kalman_state_path, "w") as file:
@@ -226,33 +222,46 @@ def process_point(kalman_parameters, point):
     for year in COLLECTION_PARAMETERS["years"]:
         process_year(year)
 
-    generate_plots(
-        data=result_path,
-        output_directory=os.path.join(run_directory, ANALYSIS_DIRECTORY, f"{index}"),
-        options={
-            PlotType.KALMAN_VS_HARMONIC: {
-                "title": f"Kalman vs Harmonic Trend",
-                "harmonic_trend": harmonic_trend_coefs_path,
-                "harmonic_flags": HARMONIC_FLAGS,
-            },
-            PlotType.KALMAN_FIT: {
-                "title": "Kalman Fit",
-            },
-            PlotType.KALMAN_VS_CCDC: {
-                "title": "Kalman vs CCDC",
-            },
-        },
-    )
-
 
 def setup_subdirectories():
+
+    result_dir = kalman_result_directory(run_directory)
+
+    os.makedirs(os.path.join(result_dir, KALMAN_STATE_SUBDIRECTORY), exist_ok=True)
+
     os.makedirs(
-        os.path.join(run_directory, HARMONIC_TREND_COEFS_DIRECTORY), exist_ok=True
+        os.path.join(result_dir, HARMONIC_TREND_SUBDIRECTORY),
+        exist_ok=True,
+    )
+    os.makedirs(
+        os.path.join(result_dir, KALMAN_END_OF_YEAR_STATE_SUBDIRECTORY),
+        exist_ok=True,
     )
 
-    os.makedirs(os.path.join(run_directory, RESULTS_DIRECTORY), exist_ok=True)
+    os.makedirs(kalman_analysis_directory(run_directory), exist_ok=True)
 
-    os.makedirs(os.path.join(run_directory, ANALYSIS_DIRECTORY), exist_ok=True)
+
+def generate_all_plots():
+    for point_index in range(len(POINTS)):
+        generate_plots(
+            data=build_kalman_result_path(run_directory, point_index),
+            output_path=build_kalman_analysis_path(run_directory, point_index),
+            options={
+                PlotType.KALMAN_VS_HARMONIC: {
+                    "title": f"Kalman vs Harmonic Trend",
+                    "harmonic_trend": build_harmonic_trend_path(
+                        run_directory, point_index
+                    ),
+                    "harmonic_flags": HARMONIC_FLAGS,
+                },
+                PlotType.KALMAN_FIT: {
+                    "title": "Kalman Fit",
+                },
+                PlotType.KALMAN_VS_CCDC: {
+                    "title": "Kalman vs CCDC",
+                },
+            },
+        )
 
 
 def run_continuous_kalman():
@@ -262,18 +271,23 @@ def run_continuous_kalman():
     setup_subdirectories()
 
     # save point coordinates to file
-    json.dump(
-        POINTS, open(os.path.join(run_directory, f"{POINTS_FILE_PREFIX}.json"), "w")
-    )
+    json.dump(POINTS, open(build_points_path(run_directory), "w"))
 
     # load kalman parameters Q, R, P, X
     kalman_parameters = json.load(open(parameters_file_path))
 
+    threads = []
     for index, point in enumerate(POINTS):
-        process_point(kalman_parameters.copy(), (index, point))
+        thread = threading.Thread(
+            target=process_point, args=(kalman_parameters.copy(), (index, point))
+        )
+        threads.append(thread)
+        thread.start()
 
-    # with ProcessPool(nodes=40) as pool:
-    # pool.map(process_point, kalman_parameters, POINTS)
+    for thread in threads:
+        thread.join()
+
+    generate_all_plots()
 
 
 if __name__ == "__main__":
