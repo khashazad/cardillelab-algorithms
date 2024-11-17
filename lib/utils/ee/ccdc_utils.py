@@ -5,9 +5,11 @@ Earth Engine at "users/parevalo_bu/gee-ccdc-tools"
 """
 
 import ee
+import math
+from lib.utils.ee.dates import convert_date
+
 
 ee.Initialize(opt_url=ee.data.HIGH_VOLUME_API_BASE_URL)
-
 
 HARMONIC_TAGS = ["INTP", "SLP", "COS", "SIN", "COS2", "SIN2", "COS3", "SIN3"]
 
@@ -221,3 +223,53 @@ def parse_ccdc_params(fname):
             elif key == "behavior":
                 output_dict[key] = val[0]
     return output_dict
+
+
+def get_synthetic_for_year(image, date, date_format, band, segments):
+
+    # Convert date to fractional year
+    tfit = date
+
+    # Define constants
+    PI2 = 2.0 * math.pi
+
+    OMEGAS = [
+        PI2 / 365.25,
+        PI2,
+        PI2 / (1000 * 60 * 60 * 24 * 365.25),
+    ]
+
+    omega = OMEGAS[date_format]
+
+    # Create an image with harmonic components
+    imageT = ee.Image.constant(
+        [
+            1,
+            tfit,
+            tfit.multiply(omega).cos(),
+            tfit.multiply(omega).sin(),
+            tfit.multiply(omega * 2).cos(),
+            tfit.multiply(omega * 2).sin(),
+            tfit.multiply(omega * 3).cos(),
+            tfit.multiply(omega * 3).sin(),
+        ]
+    ).float()
+
+    # Get coefficients for the specified band
+    newParams = get_multi_coefs(
+        image, tfit, [str(band)], HARMONIC_TAGS, False, segments, "before"
+    )
+
+    # Calculate synthetic image
+    synthetic_image = imageT.multiply(newParams).reduce("sum").rename(band)
+
+    return synthetic_image
+
+
+def get_multi_synthetic(image, date, date_format, band_list, segments):
+
+    retrieve_synthetic = lambda band: get_synthetic_for_year(
+        image, date, date_format, band, segments
+    )
+
+    return ee.Image.cat(list(map(retrieve_synthetic, band_list)))

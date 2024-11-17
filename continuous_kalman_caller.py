@@ -46,7 +46,7 @@ from lib.utils.visualization.plot_generator import generate_plots
 COLLECTION_PARAMETERS = {
     "index": Index.SWIR,
     "sensors": [Sensor.L8, Sensor.L9],
-    "years": list(range(2021, 2023)),
+    "years": list(range(2021, 2022)),
     "point_group": "pnw_1",
     "study_area": PNW,
     "day_step_size": 6,
@@ -70,7 +70,7 @@ INDEX = COLLECTION_PARAMETERS["index"]
 INITIALIZATION = Initialization.POSTHOC
 
 # whether to include the ccdc coefficients in the output
-INCLUDE_CCDC_COEFFICIENTS = False
+INCLUDE_CCDC_COEFFICIENTS = True
 
 # Get the directory of the current script
 script_directory = os.path.dirname(os.path.realpath(__file__))
@@ -124,10 +124,12 @@ def run_kalman(parameters, collection, point):
     band_names = parse_band_names(args["recording_flags"], args["harmonic_flags"])
 
     # call the kalman filter
-    states = eeek(**args)
+    kalman_output_collection = eeek(**args)
 
     # process the output
-    data = utils.get_pixels(point, states).reshape(-1, len(band_names))
+    data = utils.get_image_collection_pixels(point, kalman_output_collection).reshape(
+        -1, len(band_names)
+    )
 
     df = pd.DataFrame(data, columns=band_names)
     df[DATE] = pd.to_datetime(df[TIMESTAMP], unit="ms").dt.strftime("%Y-%m-%d")

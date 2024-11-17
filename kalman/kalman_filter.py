@@ -163,7 +163,9 @@ def kalman_filter(
         outputs.extend(preprocess_results)
         outputs.extend(postprocess_results)
 
-        return ee.List(prev).add(ee.Image.cat(*outputs))
+        return ee.List(prev).add(
+            ee.Image.cat(*outputs).copyProperties(curr, ["system:time_start"])
+        )
 
     result = ee.List(collection.iterate(_iterator, [init_image]))
 

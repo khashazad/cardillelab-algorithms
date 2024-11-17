@@ -6,6 +6,7 @@ import io
 import math
 
 import numpy as np
+import pandas as pd
 from lib.constants import Kalman
 from numpy.lib.recfunctions import structured_to_unstructured
 import ee
@@ -385,10 +386,35 @@ def compute_pixels_wrapper(request):
 
 
 def get_pixels(coords, image):
-    """Get the pixels at the given coordinates for the given image."""
     request = build_request(coords)
     request["expression"] = image
     return compute_pixels_wrapper(request)
+
+
+def get_image_collection_pixels(coords, collection):
+
+    band_count = ee.ImageCollection(collection).first().bandNames().size().getInfo()
+    collection_size = ee.ImageCollection(collection).size().getInfo()
+    chunks_size = 1024 // band_count
+
+    chunks = []
+    all_pixels = np.array([])
+
+    collection_as_list = collection.toList(collection_size)
+
+    for start in range(0, collection_size, chunks_size):
+        end = min(start + chunks_size, collection_size)
+        chunks.append(ee.ImageCollection(collection_as_list.slice(start, end)))
+
+    for chunk in chunks:
+        request = build_request(coords)
+        request["expression"] = chunk.toBands()
+        pixels = compute_pixels_wrapper(request)
+
+        all_pixels = np.append(all_pixels, pixels)
+
+    print(all_pixels.shape)
+    return all_pixels
 
 
 def get_utm_from_lonlat(lon, lat):

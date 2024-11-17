@@ -4,7 +4,9 @@ import numpy as np
 from lib import constants
 from lib.utils import utils
 from lib.constants import (
+    CCDC,
     FRACTION_OF_YEAR,
+    HARMONIC_TAGS,
     Harmonic,
     KalmanRecordingFlags,
     Kalman,
@@ -51,11 +53,7 @@ def parse_band_names(recording_flags, harmonic_flags):
     # ccdc coefficients
     if recording_flags.get(KalmanRecordingFlags.CCDC_COEFFICIENTS, False):
         band_names.extend(
-            [
-                f"{Harmonic.COS.value}{i}",
-                f"{Harmonic.SIN.value}{i}",
-            ]
-            for i in range(3)
+            [*[f"{CCDC.BAND_PREFIX.value}_{x}" for x in HARMONIC_TAGS], CCDC.FIT.value]
         )
 
     # timestamp

@@ -93,19 +93,26 @@ class Initialization(enum.Enum):
 
 
 class Harmonic(enum.Enum):
-    INTERCEPT = "intercept"
-    SLOPE = "slope"
-    COS = "cos"
-    SIN = "sin"
-    COS2 = "cos2"
-    SIN2 = "sin2"
-    COS3 = "cos3"
-    SIN3 = "sin3"
+    INTERCEPT = "INTP"
+    SLOPE = "SLP"
+    COS = "COS"
+    SIN = "SIN"
+    COS2 = "COS2"
+    SIN2 = "SIN2"
+    COS3 = "COS3"
+    SIN3 = "SIN3"
     UNIMODAL = "unimodal"
     BIMODAL = "bimodal"
     TRIMODAL = "trimodal"
     FIT = "fit"
 
+
+class CCDC(enum.Enum):
+    BAND_PREFIX = "ccdc"
+    FIT = "ccdc_fit"
+
+
+HARMONIC_TAGS = ["INTP", "SLP", "COS", "SIN", "COS2", "SIN2", "COS3", "SIN3"]
 
 NUM_MEASURES = 1  # eeek only supports one band at a time
 
