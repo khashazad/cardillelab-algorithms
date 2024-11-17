@@ -45,8 +45,8 @@ from lib.utils.visualization.plot_generator import generate_plots
 # Parameters
 COLLECTION_PARAMETERS = {
     "index": Index.SWIR,
-    "sensors": [Sensor.L8, Sensor.L9],
-    "years": list(range(2021, 2022)),
+    "sensors": [Sensor.L7, Sensor.L8, Sensor.L9],
+    "years": list(range(2015, 2016)),
     "point_group": "pnw_1",
     "study_area": PNW,
     "day_step_size": 6,
@@ -228,6 +228,9 @@ def process_point(kalman_parameters, point):
             PlotType.KALMAN_FIT: {
                 "title": "Kalman Fit",
             },
+            PlotType.KALMAN_VS_CCDC: {
+                "title": "Kalman vs CCDC",
+            },
         },
     )
 
@@ -249,7 +252,9 @@ def run_continuous_kalman():
     setup_subdirectories()
 
     # save point coordinates to file
-    json.dump(POINTS, open(os.path.join(run_directory, POINTS_FILE_PREFIX), "w"))
+    json.dump(
+        POINTS, open(os.path.join(run_directory, f"{POINTS_FILE_PREFIX}.json"), "w")
+    )
 
     # load kalman parameters Q, R, P, X
     kalman_parameters = json.load(open(parameters_file_path))

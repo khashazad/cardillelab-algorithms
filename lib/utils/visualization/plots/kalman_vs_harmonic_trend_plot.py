@@ -95,7 +95,7 @@ def get_harmonic_trend_estimates(harmonic_trend_coefs, frac_of_year, harmonic_fl
     return pd.DataFrame(estimates, columns=[FRACTION_OF_YEAR, Harmonic.FIT.value])
 
 
-def kalman_estimate_vs_harmonic_trend(
+def kalman_estimate_vs_harmonic_trend_plot(
     axs,
     data,
     options,

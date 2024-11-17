@@ -1,24 +1,18 @@
 from pprint import pprint
 from matplotlib import pyplot as plt
 import pandas as pd
-import math
-import numpy as np
 import matplotlib.dates as mdates
-import csv
-from lib.utils.harmonic import parse_harmonic_params
 
-from lib.utils.harmonic import calculate_harmonic_estimate
-from lib.utils.visualization.constant import FIXED_Y_AXIS_LIMIT, FRAC_OF_YEAR
+from lib.utils.visualization.constant import FIXED_Y_AXIS_LIMIT
 from lib.constants import (
     DATE,
     ESTIMATE,
-    FRACTION_OF_YEAR,
-    Harmonic,
     Kalman,
+    CCDC,
 )
 
 
-def kalman_fit(
+def kalman_vs_ccdc_plot(
     axs,
     data,
     options,
@@ -31,6 +25,14 @@ def kalman_fit(
         label="Kalman Estimate",
         linestyle="-",
         color="blue",
+    )
+
+    axs.plot(
+        data[DATE],
+        data[CCDC.FIT.value],
+        label="CCDC",
+        linestyle="--",
+        color="green",
     )
 
     axs.scatter(

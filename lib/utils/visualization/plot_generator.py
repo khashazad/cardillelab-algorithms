@@ -1,21 +1,16 @@
 import pandas as pd
 import os
-import math
 import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
-import numpy as np
 from lib.utils.visualization.constant import (
     ASPECT_RATIO,
     PLOT_TYPES,
     PlotType,
 )
-from lib.utils.visualization.plots.kalman_estimate_of_coefs import (
-    kalman_estimate_of_coefficients,
+from lib.utils.visualization.plots.kalman_vs_harmonic_trend_plot import (
+    kalman_estimate_vs_harmonic_trend_plot,
 )
-from lib.utils.visualization.plots.kalman_vs_harmonic_trend import (
-    kalman_estimate_vs_harmonic_trend,
-)
-from lib.utils.visualization.plots.kalman_fit import kalman_fit
+from lib.utils.visualization.plots.kalman_fit_plot import kalman_fit_plot
+from lib.utils.visualization.plots.kalman_vs_ccdc_plot import kalman_vs_ccdc_plot
 
 
 def save_chart(fig, name, output_directory):
@@ -69,13 +64,19 @@ def generate_plots(data, output_directory, options):
 
     for fig, axes, plot_type in plots:
         if plot_type == PlotType.KALMAN_VS_HARMONIC:
-            kalman_estimate_vs_harmonic_trend(
+            kalman_estimate_vs_harmonic_trend_plot(
                 axes,
                 kalman_output.copy(),
                 options[plot_type],
             )
         elif plot_type == PlotType.KALMAN_FIT:
-            kalman_fit(
+            kalman_fit_plot(
+                axes,
+                kalman_output.copy(),
+                options[plot_type],
+            )
+        elif plot_type == PlotType.KALMAN_VS_CCDC:
+            kalman_vs_ccdc_plot(
                 axes,
                 kalman_output.copy(),
                 options[plot_type],
