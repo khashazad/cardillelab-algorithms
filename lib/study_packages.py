@@ -10,7 +10,12 @@ ee.Initialize()
 def get_tag(
     **kwargs,
 ):
-    return f"{kwargs['study_area']['name']}_{'_'.join([s.value for s in kwargs['sensors']])}_{kwargs['index'].value}_{'_'.join([str(y) for y in kwargs['years']])}_{kwargs['initialization'].value}"
+    year_tag = (
+        kwargs["years"][0]
+        if len(kwargs["years"]) == 1
+        else f"{kwargs['years'][0]}-{kwargs['years'][-1]}"
+    )
+    return f"{kwargs['study_area']['name']}_{'_'.join([s.value for s in kwargs['sensors']])}_{kwargs['index'].value}_{year_tag}_{kwargs['initialization'].value}"
 
 
 def get_collection(**kwargs):

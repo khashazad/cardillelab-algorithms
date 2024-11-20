@@ -1,7 +1,7 @@
 import enum
 
 FIXED_Y_AXIS_LIMIT = 0.4
-ASPECT_RATIO = (12, 8)
+ASPECT_RATIO = (10, 6)
 
 
 class PlotType(enum.Enum):

@@ -1,6 +1,9 @@
 """ Paths used throughout project. """
 
+from datetime import datetime
 import os
+
+from lib.constants import Harmonic
 
 
 # directories
@@ -58,5 +61,47 @@ def build_end_of_year_kalman_state_path(run_directory: str, index: int) -> str:
 def build_points_path(run_directory: str) -> str:
     return os.path.join(
         run_directory,
-        f"{POINTS_FILE_PREFIX}.csv",
+        f"{POINTS_FILE_PREFIX}.json",
     )
+
+
+def build_kalman_run_directory(
+    script_directory: str, tag: str, harmonic_flags: dict, run_id: str = None
+) -> str:
+
+    include_slope = harmonic_flags.get(Harmonic.SLOPE.value, False)
+    bimodal = harmonic_flags.get(Harmonic.BIMODAL.value, False)
+    trimodal = harmonic_flags.get(Harmonic.TRIMODAL.value, False)
+
+    flags_prefix = ""
+    if include_slope:
+        flags_prefix += "_slope"
+    if trimodal:
+        flags_prefix += "_trimodal"
+    elif bimodal:
+        flags_prefix += "_bimodal"
+    else:
+        flags_prefix += "_unimodal"
+
+    run_id_prefix = f"{run_id}_" if run_id and run_id != "" else ""
+    date_time_str = datetime.now().strftime("%m-%d_%H:%M")
+
+    return f"{script_directory}/tests/kalman/{tag}/{run_id_prefix}{date_time_str}{flags_prefix}/"
+
+
+def get_kalman_parameters_path(script_directory: str, harmonic_flags: dict) -> str:
+    include_slope = harmonic_flags.get(Harmonic.SLOPE.value, False)
+    bimodal = harmonic_flags.get(Harmonic.BIMODAL.value, False)
+    trimodal = harmonic_flags.get(Harmonic.TRIMODAL.value, False)
+
+    postfix = ""
+    if include_slope:
+        postfix += "_slope"
+    if trimodal:
+        postfix += "_trimodal"
+    elif bimodal:
+        postfix += "_bimodal"
+    else:
+        postfix += "_unimodal"
+
+    return f"{script_directory}/kalman/kalman_parameters{postfix}.json"

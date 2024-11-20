@@ -72,19 +72,33 @@ def setup_kalman_init(kalman_parameters, harmonic_flags):
 
     num_params = len(harmonic_params)
 
-    Q = np.array(kalman_parameters.get(Kalman.Q.value, [])).flatten()
     R = np.array(kalman_parameters.get(Kalman.R.value, [])).flatten()
-    P = np.array(kalman_parameters.get(Kalman.P.value, [])).flatten()
     X = np.array(kalman_parameters.get(Kalman.X.value, [])).flatten()
 
+    Q = np.array(kalman_parameters.get(Kalman.Q.value, []))
+    if len(Q.shape) == 1:
+        Q = np.diag(Q).flatten()
+
+    P = np.array(kalman_parameters.get(Kalman.P.value, []))
+    if len(P.shape) == 1:
+        P = np.diag(P).flatten()
+
+    Q = Q.flatten()
+    P = P.flatten()
+
     assert (
-        len(Q) == num_params * num_params
-    ), f"Q must be a square matrix of size {num_params}x{num_params}"
-    assert len(R) == NUM_MEASURES, f"R must be a vector of size {NUM_MEASURES}"
+        len(Q) == num_params**2
+    ), f"Q must be a square matrix of size {num_params}x{num_params} or an array of size {num_params**2}, got {Q.shape}"
+    assert (
+        len(R) == NUM_MEASURES
+    ), f"R must be a vector of size {NUM_MEASURES}, got {R.shape}"
     assert (
         len(P) == num_params**2
-    ), f"P must be a square matrix of size {num_params} x {num_params}"
-    assert len(X) == num_params, f"X must be a vector of size {num_params}"
+    ), f"P must be a square matrix of size {num_params} x {num_params} or an array of size {num_params**2}, got {P.shape}"
+
+    assert (
+        len(X) == num_params
+    ), f"X must be a vector of size {num_params}, got {X.shape}"
 
     H = utils.sinusoidal(
         NUM_SINUSOID_PAIRS,

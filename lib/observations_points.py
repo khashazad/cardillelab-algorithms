@@ -61,9 +61,9 @@ def parse_point_coordinates(point_group):
         elif content_path.endswith(".json"):
             process_json_file(content_path)
 
-    point_count = len(point_coordinates)
-    with open("points_count.txt", "w") as file:
-        file.write(f"Total points: {point_count}")
+    # point_count = len(point_coordinates)
+    # with open("points_count.txt", "w") as file:
+    #     file.write(f"Total points: {point_count}")
 
     return sorted(point_coordinates, key=lambda x: (x[0], x[1]))
 

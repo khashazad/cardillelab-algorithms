@@ -11,24 +11,9 @@ from lib.utils.visualization.plots.kalman_vs_harmonic_trend_plot import (
 )
 from lib.utils.visualization.plots.kalman_fit_plot import kalman_fit_plot
 from lib.utils.visualization.plots.kalman_vs_ccdc_plot import kalman_vs_ccdc_plot
-
-
-def save_chart(fig, name, output_directory):
-    os.makedirs(output_directory, exist_ok=True)
-    fig.savefig(f"{output_directory}/{name}.png")
-
-
-def get_labels_and_handles(axs):
-    handles, labels = axs.get_legend_handles_labels()
-    unique_labels = []
-    unique_handles = []
-
-    for handle, label in zip(handles, labels):
-        if label not in unique_labels:
-            unique_handles.append(handle)
-            unique_labels.append(label)
-
-    return unique_labels, unique_handles
+from lib.utils.visualization.plots.kalman_vs_ccdc_coefs_plot import (
+    kalman_vs_ccdc_coefs_plot,
+)
 
 
 def get_labels_and_handles(axs):
@@ -44,9 +29,26 @@ def get_labels_and_handles(axs):
     return unique_labels, unique_handles
 
 
-def save_chart(fig, name, output_directory):
+def get_labels_and_handles(axs):
+    handles, labels = axs.get_legend_handles_labels()
+    unique_labels = []
+    unique_handles = []
+
+    for handle, label in zip(handles, labels):
+        if label not in unique_labels:
+            unique_handles.append(handle)
+            unique_labels.append(label)
+
+    return unique_labels, unique_handles
+
+
+def save_chart(fig, name, output_directory, legend):
     os.makedirs(output_directory, exist_ok=True)
-    fig.savefig(f"{output_directory}/{name}.png")
+    fig.savefig(
+        f"{output_directory}/{name}.png",
+        bbox_inches="tight",
+        bbox_extra_artists=(legend,),
+    )
 
 
 def generate_plots(data, output_path, options):
@@ -81,11 +83,23 @@ def generate_plots(data, output_path, options):
                 kalman_output.copy(),
                 options[plot_type],
             )
+        elif plot_type == PlotType.KALMAN_VS_CCDC_COEFS:
+            kalman_vs_ccdc_coefs_plot(
+                axes,
+                kalman_output.copy(),
+                options[plot_type],
+            )
 
     for fig, axs, plot_type in plots:
         labels, handles = get_labels_and_handles(axs)
-        fig.legend(handles, labels, loc="upper center", ncol=5)
+        legend = fig.legend(
+            handles,
+            labels,
+            loc="upper center",
+            bbox_to_anchor=(0.5, -0.1),
+            ncol=6 if len(labels) > 6 else len(labels),
+        )
 
         plt.tight_layout()
-        save_chart(fig, plot_type.value, output_path)
+        save_chart(fig, plot_type.value, output_path, legend=legend)
         plt.close(fig)

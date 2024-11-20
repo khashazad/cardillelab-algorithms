@@ -32,25 +32,26 @@ from lib.paths import (
     build_kalman_analysis_path,
     build_harmonic_trend_path,
     build_kalman_result_path,
+    build_kalman_run_directory,
     build_points_path,
+    get_kalman_parameters_path,
     kalman_analysis_directory,
     kalman_result_directory,
 )
 from kalman.kalman_helper import parse_harmonic_params
-
-from datetime import datetime
 from kalman.kalman_module import main as eeek
-from pprint import pprint
-
 from lib.utils.visualization.constant import PlotType
 from lib.utils.visualization.plot_generator import generate_plots
 import threading
+
+# could be omitted
+RUN_ID = ""
 
 # Parameters
 COLLECTION_PARAMETERS = {
     "index": Index.SWIR,
     "sensors": [Sensor.L7, Sensor.L8, Sensor.L9],
-    "years": list(range(2016, 2019)),
+    "years": [2017, 2018, 2019],
     "point_group": "pnw_6",
     "study_area": PNW,
     "day_step_size": 4,
@@ -64,8 +65,8 @@ HARMONIC_FLAGS = {
     Harmonic.INTERCEPT.value: True,
     Harmonic.SLOPE.value: True,
     Harmonic.UNIMODAL.value: True,
-    Harmonic.BIMODAL.value: True,
-    Harmonic.TRIMODAL.value: False,
+    # Harmonic.BIMODAL.value: True,
+    # Harmonic.TRIMODAL.value: True,
 }
 
 TAG = get_tag(**COLLECTION_PARAMETERS)
@@ -80,12 +81,12 @@ INCLUDE_CCDC_COEFFICIENTS = True
 script_directory = os.path.dirname(os.path.realpath(__file__))
 
 # Define the run directory based on the current timestamp
-run_directory = (
-    f"{script_directory}/tests/kalman/{TAG}/{datetime.now().strftime('%m-%d %H:%M')}/"
+run_directory = build_kalman_run_directory(
+    script_directory, TAG, HARMONIC_FLAGS, RUN_ID
 )
 
 # Path to the parameters file containing the process noise, measurement noise, and initial state covariance
-parameters_file_path = f"{script_directory}/kalman/kalman_parameters_slope_bimodal.json"
+parameters_file_path = get_kalman_parameters_path(script_directory, HARMONIC_FLAGS)
 
 
 def create_points_file(points_filename, coefficients_by_point, years: list[int]):
@@ -259,6 +260,10 @@ def generate_all_plots():
                 },
                 PlotType.KALMAN_VS_CCDC: {
                     "title": "Kalman vs CCDC",
+                },
+                PlotType.KALMAN_VS_CCDC_COEFS: {
+                    "title": "Kalman vs CCDC Coefficients",
+                    "harmonic_flags": HARMONIC_FLAGS,
                 },
             },
         )
