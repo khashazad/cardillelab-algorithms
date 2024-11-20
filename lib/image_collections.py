@@ -289,6 +289,47 @@ L8_L9_RANDONIA_SWIR_2017_2018 = gather_collections_and_reduce(
     }
 )
 
+L7_L8_L9_PNW_2017_2018 = gather_collections_and_reduce(
+    {
+        "L7dictionary": {
+            "years_list": [2017, 2018],
+            "first_doy": 1,
+            "last_doy": 365,
+            "cloud_cover_threshold": 20,
+        },
+        "L8dictionary": {
+            "years_list": [2017, 2018],
+            "first_doy": 1,
+            "last_doy": 365,
+            "cloud_cover_threshold": 20,
+        },
+        "L9dictionary": {
+            "years_list": [2017, 2018],
+            "first_doy": 1,
+            "last_doy": 365,
+            "cloud_cover_threshold": 20,
+        },
+        "default_study_area": (ee.Geometry.Polygon(PNW["coords"])),
+        "band_name_reduction": "swir",
+        "which_reduction": "SWIR",
+        "day_step_size": 4,
+        "verbose": False,
+        "dataset_selection": {
+            "L5": False,
+            "L7": True,
+            "L8": True,
+            "L9": True,
+            "MO": False,
+            "S2": False,
+            "S1": False,
+            "DW": False,
+        },
+        "first_expectation_year": 2017,
+        "verbose": False,
+    }
+)
+
+
 CCDC_GLOBAL = ee.ImageCollection("GOOGLE/GLOBAL_CCDC/V1")
 
 COLLECTIONS = {
@@ -296,6 +337,7 @@ COLLECTIONS = {
     "PNW_L8_L9_2022_2023_DSS_1": PNW_L8_L9_2022_2023_DSS_1,
     "PNW_L8_L9_2022": PNW_L8_L9_2022,
     "PNW_L8_L9_2023": PNW_L8_L9_2023,
+    "PNW_L7_L8_L9_2017_2018": L7_L8_L9_PNW_2017_2018,
     "CCDC_Randonia": CCDC_RANDONIA,
     "Randonia_l8_l9_2017_2018_swir": L8_L9_RANDONIA_SWIR_2017_2018,
     "CCDC_Global": CCDC_GLOBAL,
