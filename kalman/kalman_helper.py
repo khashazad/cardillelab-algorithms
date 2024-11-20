@@ -1,3 +1,4 @@
+from pprint import pprint
 import ee
 import json
 import numpy as np
@@ -110,9 +111,9 @@ def setup_kalman_init(kalman_parameters, harmonic_flags):
     R = np.array([float(x) for x in R]).reshape(NUM_MEASURES, NUM_MEASURES)
 
     P = np.array([float(x) for x in P]).reshape(num_params, num_params)
-    P = ee.Image(ee.Array(P.tolist())).rename(Kalman.P.value)
-
     X = np.array([float(x) for x in X]).reshape(num_params, NUM_MEASURES)
+
+    P = ee.Image(ee.Array(P.tolist())).rename(Kalman.P.value)
     X = ee.Image(ee.Array(X.tolist())).rename(Kalman.X.value)
 
     return {

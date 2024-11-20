@@ -52,7 +52,7 @@ COLLECTION_PARAMETERS = {
     "index": Index.SWIR,
     "sensors": [Sensor.L7, Sensor.L8, Sensor.L9],
     "years": [2017, 2018, 2019],
-    "point_group": "pnw_6",
+    "point_group": "pnw_1",
     "study_area": PNW,
     "day_step_size": 4,
     "start_doy": 1,
@@ -63,10 +63,10 @@ COLLECTION_PARAMETERS = {
 
 HARMONIC_FLAGS = {
     Harmonic.INTERCEPT.value: True,
-    Harmonic.SLOPE.value: True,
+    # Harmonic.SLOPE.value: True,
     Harmonic.UNIMODAL.value: True,
-    # Harmonic.BIMODAL.value: True,
-    # Harmonic.TRIMODAL.value: True,
+    Harmonic.BIMODAL.value: True,
+    Harmonic.TRIMODAL.value: True,
 }
 
 TAG = get_tag(**COLLECTION_PARAMETERS)

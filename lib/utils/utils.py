@@ -217,6 +217,7 @@ def sinusoidal(num_sinusoid_pairs, include_slope=True, include_intercept=True):
         cosine_terms = t.cos().multiply(cosine_selectors)
 
         image = t.multiply(t_selectors).add(sine_terms).add(cosine_terms)
+
         image = image.toArray(0)
         return image.arrayReshape(ee.Image(ee.Array([1, -1])), 2)
 

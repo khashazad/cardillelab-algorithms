@@ -17,9 +17,9 @@ def get_num_sinusoid_pairs(harmonic_flags):
     NUM_SINUSOID_PAIRS = 1
 
     if harmonic_flags.get(Harmonic.BIMODAL.value):
-        NUM_SINUSOID_PAIRS *= 2
+        NUM_SINUSOID_PAIRS = 2
     if harmonic_flags.get(Harmonic.TRIMODAL.value):
-        NUM_SINUSOID_PAIRS *= 3
+        NUM_SINUSOID_PAIRS = 3
 
     return NUM_SINUSOID_PAIRS
 
