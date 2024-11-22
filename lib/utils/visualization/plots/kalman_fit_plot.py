@@ -3,8 +3,8 @@ import matplotlib.dates as mdates
 
 from lib.utils.visualization.constant import FIXED_Y_AXIS_LIMIT
 from lib.constants import (
-    DATE,
-    ESTIMATE,
+    DATE_LABEL,
+    ESTIMATE_LABEL,
     Kalman,
 )
 
@@ -14,18 +14,18 @@ def kalman_fit_plot(
     data,
     options,
 ):
-    data[DATE] = pd.to_datetime(data[DATE])
+    data[DATE_LABEL] = pd.to_datetime(data[DATE_LABEL])
 
     axs.plot(
-        data[DATE],
-        data[ESTIMATE],
+        data[DATE_LABEL],
+        data[ESTIMATE_LABEL],
         label="Kalman Estimate",
         linestyle="-",
         color="blue",
     )
 
     axs.scatter(
-        data[(data[Kalman.Z.value] != 0)][DATE],
+        data[(data[Kalman.Z.value] != 0)][DATE_LABEL],
         data[(data[Kalman.Z.value] != 0)][Kalman.Z.value],
         label="Observed",
         s=13,

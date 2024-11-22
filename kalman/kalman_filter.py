@@ -2,7 +2,12 @@ import ee
 import ee.geometry
 from pprint import pprint
 from lib import constants
-from lib.constants import Kalman, ESTIMATE, TIMESTAMP, FRACTION_OF_YEAR
+from lib.constants import (
+    Kalman,
+    ESTIMATE_LABEL,
+    TIMESTAMP_LABEL,
+    FRACTION_OF_YEAR_LABEL,
+)
 from lib.utils.ee.dates import convert_date
 
 ee.Initialize(opt_url=ee.data.HIGH_VOLUME_API_BASE_URL)
@@ -155,10 +160,10 @@ def kalman_filter(
             z.rename(Kalman.Z.value),
             x.rename(Kalman.X.value),
             P.rename(Kalman.P.value),
-            estimate.rename(ESTIMATE),
+            estimate.rename(ESTIMATE_LABEL),
             # amplitude.rename(constants.AMPLITUDE),
-            ee.Image(curr.date().millis()).rename(TIMESTAMP),
-            ee.Image(frac_of_year).rename(FRACTION_OF_YEAR),
+            ee.Image(curr.date().millis()).rename(TIMESTAMP_LABEL),
+            ee.Image(frac_of_year).rename(FRACTION_OF_YEAR_LABEL),
         ]
         outputs.extend(preprocess_results)
         outputs.extend(postprocess_results)

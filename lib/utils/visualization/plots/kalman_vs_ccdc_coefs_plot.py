@@ -5,7 +5,7 @@ import matplotlib.dates as mdates
 
 from lib.utils.visualization.constant import FIXED_Y_AXIS_LIMIT
 from lib.constants import (
-    DATE,
+    DATE_LABEL,
     Harmonic,
     CCDC,
 )
@@ -20,14 +20,14 @@ def kalman_vs_ccdc_coefs_plot(
 
     harmonic_flags = options.get("harmonic_flags", {})
 
-    data[DATE] = pd.to_datetime(data[DATE])
+    data[DATE_LABEL] = pd.to_datetime(data[DATE_LABEL])
 
     columns = data.columns
 
     if harmonic_flags.get(Harmonic.INTERCEPT.value, False):
         if Harmonic.INTERCEPT.value in columns:
             axs.plot(
-                data[DATE],
+                data[DATE_LABEL],
                 data[Harmonic.INTERCEPT.value],
                 label="Intercept",
                 linestyle="-",
@@ -36,7 +36,7 @@ def kalman_vs_ccdc_coefs_plot(
 
         if ccdc_coef(Harmonic.SLOPE.value) in columns:
             axs.plot(
-                data[DATE],
+                data[DATE_LABEL],
                 data[ccdc_coef(Harmonic.INTERCEPT.value)],
                 label="CCDC Intercept",
                 linestyle="--",
@@ -46,7 +46,7 @@ def kalman_vs_ccdc_coefs_plot(
     if harmonic_flags.get(Harmonic.SLOPE.value, False):
         if Harmonic.SLOPE.value in columns:
             axs.plot(
-                data[DATE],
+                data[DATE_LABEL],
                 data[Harmonic.SLOPE.value],
                 label="Slope",
                 linestyle="-",
@@ -55,7 +55,7 @@ def kalman_vs_ccdc_coefs_plot(
 
         if ccdc_coef(Harmonic.SLOPE.value) in columns:
             axs.plot(
-                data[DATE],
+                data[DATE_LABEL],
                 data[ccdc_coef(Harmonic.SLOPE.value)],
                 label="CCDC Slope",
                 linestyle="--",
@@ -65,7 +65,7 @@ def kalman_vs_ccdc_coefs_plot(
     if harmonic_flags.get(Harmonic.UNIMODAL.value, False):
         if Harmonic.COS.value in columns and Harmonic.SIN.value in columns:
             axs.plot(
-                data[DATE],
+                data[DATE_LABEL],
                 data[Harmonic.COS.value],
                 label="Cos",
                 linestyle="-",
@@ -73,7 +73,7 @@ def kalman_vs_ccdc_coefs_plot(
             )
 
             axs.plot(
-                data[DATE],
+                data[DATE_LABEL],
                 data[Harmonic.SIN.value],
                 label="Sin",
                 linestyle="-",
@@ -85,7 +85,7 @@ def kalman_vs_ccdc_coefs_plot(
             and ccdc_coef(Harmonic.SIN.value) in columns
         ):
             axs.plot(
-                data[DATE],
+                data[DATE_LABEL],
                 data[ccdc_coef(Harmonic.COS.value)],
                 label="CCDC Cos",
                 linestyle="--",
@@ -93,7 +93,7 @@ def kalman_vs_ccdc_coefs_plot(
             )
 
             axs.plot(
-                data[DATE],
+                data[DATE_LABEL],
                 data[ccdc_coef(Harmonic.SIN.value)],
                 label="CCDC Sin",
                 linestyle="--",
@@ -103,7 +103,7 @@ def kalman_vs_ccdc_coefs_plot(
     if harmonic_flags.get(Harmonic.BIMODAL.value, False):
         if Harmonic.COS2.value in columns and Harmonic.SIN2.value in columns:
             axs.plot(
-                data[DATE],
+                data[DATE_LABEL],
                 data[Harmonic.COS2.value],
                 label="Cos2",
                 linestyle="-",
@@ -111,7 +111,7 @@ def kalman_vs_ccdc_coefs_plot(
             )
 
             axs.plot(
-                data[DATE],
+                data[DATE_LABEL],
                 data[Harmonic.SIN2.value],
                 label="Sin2",
                 linestyle="-",
@@ -123,7 +123,7 @@ def kalman_vs_ccdc_coefs_plot(
             and ccdc_coef(Harmonic.SIN2.value) in columns
         ):
             axs.plot(
-                data[DATE],
+                data[DATE_LABEL],
                 data[ccdc_coef(Harmonic.COS2.value)],
                 label="CCDC Cos2",
                 linestyle="--",
@@ -131,7 +131,7 @@ def kalman_vs_ccdc_coefs_plot(
             )
 
             axs.plot(
-                data[DATE],
+                data[DATE_LABEL],
                 data[ccdc_coef(Harmonic.SIN2.value)],
                 label="CCDC Sin2",
                 linestyle="--",
@@ -141,7 +141,7 @@ def kalman_vs_ccdc_coefs_plot(
     if harmonic_flags.get(Harmonic.TRIMODAL.value, False):
         if Harmonic.COS3.value in columns and Harmonic.SIN3.value in columns:
             axs.plot(
-                data[DATE],
+                data[DATE_LABEL],
                 data[Harmonic.COS3.value],
                 label="Cos3",
                 linestyle="-",
@@ -149,7 +149,7 @@ def kalman_vs_ccdc_coefs_plot(
             )
 
             axs.plot(
-                data[DATE],
+                data[DATE_LABEL],
                 data[Harmonic.SIN3.value],
                 label="Sin3",
                 linestyle="-",
@@ -161,7 +161,7 @@ def kalman_vs_ccdc_coefs_plot(
             and ccdc_coef(Harmonic.SIN3.value) in columns
         ):
             axs.plot(
-                data[DATE],
+                data[DATE_LABEL],
                 data[ccdc_coef(Harmonic.COS3.value)],
                 label="CCDC Cos3",
                 linestyle="--",
@@ -169,7 +169,7 @@ def kalman_vs_ccdc_coefs_plot(
             )
 
             axs.plot(
-                data[DATE],
+                data[DATE_LABEL],
                 data[ccdc_coef(Harmonic.SIN3.value)],
                 label="CCDC Sin3",
                 linestyle="--",

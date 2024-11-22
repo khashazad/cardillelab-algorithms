@@ -14,6 +14,7 @@ from lib.utils.visualization.plots.kalman_vs_ccdc_plot import kalman_vs_ccdc_plo
 from lib.utils.visualization.plots.kalman_vs_ccdc_coefs_plot import (
     kalman_vs_ccdc_coefs_plot,
 )
+from lib.utils.visualization.plots.kalman_retrofitted import kalman_retrofitted_plot
 
 
 def get_labels_and_handles(axs):
@@ -51,7 +52,7 @@ def save_chart(fig, name, output_directory, legend):
     )
 
 
-def generate_plots(data, output_path, options):
+def generate_plots(data, output_path, options, display=False):
     # create output directory
     os.makedirs(output_path, exist_ok=True)
 
@@ -89,6 +90,12 @@ def generate_plots(data, output_path, options):
                 kalman_output.copy(),
                 options[plot_type],
             )
+        elif plot_type == PlotType.KALMAN_RETROFITTED:
+            kalman_retrofitted_plot(
+                axes,
+                kalman_output.copy(),
+                options[plot_type],
+            )
 
     for fig, axs, plot_type in plots:
         labels, handles = get_labels_and_handles(axs)
@@ -102,4 +109,8 @@ def generate_plots(data, output_path, options):
 
         plt.tight_layout()
         save_chart(fig, plot_type.value, output_path, legend=legend)
+
+        if display:
+            plt.show()
+
         plt.close(fig)

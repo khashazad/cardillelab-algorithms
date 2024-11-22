@@ -2,14 +2,14 @@
 
 import enum
 
-RESIDUAL = "residual"
-CHANGE_PROB = "change_prob"
-ESTIMATE = "estimate"
-TIMESTAMP = "timestamp"
-FRACTION_OF_YEAR = "frac_of_year"
-DATE = "date"
-AMPLITUDE = "amplitude"
-MEASUREMENT = "measurement"
+RESIDUAL_LABEL = "residual"
+CHANGE_PROB_LABEL = "change_prob"
+ESTIMATE_LABEL = "estimate"
+TIMESTAMP_LABEL = "timestamp"
+FRACTION_OF_YEAR_LABEL = "frac_of_year"
+DATE_LABEL = "date"
+AMPLITUDE_LABEL = "amplitude"
+MEASUREMENT_LABEL = "measurement"
 
 PROBABILITY_LABEL = "probability_array"
 PROBABILITY_SELECTOR = "probability_class"
@@ -43,11 +43,11 @@ RECORDING_FLAGS = {
 class KalmanRecordingFlags(enum.Enum):
     STATE = "state"
     STATE_COV = "state_covariance"
-    ESTIMATE = ESTIMATE
-    TIMESTAMP = TIMESTAMP
-    FRACTION_OF_YEAR = FRACTION_OF_YEAR
-    AMPLITUDE = AMPLITUDE
-    MEASUREMENT = MEASUREMENT
+    ESTIMATE = ESTIMATE_LABEL
+    TIMESTAMP = TIMESTAMP_LABEL
+    FRACTION_OF_YEAR = FRACTION_OF_YEAR_LABEL
+    AMPLITUDE = AMPLITUDE_LABEL
+    MEASUREMENT = MEASUREMENT_LABEL
     CCDC_COEFFICIENTS = "ccdc_coefficients"
 
 
@@ -85,6 +85,8 @@ class Kalman(enum.Enum):
     Z = "z"  # observation
     INITIAL_STATE = "initial_state"
     COV_PREFIX = "cov"
+    RETROFITTED = "retrofitted"
+    EOY_STATE = "eoy_state"
 
 
 class Initialization(enum.Enum):
@@ -113,9 +115,11 @@ class CCDC(enum.Enum):
 
 
 HARMONIC_TAGS = ["INTP", "SLP", "COS", "SIN", "COS2", "SIN2", "COS3", "SIN3"]
+HARMONIC_FLAGS_LABEL = "harmonic_flags"
+HARMONIC_TREND_LABEL = "harmonic_trend"
 
 NUM_MEASURES = 1  # eeek only supports one band at a time
 
 MASK_VALUE = -999
 
-POINT_INDEX = "point_index"
+POINT_INDEX_LABEL = "point_index"

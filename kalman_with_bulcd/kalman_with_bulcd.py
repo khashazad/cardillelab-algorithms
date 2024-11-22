@@ -440,11 +440,11 @@ def hidden_bulc_iterate_with_options(
     estimate = intp.add(cos.multiply(phi.cos())).add(sin.multiply(phi.sin()))
 
     result = [
-        curr.rename(constants.MEASUREMENT),
+        curr.rename(constants.MEASUREMENT_LABEL),
         x.rename(constants.STATE),
         P.rename(constants.COV),
-        estimate.rename(constants.ESTIMATE),
-        ee.Image(curr.date().millis()).rename(constants.TIMESTAMP),
+        estimate.rename(constants.ESTIMATE_LABEL),
+        ee.Image(curr.date().millis()).rename(constants.TIMESTAMP_LABEL),
     ]
 
     accumulating_answer = accumulating_answer.addBands(ee.Image.cat(*result))

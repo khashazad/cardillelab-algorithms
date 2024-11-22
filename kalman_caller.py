@@ -7,7 +7,7 @@ import ee.geometry
 import numpy as np
 import pandas as pd
 from kalman.kalman_helper import parse_band_names
-from lib.constants import DATE, Index, Initialization, Kalman, Sensor
+from lib.constants import DATE_LABEL, Index, Initialization, Kalman, Sensor
 from lib.study_areas import PNW
 from lib.study_packages import (
     get_tag,
@@ -22,7 +22,7 @@ from lib.utils import utils
 from lib.constants import (
     Harmonic,
     KalmanRecordingFlags,
-    TIMESTAMP,
+    TIMESTAMP_LABEL,
 )
 from lib.paths import (
     HARMONIC_TREND_SUBDIRECTORY,
@@ -139,11 +139,13 @@ def run_kalman(parameters, collection, point):
     df = pd.DataFrame(data, columns=band_names)
 
     # add date column
-    df[DATE] = pd.to_datetime(df[TIMESTAMP], unit="ms").dt.strftime("%Y-%m-%d")
+    df[DATE_LABEL] = pd.to_datetime(df[TIMESTAMP_LABEL], unit="ms").dt.strftime(
+        "%Y-%m-%d"
+    )
 
     # drop rows outside of the collection years
     df = df[
-        df[DATE]
+        df[DATE_LABEL]
         .str.slice(0, 4)
         .astype(int)
         .between(COLLECTION_PARAMETERS["years"][0], COLLECTION_PARAMETERS["years"][-1])

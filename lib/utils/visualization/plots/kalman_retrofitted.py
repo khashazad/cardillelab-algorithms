@@ -1,4 +1,5 @@
 import pandas as pd
+from pprint import pprint
 import matplotlib.dates as mdates
 import csv
 from lib.utils.harmonic import extract_coefficients_from_array, parse_harmonic_params
@@ -9,82 +10,100 @@ from lib.constants import (
     DATE_LABEL,
     ESTIMATE_LABEL,
     FRACTION_OF_YEAR_LABEL,
-    HARMONIC_TREND_LABEL,
-    Harmonic,
+    HARMONIC_FLAGS_LABEL,
+    TIMESTAMP_LABEL,
     Kalman,
 )
 
 
-def get_harmonic_trend_coefficients(options):
-    harmonic_trend = options.get(HARMONIC_TREND_LABEL, None)
+def get_end_of_year_coefficients(options):
+    eoy_state = options.get(Kalman.EOY_STATE.value, None)
 
     assert (
-        harmonic_trend is not None
-    ), "harmonic trend coefficients are required for generating kalman estimate vs harmonic trend plot"
+        eoy_state is not None
+    ), "end of year state is required for generating kalman retrofitted plot"
 
     coef_dic = dict()
 
-    with open(harmonic_trend, "r") as file:
+    with open(eoy_state, "r") as file:
         reader = csv.reader(file)
 
+        next(reader)
+
         for line in reader:
-            coef_dic[line[0]] = line[1:]
+            values = line[1:]
+
+            # remove the covariance values
+            coefs = values[: len(values) // 2]
+
+            coef_dic[line[0]] = coefs
 
     return coef_dic
 
 
-def get_harmonic_trend_estimates(harmonic_trend_coefs, frac_of_year, harmonic_flags):
-    harmonic_params, _ = parse_harmonic_params(harmonic_flags)
-
-    harmonic_trend_coefs_by_year = []
+def get_retrofitted_trend(eoy_state_coefs, frac_of_year, harmonic_flags):
+    eoy_coefs_by_year = []
 
     for frac_year in list(frac_of_year):
         year = int(frac_year)
-        coefs_array = harmonic_trend_coefs.get(str(year), [])
+        coefs_array = eoy_state_coefs.get(str(year), [])
 
         coefs = extract_coefficients_from_array(coefs_array, harmonic_flags)
 
-        harmonic_trend_coefs_by_year.append((frac_year, coefs))
+        eoy_coefs_by_year.append((frac_year, coefs))
 
     estimates = [
         [
             frac_year,
             calculate_harmonic_estimate(coefs, frac_year),
         ]
-        for frac_year, coefs in harmonic_trend_coefs_by_year
+        for frac_year, coefs in eoy_coefs_by_year
     ]
 
-    return pd.DataFrame(estimates, columns=[FRACTION_OF_YEAR_LABEL, Harmonic.FIT.value])
+    return pd.DataFrame(
+        estimates, columns=[FRACTION_OF_YEAR_LABEL, Kalman.RETROFITTED.value]
+    )
 
 
-def kalman_estimate_vs_harmonic_trend_plot(
+def kalman_retrofitted_plot(
     axs,
     data,
     options,
 ):
-    harmonic_trend_coefs = get_harmonic_trend_coefficients(options)
-    harmonic_fit_df = get_harmonic_trend_estimates(
-        harmonic_trend_coefs,
+
+    eoy_state_coefs = get_end_of_year_coefficients(options)
+    eoy_state_df = get_retrofitted_trend(
+        eoy_state_coefs,
         data[FRACTION_OF_YEAR_LABEL],
-        options.get("harmonic_flags", {}),
+        options.get(HARMONIC_FLAGS_LABEL, {}),
     )
 
-    data = data.merge(harmonic_fit_df, on=FRACTION_OF_YEAR_LABEL, how="inner")
+    data = data.merge(eoy_state_df, on=FRACTION_OF_YEAR_LABEL, how="inner")
+
+    unique_years = pd.to_datetime(data[DATE_LABEL]).dt.year.unique().tolist()
+
+    for year in unique_years:
+        axs.axvline(
+            x=pd.Timestamp(year=year, month=1, day=1),
+            color="gray",
+            linestyle="-",
+            alpha=0.1,
+        )
 
     data[DATE_LABEL] = pd.to_datetime(data[DATE_LABEL])
 
     axs.plot(
         data[DATE_LABEL],
         data[ESTIMATE_LABEL],
-        label="Kalman Estimate",
+        label="Kalman Fit",
         linestyle="-",
         color="blue",
     )
 
     axs.plot(
         data[DATE_LABEL],
-        data[Harmonic.FIT.value],
-        label="Harmonic Trend",
+        data[Kalman.RETROFITTED.value],
+        label="Retrofitted",
         linestyle="--",
         color="green",
     )
