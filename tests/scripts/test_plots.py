@@ -4,7 +4,7 @@ from lib.constants import Harmonic
 from lib.utils.visualization.constant import PlotType
 from lib.utils.visualization.plot_generator import generate_plots
 
-run_directory = "./tests/kalman/PNW_L7_L8_swir_2015_2016_posthoc/11-15 23:06"
+run_directory = "../tests/kalman/PNW_L7_L8_swir_2015_2016_posthoc/11-15 23:06"
 
 data = f"{run_directory}/result/eeek_0.csv"
 harmonic_trend = f"{run_directory}/harmonic_coefficients/fitted_coefficients_0.csv"

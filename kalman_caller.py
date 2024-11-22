@@ -1,156 +1,92 @@
 import csv
+import json
 import os
 import shutil
 import ee
 import ee.geometry
+import numpy as np
 import pandas as pd
-from lib.constants import Index, Sensor
-from lib.image_collections import COLLECTIONS
+from kalman.kalman_helper import parse_band_names
+from lib.constants import DATE, Index, Initialization, Kalman, Sensor
 from lib.study_areas import PNW
 from lib.study_packages import (
-    pnw_nbr_l7_l8_l9_2017_2019_6_point,
-    study_package,
+    get_tag,
+    get_points,
+    get_collection,
 )
 from lib.utils.harmonic import (
-    calculate_harmonic_estimate,
-    harmonic_trend_coefficients,
+    harmonic_trend_coefficients_for_year,
 )
-from lib.utils.visualization.charts import (
-    ChartType,
-    generate_charts,
-)
-
+from lib.utils.visualization.plot_generator import generate_plots
 from lib.utils import utils
-from lib.utils.ee import dates as date_utils
-from lib.utils.ee import ccdc_utils
-from datetime import datetime
-from kalman.kalman_helper import main as eeek
-from pprint import pprint
-import concurrent.futures
+from lib.constants import (
+    Harmonic,
+    KalmanRecordingFlags,
+    TIMESTAMP,
+)
+from lib.paths import (
+    HARMONIC_TREND_SUBDIRECTORY,
+    KALMAN_END_OF_YEAR_STATE_SUBDIRECTORY,
+    KALMAN_STATE_SUBDIRECTORY,
+    build_end_of_year_kalman_state_path,
+    build_kalman_analysis_path,
+    build_harmonic_trend_path,
+    build_kalman_result_path,
+    build_kalman_run_directory,
+    build_points_path,
+    get_kalman_parameters_path,
+    kalman_analysis_directory,
+    kalman_result_directory,
+)
+from kalman.kalman_helper import parse_harmonic_params
+from kalman.kalman_module import main as eeek
+from lib.utils.visualization.constant import PlotType
+from lib.utils.visualization.plot_generator import generate_plots
+import threading
+
+# could be omitted
+RUN_ID = ""
 
 # Parameters
-TAG, INDEX, POINTS, STUDY_AREA, COLLECTION, YEARS, INITIALIZATION = study_package(
-    **{
-        "index": Index.SWIR,
-        "sensors": [Sensor.L7, Sensor.L8],
-        "years": [2019],
-        "point_group": "pnw_6",
-        "study_area": PNW,
-        "day_step_size": 6,
-        "start_doy": 1,
-        "end_doy": 300,
-        "cloud_cover_threshold": 20,
-    }
-).values()
+COLLECTION_PARAMETERS = {
+    "index": Index.SWIR,
+    "sensors": [Sensor.L7, Sensor.L8, Sensor.L9],
+    "years": [2014, 2015, 2016, 2017, 2018, 2019],
+    "point_group": "pnw_7",
+    "study_area": PNW,
+    "day_step_size": 4,
+    "start_doy": 1,
+    "end_doy": 365,
+    "cloud_cover_threshold": 20,
+    "initialization": Initialization.POSTHOC,
+}
+
+HARMONIC_FLAGS = {
+    Harmonic.INTERCEPT.value: True,
+    Harmonic.SLOPE.value: True,
+    Harmonic.UNIMODAL.value: True,
+    # Harmonic.BIMODAL.value: True,
+    # Harmonic.TRIMODAL.value: True,
+}
+
+TAG = get_tag(**COLLECTION_PARAMETERS)
+POINTS = get_points(COLLECTION_PARAMETERS["point_group"])
+INDEX = COLLECTION_PARAMETERS["index"]
+INITIALIZATION = Initialization.POSTHOC
 
 # whether to include the ccdc coefficients in the output
 INCLUDE_CCDC_COEFFICIENTS = True
-
-# the number of sinusoid pairs used in the kalman process
-SINUSOID_PAIRS = 1
-
-# the flags for the kalman process
-KALMAN_FLAGS = {
-    "include_intercept": True,
-    "store_measurement": True,
-    "store_estimate": True,
-    "store_date": True,
-    "include_slope": False,
-    "store_amplitude": False,
-}
 
 # Get the directory of the current script
 script_directory = os.path.dirname(os.path.realpath(__file__))
 
 # Define the run directory based on the current timestamp
-run_directory = (
-    f"{script_directory}/tests/kalman/{TAG}/{datetime.now().strftime('%m-%d %H:%M')}/"
+run_directory = build_kalman_run_directory(
+    script_directory, TAG, HARMONIC_FLAGS, RUN_ID
 )
 
 # Path to the parameters file containing the process noise, measurement noise, and initial state covariance
-parameters_file_path = f"{script_directory}/kalman/eeek_input.json"
-
-# Create the run directory if it doesn't exist
-os.makedirs(run_directory, exist_ok=True)
-
-
-def append_ccdc_coefficients(kalman_output_path, points):
-    ccdc_asset = (
-        COLLECTIONS["CCDC_Global"]
-        .mosaic()
-        .clip(ee.Geometry.Polygon(STUDY_AREA["coords"]))
-    )
-    if INDEX == Index.SWIR:
-        bands = ["SWIR1"]
-    else:
-        bands = ["NIR", "SWIR1"]
-
-    coefs = ["INTP", "SLP", "COS", "SIN", "COS2", "SIN2", "COS3", "SIN3"]
-    segments_count = 10
-    segments = ccdc_utils.build_segment_tag(segments_count)
-
-    kalman_output_df = pd.read_csv(kalman_output_path)
-    dates = kalman_output_df[kalman_output_df["point"] == 0]["timestamp"].to_numpy()
-
-    ccdc_image = ccdc_utils.build_ccd_image(ccdc_asset, segments_count, bands)
-
-    ccdc_coefs_ic = ee.ImageCollection([])
-
-    for date in dates:
-        formatted_date = date_utils.convert_date(
-            {"input_format": 2, "input_date": date, "output_format": 1}
-        )
-
-        ccdc_coefs_image = ccdc_utils.get_multi_coefs(
-            ccdc_image, formatted_date, bands, coefs, segments, segments, "after"
-        )
-
-        ccdc_coefs_ic = ccdc_coefs_ic.merge(ee.ImageCollection([ccdc_coefs_image]))
-
-    def process_point(i, point):
-        coords = (point[0], point[1])
-        request = utils.build_request(coords)
-        request["expression"] = ccdc_coefs_ic.toBands()
-        coef_list = utils.compute_pixels_wrapper(request)
-
-        ccdc_coefs_df = pd.DataFrame(
-            coef_list.reshape(len(dates), len(coefs) * len(bands)),
-            columns=[f"CCDC_{c}_{b}" for c in coefs for b in bands],
-        )
-        ccdc_coefs_df["timestamp"] = dates
-
-        kalman_df = pd.DataFrame(kalman_output_df[kalman_output_df["point"] == i])
-
-        kalman_ccdc_df = pd.merge(
-            kalman_df,
-            ccdc_coefs_df,
-            on="timestamp",
-            how="inner",
-        )
-
-        # Save to a temporary CSV file
-        temp_file_path = (
-            f"{os.path.dirname(kalman_output_path)}/outputs/{i:03d}_with_ccdc.csv"
-        )
-        kalman_ccdc_df.to_csv(temp_file_path, index=False)
-
-        return temp_file_path
-
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        temp_files = list(executor.map(lambda p: process_point(*p), enumerate(points)))
-
-    output_df = pd.concat(
-        [pd.read_csv(temp_file) for temp_file in temp_files if temp_file is not None],
-        ignore_index=True,
-    )
-
-    output_file_path = kalman_output_path.replace(".csv", "_with_ccdc.csv")
-    output_df.to_csv(output_file_path, index=False)
-
-    # clean up temporary files
-    # for temp_file in temp_files:
-    #     if temp_file is not None:
-    #         os.remove(temp_file)
+parameters_file_path = get_kalman_parameters_path(script_directory, HARMONIC_FLAGS)
 
 
 def create_points_file(points_filename, coefficients_by_point, years: list[int]):
@@ -161,64 +97,204 @@ def create_points_file(points_filename, coefficients_by_point, years: list[int])
 
             year = years[0]
 
-            intercept = coefs[year]["intercept"]
-            cos = coefs[year]["cos"]
-            sin = coefs[year]["sin"]
+            intercept = coefs[year][Harmonic.INTERCEPT.value]
+            cos = coefs[year][Harmonic.COS.value]
+            sin = coefs[year][Harmonic.SIN.value]
 
             file.write(f"{longitude},{latitude},{intercept},{cos},{sin}\n")
 
 
-def build_observations(coefficients_by_point, output_filename, years: list[int]):
-    observations = []
-
-    with open(output_filename, "w", newline="") as file:
-        csv_writer = csv.writer(file)
-        csv_writer.writerow(
-            ["point", "timestamp", "intercept", "cos", "sin", "estimate"]
-        )
-        for index, coefficient_set in enumerate(coefficients_by_point):
-            observation_index = 1
-
-            def create_observation_from_coefficients(timestamps, intercept, cos, sin):
-                nonlocal observation_index
-                for timestamp in timestamps:
-                    estimate = calculate_harmonic_estimate(
-                        {
-                            "intercept": intercept,
-                            "cos": cos,
-                            "sin": sin,
-                        },
-                        timestamp,
-                    )
-
-                    observations.append(
-                        (f"intercept_{int(index)}_{observation_index}", intercept)
-                    )
-                    observations.append((f"cos_{int(index)}_{observation_index}", cos))
-                    observations.append((f"sin_{int(index)}_{observation_index}", sin))
-                    observations.append(
-                        (f"estimate_{int(index)}_{observation_index}", estimate)
-                    )
-
-                    csv_writer.writerow(
-                        [index, timestamp, intercept, cos, sin, estimate]
-                    )
-                    observation_index += 1
-
-            for year in years:
-                coefficients = coefficient_set[year]
-                create_observation_from_coefficients(
-                    coefficients["timestamps"],
-                    coefficients["intercept"],
-                    coefficients["cos"],
-                    coefficients["sin"],
-                )
-
-        return observations
-
-
-def run_kalman():
+def run_kalman(parameters, collection, point):
     global run_directory
+
+    collection = collection.filterBounds(ee.Geometry.Point(point))
+
+    # Set up arguments for the Kalman process
+    args = {
+        "kalman_parameters": parameters,
+        "value_collection": collection,
+        "harmonic_flags": HARMONIC_FLAGS,
+        "recording_flags": {
+            KalmanRecordingFlags.MEASUREMENT: True,
+            KalmanRecordingFlags.TIMESTAMP: True,
+            KalmanRecordingFlags.FRACTION_OF_YEAR: True,
+            KalmanRecordingFlags.ESTIMATE: True,
+            KalmanRecordingFlags.AMPLITUDE: False,
+            KalmanRecordingFlags.STATE: True,
+            KalmanRecordingFlags.STATE_COV: True,
+            KalmanRecordingFlags.CCDC_COEFFICIENTS: INCLUDE_CCDC_COEFFICIENTS,
+        },
+    }
+
+    band_names = parse_band_names(args["recording_flags"], args["harmonic_flags"])
+
+    # call the kalman filter
+    kalman_output_collection = eeek(**args)
+
+    # process the output
+    data = utils.get_image_collection_pixels(point, kalman_output_collection).reshape(
+        -1, len(band_names)
+    )
+
+    df = pd.DataFrame(data, columns=band_names)
+
+    # add date column
+    df[DATE] = pd.to_datetime(df[TIMESTAMP], unit="ms").dt.strftime("%Y-%m-%d")
+
+    # drop rows outside of the collection years
+    df = df[
+        df[DATE]
+        .str.slice(0, 4)
+        .astype(int)
+        .between(COLLECTION_PARAMETERS["years"][0], COLLECTION_PARAMETERS["years"][-1])
+    ]
+
+    return df
+
+
+def process_point(kalman_parameters, point):
+    global run_directory
+
+    index, point = point
+
+    harmonic_trend_coefs_path = build_harmonic_trend_path(run_directory, index)
+
+    result_path = build_kalman_result_path(run_directory, index)
+
+    end_of_year_kalman_state_path = build_end_of_year_kalman_state_path(
+        run_directory, index
+    )
+
+    with open(end_of_year_kalman_state_path, "w") as file:
+        state_labels, _ = parse_harmonic_params(HARMONIC_FLAGS)
+        covariance_labels = [f"{Kalman.COV_PREFIX.value}_{x}" for x in state_labels]
+
+        csv.writer(file).writerow(["year", *state_labels, *covariance_labels])
+
+    def update_kalman_parameters_with_last_run(data, year):
+        harmonic_params, _ = parse_harmonic_params(HARMONIC_FLAGS)
+
+        state = data.iloc[-1][harmonic_params].tolist()
+        covariance = data.iloc[-1][
+            [f"{Kalman.COV_PREFIX.value}_{x}" for x in harmonic_params]
+        ].tolist()
+
+        kalman_parameters[Kalman.X.value] = state
+        kalman_parameters[Kalman.P.value] = np.diag(covariance)
+
+        with open(end_of_year_kalman_state_path, "a") as file:
+            writer = csv.writer(file)
+            writer.writerow([year, *state, *covariance])
+
+    def process_year(year):
+
+        is_first_year = year == COLLECTION_PARAMETERS["years"][0]
+
+        collection = get_collection(
+            **{
+                **COLLECTION_PARAMETERS,
+                "years": [year],
+            }
+        )
+
+        coefficients = harmonic_trend_coefficients_for_year(
+            collection,
+            point,
+            year,
+            INDEX,
+            harmonic_flags=HARMONIC_FLAGS,
+            output_file=harmonic_trend_coefs_path,
+        )
+
+        if INITIALIZATION == Initialization.POSTHOC and is_first_year:
+            kalman_parameters[Kalman.X.value] = coefficients
+
+        data = run_kalman(kalman_parameters, collection, point)
+
+        update_kalman_parameters_with_last_run(data, year)
+
+        data.to_csv(
+            result_path,
+            mode="a" if not is_first_year else "w",
+            header=True if is_first_year else False,
+            index=False,
+        )
+
+    for year in COLLECTION_PARAMETERS["years"]:
+        process_year(year)
+
+
+def setup_subdirectories():
+    result_dir = kalman_result_directory(run_directory)
+
+    os.makedirs(os.path.join(result_dir, KALMAN_STATE_SUBDIRECTORY), exist_ok=True)
+
+    os.makedirs(
+        os.path.join(result_dir, HARMONIC_TREND_SUBDIRECTORY),
+        exist_ok=True,
+    )
+    os.makedirs(
+        os.path.join(result_dir, KALMAN_END_OF_YEAR_STATE_SUBDIRECTORY),
+        exist_ok=True,
+    )
+
+    os.makedirs(kalman_analysis_directory(run_directory), exist_ok=True)
+
+
+def generate_all_plots():
+    for point_index in range(len(POINTS)):
+        generate_plots(
+            data=build_kalman_result_path(run_directory, point_index),
+            output_path=build_kalman_analysis_path(run_directory, point_index),
+            options={
+                PlotType.KALMAN_VS_HARMONIC: {
+                    "title": f"Kalman vs Harmonic Trend",
+                    "harmonic_trend": build_harmonic_trend_path(
+                        run_directory, point_index
+                    ),
+                    "harmonic_flags": HARMONIC_FLAGS,
+                },
+                PlotType.KALMAN_FIT: {
+                    "title": "Kalman Fit",
+                },
+                PlotType.KALMAN_VS_CCDC: {
+                    "title": "Kalman vs CCDC",
+                },
+                PlotType.KALMAN_VS_CCDC_COEFS: {
+                    "title": "Kalman vs CCDC Coefficients",
+                    "harmonic_flags": HARMONIC_FLAGS,
+                },
+            },
+        )
+
+
+def run_continuous_kalman():
+    global run_directory
+
+    # create result, harmonic coefficients, and analysis directories
+    setup_subdirectories()
+
+    # save point coordinates to file
+    json.dump(POINTS, open(build_points_path(run_directory), "w"))
+
+    # load kalman parameters Q, R, P, X
+    kalman_parameters = json.load(open(parameters_file_path))
+
+    threads = []
+    for index, point in enumerate(POINTS):
+        thread = threading.Thread(
+            target=process_point, args=(kalman_parameters.copy(), (index, point))
+        )
+        threads.append(thread)
+        thread.start()
+
+    for thread in threads:
+        thread.join()
+
+    generate_all_plots()
+
+
+if __name__ == "__main__":
 
     # Ensure the run directory exists
     os.makedirs(run_directory, exist_ok=True)
@@ -229,69 +305,4 @@ def run_kalman():
         os.path.join(run_directory, os.path.basename(parameters_file_path)),
     )
 
-    # Define file paths for input and output
-    input_file_path = os.path.join(
-        run_directory, os.path.basename(parameters_file_path)
-    )
-    output_file_path = os.path.join(run_directory, "eeek_output.csv")
-    points_file_path = os.path.join(run_directory, "points.csv")
-
-    # Set up arguments for the Kalman process
-    args = {
-        "input": input_file_path,
-        "output": output_file_path,
-        "points": points_file_path,
-        "num_sinusoid_pairs": SINUSOID_PAIRS,
-        "collection": COLLECTION,
-        "include_intercept": True,
-        "store_measurement": True,
-        "store_estimate": True,
-        "store_timestamp": True,
-        "include_slope": False,
-        "store_amplitude": False,
-        "individual_outputs": True,
-        "initialization": INITIALIZATION.value,
-    }
-
-    # Run the Kalman process with the specified arguments
-    eeek(args)
-
-
-if __name__ == "__main__":
-    # Define filenames for output
-    fitted_coefficiets_filename = run_directory + "fitted_coefficients.csv"
-    points_filename = run_directory + "points.csv"
-    observations_filename = run_directory + "observations.csv"
-
-    fitted_coefficiets_by_point = harmonic_trend_coefficients(
-        POINTS, fitted_coefficiets_filename, COLLECTION, YEARS, INDEX
-    )
-    create_points_file(points_filename, fitted_coefficiets_by_point, YEARS)
-
-    observations = build_observations(
-        fitted_coefficiets_by_point, observations_filename, YEARS
-    )
-
-    # Run the Kalman process
-    run_kalman()
-
-    if INCLUDE_CCDC_COEFFICIENTS:
-        append_ccdc_coefficients(f"{run_directory}/eeek_output.csv", POINTS)
-
-    # Generate charts based on the output and observations
-    generate_charts(
-        output_file_path=(
-            f"{run_directory}/eeek_output_with_ccdc.csv"
-            if INCLUDE_CCDC_COEFFICIENTS
-            else f"{run_directory}/eeek_output.csv"
-        ),
-        observation_file_path=f"{run_directory}/observations.csv",
-        output_directory=f"{run_directory}/analysis",
-        flags={
-            ChartType.KALMAN_VS_HARMONIC_FIT: True,
-            ChartType.ESTIMATES_INTERCEPT_COS_SIN: True,
-            ChartType.RESIDUALS_OVER_TIME: True,
-            ChartType.AMPLITUDE: False,
-            ChartType.KALMAN_VS_CCDC: INCLUDE_CCDC_COEFFICIENTS,
-        },
-    )
+    run_continuous_kalman()
