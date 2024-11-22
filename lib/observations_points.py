@@ -1,7 +1,9 @@
 import os
 import json
 
-PREFIX = os.path.join(os.path.dirname(__file__), "point_groups", "groups")
+PREFIX = os.path.relpath(
+    os.path.join(os.path.dirname(__file__), "point_groups", "groups")
+)
 
 
 def build_path(file_name):
@@ -30,8 +32,12 @@ def rename_point_group_folder(point_set_directory_path):
                 )
 
 
-def parse_point_coordinates(point_set_directory_path):
+def parse_point_coordinates(point_group):
+    point_set_directory_path = build_path(point_group)
     point_coordinates = []
+
+    if not os.path.exists(point_set_directory_path):
+        raise ValueError(f"Invalid point group directory: {point_set_directory_path}")
 
     def process_json_file(content_path):
         with open(content_path, "r") as file:
@@ -55,9 +61,9 @@ def parse_point_coordinates(point_set_directory_path):
         elif content_path.endswith(".json"):
             process_json_file(content_path)
 
-    point_count = len(point_coordinates)
-    with open("points_count.txt", "w") as file:
-        file.write(f"Total points: {point_count}")
+    # point_count = len(point_coordinates)
+    # with open("points_count.txt", "w") as file:
+    #     file.write(f"Total points: {point_count}")
 
     return sorted(point_coordinates, key=lambda x: (x[0], x[1]))
 

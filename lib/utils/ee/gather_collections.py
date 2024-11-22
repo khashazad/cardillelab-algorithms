@@ -1,6 +1,9 @@
 import ee
 import pandas as pd
 
+from lib.constants import Index
+
+
 def check_for_sar(collecting_params):
     """Check if the data sources include any SAR datasets."""
     sar_present = False
@@ -125,9 +128,8 @@ def apply_scale_factors_l89(image):
     thermal_bands = image.select("ST_B.*").multiply(0.00341802).add(149.0)
     return image.addBands(optical_bands, None, True).addBands(thermal_bands, None, True)
 
-
 def apply_scale_factors_s2(image):
-    return image.addBands(image.select("B.").multiply(0.0001))
+    return image.addBands(image.select("B.").multiply(0.0001), None, True)
 
 
 # Check functions
@@ -171,7 +173,7 @@ def gather_collections_and_reduce(gather_collections_args):
     group_start_doy = 365
     group_end_doy = 1
 
-    if dataset_selection["L5"]:
+    if "L5" in dataset_selection and dataset_selection["L5"]:
         sensor_input_l5 = "LANDSAT/LT05/C02/T1_L2"
         cloud_cover_name_input_l5 = "CLOUD_COVER"
         cloud_cover_threshold_l5 = gather_collections_args["L5dictionary"][
@@ -185,7 +187,7 @@ def gather_collections_and_reduce(gather_collections_args):
             group_end_doy, int(gather_collections_args["L5dictionary"]["last_doy"])
         )
 
-    if dataset_selection["L7"]:
+    if "L7" in dataset_selection and dataset_selection["L7"]:
         sensor_input_l7 = "LANDSAT/LE07/C02/T1_L2"
         cloud_cover_name_input_l7 = "CLOUD_COVER"
         cloud_cover_threshold_l7 = gather_collections_args["L7dictionary"][
@@ -199,7 +201,7 @@ def gather_collections_and_reduce(gather_collections_args):
             group_end_doy, int(gather_collections_args["L7dictionary"]["last_doy"])
         )
 
-    if dataset_selection["L8"]:
+    if "L8" in dataset_selection and dataset_selection["L8"]:
         sensor_input_l8 = "LANDSAT/LC08/C02/T1_L2"
         cloud_cover_name_input_l8 = "CLOUD_COVER"
         cloud_cover_threshold_l8 = gather_collections_args["L8dictionary"][
@@ -213,7 +215,7 @@ def gather_collections_and_reduce(gather_collections_args):
             group_end_doy, int(gather_collections_args["L8dictionary"]["last_doy"])
         )
 
-    if dataset_selection["L9"]:
+    if "L9" in dataset_selection and dataset_selection["L9"]:
         sensor_input_l9 = "LANDSAT/LC09/C02/T1_L2"
         cloud_cover_name_input_l9 = "CLOUD_COVER"
         cloud_cover_threshold_l9 = gather_collections_args["L9dictionary"][
@@ -227,7 +229,7 @@ def gather_collections_and_reduce(gather_collections_args):
             group_end_doy, int(gather_collections_args["L9dictionary"]["last_doy"])
         )
 
-    if dataset_selection["MO"]:
+    if "MO" in dataset_selection and dataset_selection["MO"]:
         sensor_input_mo = "MODIS/006/MCD43A4"
         which_years.extend(gather_collections_args["MOdictionary"]["years_list"])
         group_start_doy = min(
@@ -240,7 +242,7 @@ def gather_collections_and_reduce(gather_collections_args):
             "incorporation_style"
         ]
 
-    if dataset_selection["S1"]:
+    if "S1" in dataset_selection and dataset_selection["S1"]:
         sensor_input_s1 = "COPERNICUS/S1_GRD"
         which_years.extend(gather_collections_args["S1dictionary"]["years_list"])
         group_start_doy = min(
@@ -250,7 +252,7 @@ def gather_collections_and_reduce(gather_collections_args):
             group_end_doy, int(gather_collections_args["S1dictionary"]["last_doy"])
         )
 
-    if dataset_selection["S2"]:
+    if "S2" in dataset_selection and dataset_selection["S2"]:
         sensor_input_s2 = "COPERNICUS/S2_SR_HARMONIZED"
         cloud_cover_name_input_s2 = "CLOUD_COVERAGE_ASSESSMENT"
         cloud_cover_threshold_s2 = gather_collections_args["S2dictionary"][
@@ -312,7 +314,7 @@ def gather_collections_and_reduce(gather_collections_args):
                     ee.ImageCollection(sensor_input_l8).first()
                 ).map(swir_landsat_8_9)
 
-                if dataset_selection["DW"]:
+                if "DW" in dataset_selection and dataset_selection["DW"]:
                     one_time_slice = (
                         ee.ImageCollection(sensor_input_dw)
                         .filterBounds(default_study_area)
@@ -325,7 +327,7 @@ def gather_collections_and_reduce(gather_collections_args):
                             one_time_slice_reduction
                         )
 
-                if dataset_selection["L5"]:
+                if "L5" in dataset_selection and dataset_selection["L5"]:
                     one_time_slice = (
                         ee.ImageCollection(sensor_input_l5)
                         .filterBounds(default_study_area)
@@ -362,7 +364,7 @@ def gather_collections_and_reduce(gather_collections_args):
                         one_time_slice_reduction
                     )
 
-                if dataset_selection["L7"]:
+                if "L7" in dataset_selection and dataset_selection["L7"]:
                     one_time_slice = (
                         ee.ImageCollection(sensor_input_l7)
                         .filterBounds(default_study_area)
@@ -375,15 +377,31 @@ def gather_collections_and_reduce(gather_collections_args):
                     )
                     one_time_slice_cloud_masked = one_time_slice.map(
                         cloud_mask_ic_l5_and_l7
-                    )
+                    ).map(apply_scale_factors_l89)
                     if which_reduction == "NBR":
+
+                        def nbr_landsat_7(img):
+                            mySingleValue = img.normalizedDifference(
+                                ["SR_B4", "SR_B7"]
+                            ).rename(band_name_reduction)
+                            return ee.Image(mySingleValue.copyProperties(img)).toFloat()
+
                         one_time_slice_reduction = one_time_slice_cloud_masked.map(
-                            lambda img: img.normalizedDifference(["SR_B4", "SR_B7"])
+                            nbr_landsat_7
                         )
+
                     if which_reduction == "NDVI":
+
+                        def ndvi_landsat_7(img):
+                            mySingleValue = img.normalizedDifference(
+                                ["SR_B4", "SR_B3"]
+                            ).rename(band_name_reduction)
+                            return ee.Image(mySingleValue.copyProperties(img)).toFloat()
+
                         one_time_slice_reduction = one_time_slice_cloud_masked.map(
-                            lambda img: img.normalizedDifference(["SR_B4", "SR_B3"])
+                            ndvi_landsat_7
                         )
+
                     if which_reduction in ["count", "binary"]:
                         one_time_slice_reduction = (
                             one_time_slice_cloud_masked.select(0)
@@ -391,15 +409,23 @@ def gather_collections_and_reduce(gather_collections_args):
                             .toInt()
                             .rename([band_name_reduction])
                         )
+
                     if which_reduction == "SWIR":
+
+                        def swir_landsat_7(img):
+                            mySingleValue = img.select("SR_B5").rename(
+                                band_name_reduction
+                            )
+                            return ee.Image(mySingleValue.copyProperties(img)).toFloat()
+
                         one_time_slice_reduction = one_time_slice_cloud_masked.map(
-                            lambda img: img.select("SR_B5").rename(band_name_reduction)
+                            swir_landsat_7
                         )
                     multi_sensor_time_slice = multi_sensor_time_slice.merge(
                         one_time_slice_reduction
                     )
 
-                if dataset_selection["L8"]:
+                if "L8" in dataset_selection and dataset_selection["L8"]:
                     one_time_slice = (
                         ee.ImageCollection(sensor_input_l8)
                         .filterBounds(default_study_area)
@@ -413,17 +439,27 @@ def gather_collections_and_reduce(gather_collections_args):
                     one_time_slice_cloud_masked = one_time_slice.map(
                         mask_sr_clouds_l8_and_l9
                     ).map(apply_scale_factors_l89)
-                    if which_reduction == "NBR":
-                        one_time_slice_reduction = one_time_slice_cloud_masked.map(
-                            lambda img: img.normalizedDifference(
+                    if which_reduction == Index.NBR.value.upper():
+
+                        def nbr_landsat_8(img):
+                            mySingleValue = img.normalizedDifference(
                                 ["SR_B5", "SR_B7"]
-                            ).rename([band_name_reduction])
-                        ).rename(band_name_reduction)
-                    if which_reduction == "NDVI":
+                            ).rename(band_name_reduction)
+                            return ee.Image(mySingleValue.copyProperties(img)).toFloat()
+
                         one_time_slice_reduction = one_time_slice_cloud_masked.map(
-                            lambda img: img.normalizedDifference(
+                            nbr_landsat_8
+                        )
+                    if which_reduction == Index.NDVI.value.upper():
+
+                        def ndvi_landsat_8(img):
+                            mySingleValue = img.normalizedDifference(
                                 ["SR_B5", "SR_B4"]
-                            ).rename([band_name_reduction])
+                            ).rename(band_name_reduction)
+                            return ee.Image(mySingleValue.copyProperties(img)).toFloat()
+
+                        one_time_slice_reduction = one_time_slice_cloud_masked.map(
+                            ndvi_landsat_8
                         )
                     if which_reduction in ["count", "binary"]:
                         one_time_slice_reduction = (
@@ -432,7 +468,7 @@ def gather_collections_and_reduce(gather_collections_args):
                             .toInt()
                             .rename([band_name_reduction])
                         )
-                    if which_reduction == "SWIR":
+                    if which_reduction == Index.SWIR.value.upper():
                         one_time_slice_reduction = one_time_slice_cloud_masked.map(
                             swir_landsat_8_9
                         )
@@ -440,7 +476,7 @@ def gather_collections_and_reduce(gather_collections_args):
                         one_time_slice_reduction
                     )
 
-                if dataset_selection["L9"]:
+                if "L9" in dataset_selection and dataset_selection["L9"]:
                     one_time_slice = (
                         ee.ImageCollection(sensor_input_l9)
                         .filterBounds(default_study_area)
@@ -454,17 +490,27 @@ def gather_collections_and_reduce(gather_collections_args):
                     one_time_slice_cloud_masked = one_time_slice.map(
                         mask_sr_clouds_l8_and_l9
                     ).map(apply_scale_factors_l89)
-                    if which_reduction == "NBR":
-                        one_time_slice_reduction = one_time_slice_cloud_masked.map(
-                            lambda img: img.normalizedDifference(
+                    if which_reduction == Index.NBR.value.upper():
+
+                        def nbr_landsat_9(img):
+                            mySingleValue = img.normalizedDifference(
                                 ["SR_B5", "SR_B7"]
-                            ).rename([band_name_reduction])
-                        )
-                    if which_reduction == "NDVI":
+                            ).rename(band_name_reduction)
+                            return ee.Image(mySingleValue.copyProperties(img)).toFloat()
+
                         one_time_slice_reduction = one_time_slice_cloud_masked.map(
-                            lambda img: img.normalizedDifference(
+                            nbr_landsat_9
+                        )
+                    if which_reduction == Index.NDVI.value.upper():
+
+                        def ndvi_landsat_9(img):
+                            mySingleValue = img.normalizedDifference(
                                 ["SR_B5", "SR_B4"]
-                            ).rename([band_name_reduction])
+                            ).rename(band_name_reduction)
+                            return ee.Image(mySingleValue.copyProperties(img)).toFloat()
+
+                        one_time_slice_reduction = one_time_slice_cloud_masked.map(
+                            ndvi_landsat_9
                         )
                     if which_reduction in ["count", "binary"]:
                         one_time_slice_reduction = (
@@ -473,7 +519,7 @@ def gather_collections_and_reduce(gather_collections_args):
                             .toInt()
                             .rename([band_name_reduction])
                         )
-                    if which_reduction == "SWIR":
+                    if which_reduction == Index.SWIR.value.upper():
                         one_time_slice_reduction = one_time_slice_cloud_masked.map(
                             swir_landsat_8_9
                         )
@@ -481,20 +527,20 @@ def gather_collections_and_reduce(gather_collections_args):
                         one_time_slice_reduction
                     )
 
-                if dataset_selection["MO"]:
+                if "MO" in dataset_selection and dataset_selection["MO"]:
                     one_time_slice = (
                         ee.ImageCollection(sensor_input_mo)
                         .filterBounds(default_study_area)
                         .filterDate(start, end)
                     )
                     one_time_slice_cloud_masked = one_time_slice
-                    if which_reduction == "NBR":
+                    if which_reduction == Index.NBR.value.upper():
                         one_time_slice_reduction = one_time_slice_cloud_masked.map(
                             lambda img: img.normalizedDifference(
                                 ["Nadir_Reflectance_Band2", "Nadir_Reflectance_Band7"]
                             )
                         )
-                    if which_reduction == "NDVI":
+                    if which_reduction == Index.NDVI.value.upper():
                         one_time_slice_reduction = one_time_slice_cloud_masked.map(
                             lambda img: img.normalizedDifference(
                                 ["Nadir_Reflectance_Band2", "Nadir_Reflectance_Band1"]
@@ -507,7 +553,7 @@ def gather_collections_and_reduce(gather_collections_args):
                             .toInt()
                             .rename([band_name_reduction])
                         )
-                    if which_reduction == "SWIR":
+                    if which_reduction == Index.SWIR.value.upper():
                         one_time_slice_reduction = one_time_slice_cloud_masked.map(
                             lambda img: img.select("Nadir_Reflectance_Band6").rename(
                                 band_name_reduction
@@ -517,7 +563,7 @@ def gather_collections_and_reduce(gather_collections_args):
                         one_time_slice_reduction
                     )
 
-                if dataset_selection["S1"]:
+                if "S1" in dataset_selection and dataset_selection["S1"]:
                     one_time_slice = (
                         ee.ImageCollection(sensor_input_s1)
                         .filterBounds(default_study_area)
@@ -546,7 +592,7 @@ def gather_collections_and_reduce(gather_collections_args):
                         one_time_slice_reduction
                     )
 
-                if dataset_selection["S2"]:
+                if "S2" in dataset_selection and dataset_selection["S2"]:
                     if the_year >= 2021:
                         one_time_slice = (
                             linked_s2_and_cloud_score_plus_ic.filterBounds(
@@ -587,11 +633,11 @@ def gather_collections_and_reduce(gather_collections_args):
                             .map(cloud_mask_ic_older_s2)
                             .map(apply_scale_factors_s2)
                         )
-                    if which_reduction == "NBR":
+                    if which_reduction == Index.NBR.value.upper():
                         one_time_slice_reduction = one_time_slice.map(
                             lambda img: img.normalizedDifference(["B8", "B12"])
                         )
-                    if which_reduction == "NDVI":
+                    if which_reduction == Index.NDVI.value.upper():
                         one_time_slice_reduction = one_time_slice.map(
                             lambda img: img.normalizedDifference(["B8", "B4"])
                         )
@@ -602,7 +648,7 @@ def gather_collections_and_reduce(gather_collections_args):
                             .toInt()
                             .rename([band_name_reduction])
                         )
-                    if which_reduction == "SWIR":
+                    if which_reduction == Index.SWIR.value.upper():
                         one_time_slice_reduction = one_time_slice.map(
                             lambda img: img.select("B11")
                             .divide(1e4)

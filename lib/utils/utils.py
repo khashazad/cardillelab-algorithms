@@ -6,6 +6,8 @@ import io
 import math
 
 import numpy as np
+import pandas as pd
+from lib.constants import Kalman
 from numpy.lib.recfunctions import structured_to_unstructured
 import ee
 
@@ -215,6 +217,7 @@ def sinusoidal(num_sinusoid_pairs, include_slope=True, include_intercept=True):
         cosine_terms = t.cos().multiply(cosine_selectors)
 
         image = t.multiply(t_selectors).add(sine_terms).add(cosine_terms)
+
         image = image.toArray(0)
         return image.arrayReshape(ee.Image(ee.Array([1, -1])), 2)
 
@@ -267,33 +270,6 @@ def track_updated_measurement(x, H, **kwargs):
         ee.Image
     """
     return H(**kwargs).matrixMultiply(x)
-
-
-def unpack_arrays(image, param_names):
-    """Unpack array image into separate bands.
-
-    Can be mapped across the output of kalman_filter.
-
-    Currently only unpacks x and P. Names covariance bands as
-    cov_{param1}_{param2}
-
-    Args:
-        image: ee.Image
-        param_names: list[str], the names to give each parameter in the state
-
-    Returns:
-        ee.Image with bands for each state variable, and the covariance between
-        each pair of state variables and all bands from the original input
-        image.
-    """
-    z = image.select(constants.MEASUREMENT).arrayProject([0]).arrayFlatten(
-        [[constants.MEASUREMENT]]
-    )
-    x = image.select(constants.STATE).arrayProject([0]).arrayFlatten([param_names])
-    P = image.select(constants.COV).arrayFlatten(
-        [["cov_" + x for x in param_names], param_names]
-    )
-    return image.addBands(ee.Image.cat(z, x, P), overwrite=True)
 
 
 def prep_landsat_collection(
@@ -404,9 +380,41 @@ def compute_pixels_wrapper(request):
         np.ndarray
     """
     result = ee.data.computePixels(request)
+
     return np.squeeze(
         structured_to_unstructured(np.load(io.BytesIO(result), allow_pickle=True))
     )
+
+
+def get_pixels(coords, image):
+    request = build_request(coords)
+    request["expression"] = image
+    return compute_pixels_wrapper(request)
+
+
+def get_image_collection_pixels(coords, collection):
+
+    band_count = ee.ImageCollection(collection).first().bandNames().size().getInfo()
+    collection_size = ee.ImageCollection(collection).size().getInfo()
+    chunks_size = 1024 // band_count
+
+    chunks = []
+    all_pixels = np.array([])
+
+    collection_as_list = collection.toList(collection_size)
+
+    for start in range(0, collection_size, chunks_size):
+        end = min(start + chunks_size, collection_size)
+        chunks.append(ee.ImageCollection(collection_as_list.slice(start, end)))
+
+    for chunk in chunks:
+        request = build_request(coords)
+        request["expression"] = chunk.toBands()
+        pixels = compute_pixels_wrapper(request)
+
+        all_pixels = np.append(all_pixels, pixels)
+
+    return all_pixels
 
 
 def get_utm_from_lonlat(lon, lat):

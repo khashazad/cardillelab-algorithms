@@ -1,12 +1,11 @@
 import ee
 import ee.geometry
 from pprint import pprint
-
 from lib import constants
+from lib.constants import Kalman, ESTIMATE, TIMESTAMP, FRACTION_OF_YEAR
+from lib.utils.ee.dates import convert_date
 
 ee.Initialize(opt_url=ee.data.HIGH_VOLUME_API_BASE_URL)
-
-UNMASK_VALUE = -999
 
 # use 2pi * time since this date as input to sinusoids
 START_DATE = "2016-01-01"
@@ -70,7 +69,6 @@ def kalman_filter(
     postprocess_fn=lambda **kwargs: [],
     measurement_band=None,
     num_params=3,
-    point_coords=None,
 ):
     """Applies a Kalman Filter to the given image collection.
 
@@ -121,22 +119,19 @@ def kalman_filter(
 
     if measurement_band is None:
         measurement_band = collection.first().bandNames().getString(0)
-        # print(f"Using {measurement_band.getInfo()} as measurement band.")
 
     def _iterator(curr, prev):
         """Kalman Filter Loop."""
-        curr = (
-            ee.Image(curr)
-            # .unmask(UNMASK_VALUE, sameFootprint=False)
-        )
+        curr = ee.Image(curr)
         prev = ee.List(prev)
 
         last = ee.Image(prev.get(-1))
-        x_prev = last.select(constants.STATE)
-        P_prev = last.select(constants.COV)
+
+        x_prev = last.select(Kalman.X.value)
+        P_prev = last.select(Kalman.P.value)
 
         z = curr.select(measurement_band).toArray().toArray(1)
-        t = curr.date().difference(START_DATE, "year")
+        t = ee.Number(curr.date().getRelative("day", "year")).divide(365)
 
         preprocess_results = preprocess_fn(**locals())
 
@@ -145,36 +140,32 @@ def kalman_filter(
 
         postprocess_results = postprocess_fn(**locals())
 
-        x = x_prev.where(curr.select(measurement_band).gt(-999), x)
-        P = P_prev.where(curr.select(measurement_band).gt(-999), P)
+        x = x_prev.where(curr.select(measurement_band).gt(constants.MASK_VALUE), x)
+        P = P_prev.where(curr.select(measurement_band).gt(constants.MASK_VALUE), P)
 
-        pixel_image = (
-            x.select(constants.STATE)
-            .arrayProject([0])
-            .arrayFlatten([["INTP", "COS0", "SIN0"]])
+        estimate = H(**locals()).matrixMultiply(x)
+
+        # amplitude = cos.pow(2).add(sin.pow(2)).sqrt()
+
+        frac_of_year = convert_date(
+            {"input_format": 2, "input_date": curr.date(), "output_format": 1}
         )
 
-        intp = pixel_image.select("INTP")
-        cos = pixel_image.select("COS0")
-        sin = pixel_image.select("SIN0")
-
-        phi = t.multiply(FREQUENCY)
-        estimate = intp.add(cos.multiply(phi.cos())).add(sin.multiply(phi.sin()))
-
-        amplitude = cos.pow(2).add(sin.pow(2)).sqrt()
-
         outputs = [
-            z.rename(constants.MEASUREMENT),
-            x.rename(constants.STATE),
-            P.rename(constants.COV),
-            estimate.rename(constants.ESTIMATE),
-            amplitude.rename(constants.AMPLITUDE),
-            ee.Image(curr.date().millis()).rename(constants.DATE),
+            z.rename(Kalman.Z.value),
+            x.rename(Kalman.X.value),
+            P.rename(Kalman.P.value),
+            estimate.rename(ESTIMATE),
+            # amplitude.rename(constants.AMPLITUDE),
+            ee.Image(curr.date().millis()).rename(TIMESTAMP),
+            ee.Image(frac_of_year).rename(FRACTION_OF_YEAR),
         ]
         outputs.extend(preprocess_results)
         outputs.extend(postprocess_results)
 
-        return ee.List(prev).add(ee.Image.cat(*outputs))
+        return ee.List(prev).add(
+            ee.Image.cat(*outputs).copyProperties(curr, ["system:time_start"])
+        )
 
     result = ee.List(collection.iterate(_iterator, [init_image]))
 

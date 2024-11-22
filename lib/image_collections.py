@@ -18,7 +18,7 @@ to use for the given run.
 """
 
 import ee
-
+from lib.constants import Index, Sensor
 from lib.study_areas import PNW, RANDONIA
 
 ee.Initialize()
@@ -26,6 +26,37 @@ ee.Initialize()
 from pprint import pprint
 
 from lib.utils.ee.gather_collections import gather_collections_and_reduce
+
+
+def build_collection(
+    study_area,
+    years=[2022, 2023],
+    index=Index.SWIR,
+    sensors=[Sensor.L8, Sensor.L9],
+    day_step_size=6,
+    start_doy=1,
+    end_doy=365,
+    cloud_cover_threshold=20,
+):
+    args = {
+        "default_study_area": (ee.Geometry.Polygon(study_area)),
+        "band_name_reduction": index.value,
+        "which_reduction": index.value.upper(),
+        "day_step_size": day_step_size,
+        "verbose": False,
+        "dataset_selection": {sensor.value: True for sensor in sensors},
+        "first_expectation_year": years[0],
+    }
+
+    for sensor in sensors:
+        args[f"{sensor.value}dictionary"] = {
+            "years_list": years,
+            "first_doy": start_doy,
+            "last_doy": end_doy,
+            "cloud_cover_threshold": cloud_cover_threshold,
+        }
+
+    return gather_collections_and_reduce(args)
 
 
 def scale_landsat8(image):
@@ -96,7 +127,7 @@ PNW_L8_L9_2022_2023 = gather_collections_and_reduce(
             "last_doy": 250,
             "cloud_cover_threshold": 20,
         },
-        "default_study_area": (ee.Geometry.Polygon(PNW)),
+        "default_study_area": (ee.Geometry.Polygon(PNW["coords"])),
         "band_name_reduction": "swir",
         "which_reduction": "SWIR",
         "day_step_size": 6,
@@ -130,7 +161,7 @@ PNW_L8_L9_2022_2023_DSS_1 = gather_collections_and_reduce(
             "last_doy": 250,
             "cloud_cover_threshold": 20,
         },
-        "default_study_area": ee.Geometry.Polygon(PNW),
+        "default_study_area": ee.Geometry.Polygon(PNW["coords"]),
         "band_name_reduction": "swir",
         "which_reduction": "SWIR",
         "day_step_size": 1,
@@ -164,7 +195,7 @@ PNW_L8_L9_2022 = gather_collections_and_reduce(
             "last_doy": 250,
             "cloud_cover_threshold": 20,
         },
-        "default_study_area": (ee.Geometry.Polygon(PNW)),
+        "default_study_area": (ee.Geometry.Polygon(PNW["coords"])),
         "band_name_reduction": "swir",
         "which_reduction": "SWIR",
         "day_step_size": 4,
@@ -238,7 +269,7 @@ L8_L9_RANDONIA_SWIR_2017_2018 = gather_collections_and_reduce(
             "last_doy": 250,
             "cloud_cover_threshold": 20,
         },
-        "default_study_area": (ee.Geometry.Polygon(RANDONIA)),
+        "default_study_area": (ee.Geometry.Polygon(RANDONIA["coords"])),
         "band_name_reduction": "swir",
         "which_reduction": "SWIR",
         "day_step_size": 6,
@@ -258,14 +289,60 @@ L8_L9_RANDONIA_SWIR_2017_2018 = gather_collections_and_reduce(
     }
 )
 
+L7_L8_L9_PNW_2017_2018 = gather_collections_and_reduce(
+    {
+        "L7dictionary": {
+            "years_list": [2017, 2018],
+            "first_doy": 1,
+            "last_doy": 365,
+            "cloud_cover_threshold": 20,
+        },
+        "L8dictionary": {
+            "years_list": [2017, 2018],
+            "first_doy": 1,
+            "last_doy": 365,
+            "cloud_cover_threshold": 20,
+        },
+        "L9dictionary": {
+            "years_list": [2017, 2018],
+            "first_doy": 1,
+            "last_doy": 365,
+            "cloud_cover_threshold": 20,
+        },
+        "default_study_area": (ee.Geometry.Polygon(PNW["coords"])),
+        "band_name_reduction": "swir",
+        "which_reduction": "SWIR",
+        "day_step_size": 4,
+        "verbose": False,
+        "dataset_selection": {
+            "L5": False,
+            "L7": True,
+            "L8": True,
+            "L9": True,
+            "MO": False,
+            "S2": False,
+            "S1": False,
+            "DW": False,
+        },
+        "first_expectation_year": 2017,
+        "verbose": False,
+    }
+)
+
+
+CCDC_GLOBAL = ee.ImageCollection("GOOGLE/GLOBAL_CCDC/V1")
+
 COLLECTIONS = {
     "PNW_L8_L9_2022_2023": PNW_L8_L9_2022_2023,
     "PNW_L8_L9_2022_2023_DSS_1": PNW_L8_L9_2022_2023_DSS_1,
     "PNW_L8_L9_2022": PNW_L8_L9_2022,
     "PNW_L8_L9_2023": PNW_L8_L9_2023,
+    "PNW_L7_L8_L9_2017_2018": L7_L8_L9_PNW_2017_2018,
     "CCDC_Randonia": CCDC_RANDONIA,
     "Randonia_l8_l9_2017_2018_swir": L8_L9_RANDONIA_SWIR_2017_2018,
+    "CCDC_Global": CCDC_GLOBAL,
 }
+
 
 if __name__ == "__main__":
     pprint(L8_GATHER_COLLECTIONS.getInfo())

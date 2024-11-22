@@ -1,14 +1,16 @@
 """ Constants used throughout project. """
 
-# band names
-STATE = "state"
-COV = "P"
-MEASUREMENT = "z"
+import enum
+
 RESIDUAL = "residual"
 CHANGE_PROB = "change_prob"
 ESTIMATE = "estimate"
+TIMESTAMP = "timestamp"
+FRACTION_OF_YEAR = "frac_of_year"
 DATE = "date"
 AMPLITUDE = "amplitude"
+MEASUREMENT = "measurement"
+
 PROBABILITY_LABEL = "probability_array"
 PROBABILITY_SELECTOR = "probability_class"
 PER_PIXEL_IMAGE_COUNTER = "per_pixel_image_counter"
@@ -31,4 +33,89 @@ RECORDING_FLAGS = {
     "confidence": False,
     "final_class": True,
     "final_probabilities": True,
+    "ccdc_coefficients": True,
+    "estimate": True,
+    "measurement": True,
+    "timestamp": True,
 }
+
+
+class KalmanRecordingFlags(enum.Enum):
+    STATE = "state"
+    STATE_COV = "state_covariance"
+    ESTIMATE = ESTIMATE
+    TIMESTAMP = TIMESTAMP
+    FRACTION_OF_YEAR = FRACTION_OF_YEAR
+    AMPLITUDE = AMPLITUDE
+    MEASUREMENT = MEASUREMENT
+    CCDC_COEFFICIENTS = "ccdc_coefficients"
+
+
+class BulcRecordingFlags(enum.Enum):
+    ITERATION_NUMBER = "iteration_number"
+    EVENTS = "events"
+    CONDITIONALS = "conditionals"
+    PROBABILITIES = "probabilities"
+    BULC_LAYERS = "bulc_layers"
+    CONFIDENCE = "confidence"
+    FINAL_CLASS = "final_class"
+    FINAL_PROBABILITIES = "final_probabilities"
+
+
+class Index(enum.Enum):
+    SWIR = "swir"
+    NBR = "nbr"
+    NDVI = "ndvi"
+
+
+class Sensor(enum.Enum):
+    L7 = "L7"
+    L8 = "L8"
+    L9 = "L9"
+    S2 = "S2"
+
+
+class Kalman(enum.Enum):
+    F = "F"  # state transition model
+    Q = "Q"  # process noise covariance
+    H = "H"  # observation model
+    R = "R"  # measurement noise covariance
+    P = "P"  # state covariance matrix
+    X = "X"  # state
+    Z = "z"  # observation
+    INITIAL_STATE = "initial_state"
+    COV_PREFIX = "cov"
+
+
+class Initialization(enum.Enum):
+    UNIFORM = "uniform"
+    POSTHOC = "posthoc"
+
+
+class Harmonic(enum.Enum):
+    INTERCEPT = "INTP"
+    SLOPE = "SLP"
+    COS = "COS"
+    SIN = "SIN"
+    COS2 = "COS2"
+    SIN2 = "SIN2"
+    COS3 = "COS3"
+    SIN3 = "SIN3"
+    UNIMODAL = "unimodal"
+    BIMODAL = "bimodal"
+    TRIMODAL = "trimodal"
+    FIT = "fit"
+
+
+class CCDC(enum.Enum):
+    BAND_PREFIX = "ccdc"
+    FIT = "ccdc_fit"
+
+
+HARMONIC_TAGS = ["INTP", "SLP", "COS", "SIN", "COS2", "SIN2", "COS3", "SIN3"]
+
+NUM_MEASURES = 1  # eeek only supports one band at a time
+
+MASK_VALUE = -999
+
+POINT_INDEX = "point_index"

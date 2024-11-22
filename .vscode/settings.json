@@ -63,5 +63,7 @@
     "editor.defaultformatter": null
   },
   "python.formatting.blackargs": ["--line-length", "120"],
-  "python.formatting.provider": "black"
+  "python.formatting.provider": "black",
+  "python.analysis.extraPaths": ["./lib"],
+  "python.REPL.enableREPLSmartSend": false
 }

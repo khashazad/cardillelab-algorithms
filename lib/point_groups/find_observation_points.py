@@ -9,7 +9,7 @@ import matplotlib.dates as mdates
 from enum import Enum
 import sys
 
-from lib.study_areas import RANDONIA
+from lib.study_areas import PNW, RANDONIA
 
 ee.Initialize(opt_url=ee.data.HIGH_VOLUME_API_BASE_URL)
 
@@ -27,7 +27,7 @@ NUMBER_OF_POINTS_IN_EACH_ITERATION = 10
 
 MINIMUM_MEASUREMENT_COUNT = 15
 
-STUDY_AREA = RANDONIA
+STUDY_AREA = PNW["coords"]
 FIRST_YEAR = 2017
 LAST_YEAR = 2018
 
@@ -36,7 +36,7 @@ if MODE == Stability.UNSTABLE:
 else:
     MEAN_SWIR_THRESHOLD = 0.01
 
-image_collection = COLLECTIONS["Randonia_l8_l9_2017_2018_swir"]
+image_collection = COLLECTIONS["PNW_L7_L8_L9_2017_2018"]
 
 script_directory = os.path.dirname(os.path.abspath(__file__))
 
