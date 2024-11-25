@@ -11,12 +11,12 @@ from lib.paths import (
 )
 
 run_directory = (
-    "./tests/kalman/PNW_L7_L8_L9_swir_2014-2019_posthoc/11-21_10:58_slope_unimodal"
+    "./tests/kalman/PNW_L7_L8_L9_swir_2017-2019_posthoc/11-24_22:13_slope_unimodal"
 )
 
-points = 1
+points = 7
 
-for i in range(points):
+for i in range(4, points):
     data = build_kalman_result_path(run_directory, i)
     harmonic_trend = build_harmonic_trend_path(run_directory, i)
     eoy_state = build_end_of_year_kalman_state_path(run_directory, i)
@@ -40,6 +40,11 @@ for i in range(points):
             HARMONIC_FLAGS_LABEL: harmonic_flags,
             Kalman.EOY_STATE.value: eoy_state,
         },
+        # PlotType.KALMAN_VS_CCDC_COEFS: {
+        #     "title": "Kalman vs CCDC Coefficients",
+        #     HARMONIC_FLAGS_LABEL: harmonic_flags,
+        #     Kalman.EOY_STATE.value: eoy_state,
+        # },
     }
 
     if os.path.exists(analysis_directory):

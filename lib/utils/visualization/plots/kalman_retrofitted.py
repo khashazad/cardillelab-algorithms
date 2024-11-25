@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 from pprint import pprint
 import matplotlib.dates as mdates
@@ -12,6 +13,7 @@ from lib.constants import (
     FRACTION_OF_YEAR_LABEL,
     HARMONIC_FLAGS_LABEL,
     TIMESTAMP_LABEL,
+    Harmonic,
     Kalman,
 )
 
@@ -44,6 +46,8 @@ def get_end_of_year_coefficients(options):
 def get_retrofitted_trend(eoy_state_coefs, frac_of_year, harmonic_flags):
     eoy_coefs_by_year = []
 
+    print("testing")
+
     for frac_year in list(frac_of_year):
         year = int(frac_year)
         coefs_array = eoy_state_coefs.get(str(year), [])
@@ -60,9 +64,11 @@ def get_retrofitted_trend(eoy_state_coefs, frac_of_year, harmonic_flags):
         for frac_year, coefs in eoy_coefs_by_year
     ]
 
-    return pd.DataFrame(
+    df = pd.DataFrame(
         estimates, columns=[FRACTION_OF_YEAR_LABEL, Kalman.RETROFITTED.value]
     )
+
+    return df
 
 
 def kalman_retrofitted_plot(
@@ -70,12 +76,14 @@ def kalman_retrofitted_plot(
     data,
     options,
 ):
+    harmonic_flags = options.get(HARMONIC_FLAGS_LABEL, {})
+    print(harmonic_flags)
 
     eoy_state_coefs = get_end_of_year_coefficients(options)
     eoy_state_df = get_retrofitted_trend(
         eoy_state_coefs,
         data[FRACTION_OF_YEAR_LABEL],
-        options.get(HARMONIC_FLAGS_LABEL, {}),
+        harmonic_flags,
     )
 
     data = data.merge(eoy_state_df, on=FRACTION_OF_YEAR_LABEL, how="inner")

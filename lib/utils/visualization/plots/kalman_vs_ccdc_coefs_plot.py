@@ -1,5 +1,3 @@
-from pprint import pprint
-from matplotlib import pyplot as plt
 import pandas as pd
 import matplotlib.dates as mdates
 
@@ -23,6 +21,16 @@ def kalman_vs_ccdc_coefs_plot(
     data[DATE_LABEL] = pd.to_datetime(data[DATE_LABEL])
 
     columns = data.columns
+
+    unique_years = pd.to_datetime(data[DATE_LABEL]).dt.year.unique().tolist()
+
+    for year in unique_years:
+        axs.axvline(
+            x=pd.Timestamp(year=year, month=1, day=1),
+            color="gray",
+            linestyle="-",
+            alpha=0.1,
+        )
 
     if harmonic_flags.get(Harmonic.INTERCEPT.value, False):
         if Harmonic.INTERCEPT.value in columns:

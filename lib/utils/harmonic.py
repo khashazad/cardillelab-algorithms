@@ -59,31 +59,31 @@ def extract_coefficients_from_array(coefs, harmonic_flags):
     args = {}
 
     if harmonic_flags.get(Harmonic.INTERCEPT.value, False):
-        args[Harmonic.INTERCEPT.value] = coefs[index]
+        args[Harmonic.INTERCEPT.value] = float(coefs[index])
         index += 1
 
     if harmonic_flags.get(Harmonic.SLOPE.value, False):
-        args[Harmonic.SLOPE.value] = coefs[index]
+        args[Harmonic.SLOPE.value] = float(coefs[index])
         index += 1
 
-    args[Harmonic.COS.value] = coefs[index]
+    args[Harmonic.COS.value] = float(coefs[index])
     index += 1
 
-    args[Harmonic.SIN.value] = coefs[index]
+    args[Harmonic.SIN.value] = float(coefs[index])
     index += 1
 
     if harmonic_flags.get(Harmonic.BIMODAL.value, False):
-        args[Harmonic.COS2.value] = coefs[index]
+        args[Harmonic.COS2.value] = float(coefs[index])
         index += 1
 
-        args[Harmonic.SIN2.value] = coefs[index]
+        args[Harmonic.SIN2.value] = float(coefs[index])
         index += 1
 
     if harmonic_flags.get(Harmonic.TRIMODAL.value, False):
-        args[Harmonic.COS3.value] = coefs[index]
+        args[Harmonic.COS3.value] = float(coefs[index])
         index += 1
 
-        args[Harmonic.SIN3.value] = coefs[index]
+        args[Harmonic.SIN3.value] = float(coefs[index])
         index += 1
 
     return args
