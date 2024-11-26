@@ -3,7 +3,7 @@ from pprint import pprint
 import matplotlib.dates as mdates
 import csv
 from lib.utils.harmonic import extract_coefficients_from_array
-from lib.utils.harmonic import calculate_harmonic_estimate
+from lib.utils.harmonic import calculate_harmonic_fit
 from lib.utils.visualization.constant import FIXED_Y_AXIS_LIMIT
 from lib.constants import (
     HARMONIC_TREND_LABEL,
@@ -55,13 +55,13 @@ def get_forward_trend(data, options, eoy_state_coefs, frac_of_year):
 
         if year == first_year:
             forward_trends.append(
-                [frac_year, calculate_harmonic_estimate(first_year_coefs, frac_year)]
+                [frac_year, calculate_harmonic_fit(first_year_coefs, frac_year)]
             )
         else:
             forward_trends.append(
                 [
                     frac_year,
-                    calculate_harmonic_estimate(
+                    calculate_harmonic_fit(
                         extract_coefficients_from_array(
                             eoy_state_coefs.get(str(year - 1), []), harmonic_flags
                         ),
@@ -114,7 +114,7 @@ def get_retrofitted_trend(eoy_state_coefs, frac_of_year, harmonic_flags):
     estimates = [
         [
             frac_year,
-            calculate_harmonic_estimate(coefs, frac_year),
+            calculate_harmonic_fit(coefs, frac_year),
         ]
         for frac_year, coefs in eoy_coefs_by_year
     ]

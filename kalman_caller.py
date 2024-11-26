@@ -9,14 +9,16 @@ import pandas as pd
 from kalman.kalman_helper import parse_band_names
 from lib.constants import (
     DATE_LABEL,
+    FORWARD_TREND_LABEL,
     HARMONIC_FLAGS_LABEL,
     HARMONIC_TREND_LABEL,
+    RETROFITTED_TREND_LABEL,
     Index,
     Initialization,
     Kalman,
     Sensor,
 )
-from lib.study_areas import PNW
+from lib.study_areas import PNW, RANDONIA
 from lib.study_packages import (
     get_tag,
     get_points,
@@ -59,9 +61,9 @@ RUN_ID = ""
 COLLECTION_PARAMETERS = {
     "index": Index.SWIR,
     "sensors": [Sensor.L7, Sensor.L8, Sensor.L9],
-    "years": [2017, 2018, 2019],
-    "point_group": "pnw_7",
-    "study_area": PNW,
+    "years": range(2017, 2020),
+    "point_group": "randonia_4",
+    "study_area": RANDONIA,
     "day_step_size": 4,
     "start_doy": 1,
     "end_doy": 365,
@@ -271,6 +273,10 @@ def generate_all_plots():
                 PlotType.KALMAN_RETROFITTED: {
                     HARMONIC_FLAGS_LABEL: HARMONIC_FLAGS,
                     Kalman.EOY_STATE.value: build_end_of_year_kalman_state_path(
+                        run_directory, point_index
+                    ),
+                    FORWARD_TREND_LABEL: True,
+                    HARMONIC_TREND_LABEL: build_harmonic_trend_path(
                         run_directory, point_index
                     ),
                 },

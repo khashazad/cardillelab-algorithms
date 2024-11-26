@@ -3,7 +3,7 @@ import matplotlib.dates as mdates
 import csv
 from lib.utils.harmonic import extract_coefficients_from_array, parse_harmonic_params
 
-from lib.utils.harmonic import calculate_harmonic_estimate
+from lib.utils.harmonic import calculate_harmonic_fit
 from lib.utils.visualization.constant import FIXED_Y_AXIS_LIMIT
 from lib.constants import (
     DATE_LABEL,
@@ -49,7 +49,7 @@ def get_harmonic_trend_estimates(harmonic_trend_coefs, frac_of_year, harmonic_fl
     estimates = [
         [
             frac_year,
-            calculate_harmonic_estimate(coefs, frac_year),
+            calculate_harmonic_fit(coefs, frac_year),
         ]
         for frac_year, coefs in harmonic_trend_coefs_by_year
     ]

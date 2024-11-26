@@ -213,7 +213,7 @@ def harmonic_trend_coefficients_for_points(
     return output_list
 
 
-def calculate_harmonic_estimate(coefficients, frac_of_year):
+def calculate_harmonic_fit(coefficients, frac_of_year):
     phi = np.pi * 2 * frac_of_year
 
     phi_cos = np.cos(phi)
