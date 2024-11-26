@@ -113,4 +113,4 @@ def generate_plots(data, output_path, options, display=False):
         if display:
             plt.show()
 
-        # plt.close(fig)
+        plt.close(fig)
