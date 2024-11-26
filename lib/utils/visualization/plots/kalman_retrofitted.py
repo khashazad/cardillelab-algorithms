@@ -1,21 +1,78 @@
-import numpy as np
 import pandas as pd
 from pprint import pprint
 import matplotlib.dates as mdates
 import csv
-from lib.utils.harmonic import extract_coefficients_from_array, parse_harmonic_params
-
+from lib.utils.harmonic import extract_coefficients_from_array
 from lib.utils.harmonic import calculate_harmonic_estimate
 from lib.utils.visualization.constant import FIXED_Y_AXIS_LIMIT
 from lib.constants import (
+    HARMONIC_TREND_LABEL,
     DATE_LABEL,
     ESTIMATE_LABEL,
+    FORWARD_TREND_LABEL,
     FRACTION_OF_YEAR_LABEL,
     HARMONIC_FLAGS_LABEL,
-    TIMESTAMP_LABEL,
-    Harmonic,
+    RETROFITTED_TREND_LABEL,
     Kalman,
 )
+
+
+def get_harmonic_trend_coefficients(options):
+    harmonic_trend = options.get(HARMONIC_TREND_LABEL, None)
+
+    assert (
+        harmonic_trend is not None
+    ), "harmonic trend coefficients are required for generating kalman estimate vs harmonic trend plot"
+
+    coef_dic = dict()
+
+    with open(harmonic_trend, "r") as file:
+        reader = csv.reader(file)
+
+        for line in reader:
+            coef_dic[line[0]] = line[1:]
+
+    return coef_dic
+
+
+def get_forward_trend(data, options, eoy_state_coefs, frac_of_year):
+    harmonic_trend = options.get(HARMONIC_TREND_LABEL, {})
+    harmonic_flags = options.get(HARMONIC_FLAGS_LABEL, {})
+
+    with open(harmonic_trend, "r") as file:
+        reader = csv.reader(file)
+
+        first_year_coefs = extract_coefficients_from_array(
+            next(reader)[1:], harmonic_flags
+        )
+
+    first_year = pd.to_datetime(data[DATE_LABEL]).iloc[0].year
+
+    forward_trends = []
+
+    for frac_year in frac_of_year:
+        year = int(frac_year)
+
+        if year == first_year:
+            forward_trends.append(
+                [frac_year, calculate_harmonic_estimate(first_year_coefs, frac_year)]
+            )
+        else:
+            forward_trends.append(
+                [
+                    frac_year,
+                    calculate_harmonic_estimate(
+                        extract_coefficients_from_array(
+                            eoy_state_coefs.get(str(year - 1), []), harmonic_flags
+                        ),
+                        frac_year,
+                    ),
+                ]
+            )
+
+    return pd.DataFrame(
+        forward_trends, columns=[FRACTION_OF_YEAR_LABEL, FORWARD_TREND_LABEL]
+    )
 
 
 def get_end_of_year_coefficients(options):
@@ -46,8 +103,6 @@ def get_end_of_year_coefficients(options):
 def get_retrofitted_trend(eoy_state_coefs, frac_of_year, harmonic_flags):
     eoy_coefs_by_year = []
 
-    print("testing")
-
     for frac_year in list(frac_of_year):
         year = int(frac_year)
         coefs_array = eoy_state_coefs.get(str(year), [])
@@ -65,7 +120,7 @@ def get_retrofitted_trend(eoy_state_coefs, frac_of_year, harmonic_flags):
     ]
 
     df = pd.DataFrame(
-        estimates, columns=[FRACTION_OF_YEAR_LABEL, Kalman.RETROFITTED.value]
+        estimates, columns=[FRACTION_OF_YEAR_LABEL, RETROFITTED_TREND_LABEL]
     )
 
     return df
@@ -77,7 +132,6 @@ def kalman_retrofitted_plot(
     options,
 ):
     harmonic_flags = options.get(HARMONIC_FLAGS_LABEL, {})
-    print(harmonic_flags)
 
     eoy_state_coefs = get_end_of_year_coefficients(options)
     eoy_state_df = get_retrofitted_trend(
@@ -87,6 +141,13 @@ def kalman_retrofitted_plot(
     )
 
     data = data.merge(eoy_state_df, on=FRACTION_OF_YEAR_LABEL, how="inner")
+
+    if options.get(FORWARD_TREND_LABEL, False):
+        forward_trend_df = get_forward_trend(
+            data, options, eoy_state_coefs, data[FRACTION_OF_YEAR_LABEL]
+        )
+
+        data = data.merge(forward_trend_df, on=FRACTION_OF_YEAR_LABEL, how="inner")
 
     unique_years = pd.to_datetime(data[DATE_LABEL]).dt.year.unique().tolist()
 
@@ -110,11 +171,20 @@ def kalman_retrofitted_plot(
 
     axs.plot(
         data[DATE_LABEL],
-        data[Kalman.RETROFITTED.value],
+        data[RETROFITTED_TREND_LABEL],
         label="Retrofitted",
-        linestyle="--",
-        color="green",
+        linestyle="-.",
+        color="orange",
     )
+
+    if options.get(FORWARD_TREND_LABEL, False):
+        axs.plot(
+            data[DATE_LABEL],
+            data[FORWARD_TREND_LABEL],
+            label="Forward Trend",
+            linestyle="-.",
+            color="green",
+        )
 
     axs.scatter(
         data[(data[Kalman.Z.value] != 0)][DATE_LABEL],

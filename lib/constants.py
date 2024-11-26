@@ -85,8 +85,11 @@ class Kalman(enum.Enum):
     Z = "z"  # observation
     INITIAL_STATE = "initial_state"
     COV_PREFIX = "cov"
-    RETROFITTED = "retrofitted"
     EOY_STATE = "eoy_state"
+
+
+FORWARD_TREND_LABEL = "forward_trend"
+RETROFITTED_TREND_LABEL = "retrofitted_trend"
 
 
 class Initialization(enum.Enum):
