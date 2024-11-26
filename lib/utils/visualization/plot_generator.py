@@ -53,7 +53,6 @@ def save_chart(fig, name, output_directory, legend):
 
 
 def generate_plots(data, output_path, options, display=False):
-    print("here")
     # create output directory
     os.makedirs(output_path, exist_ok=True)
 
