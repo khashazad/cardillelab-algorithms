@@ -108,7 +108,7 @@ def preprocess(bulc_leveler=0.1):
         prev = ee.List(prev)
 
         curr_residual = z.subtract(H(**kwargs).matrixMultiply(x)).arrayGet((0, 0))
-        prev_residuals = ee.ImageCollection(prev).select(constants.RESIDUAL)
+        prev_residuals = ee.ImageCollection(prev).select(constants.RESIDUAL_LABEL)
         mean_residuals = prev_residuals.reduce(ee.Reducer.mean())
         std_residuals = prev_residuals.reduce(ee.Reducer.stdDev())
 
@@ -116,13 +116,13 @@ def preprocess(bulc_leveler=0.1):
         change_prob = get_change_prob(z_score)
         smoothed_change_prob = bulcp_update(
             change_prob,
-            ee.Image(prev.get(-1)).select(constants.CHANGE_PROB),
+            ee.Image(prev.get(-1)).select(constants.CHANGE_PROB_LABEL),
             bulc_leveler,
         )
 
         return [
-            curr_residual.rename(constants.RESIDUAL),
-            smoothed_change_prob.rename(constants.CHANGE_PROB),
+            curr_residual.rename(constants.RESIDUAL_LABEL),
+            smoothed_change_prob.rename(constants.CHANGE_PROB_LABEL),
         ]
 
     return inner

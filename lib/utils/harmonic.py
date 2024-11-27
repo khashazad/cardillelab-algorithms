@@ -46,6 +46,49 @@ def parse_harmonic_params(harmonic_flags):
     return param_names, NUM_SINUSOID_PAIRS
 
 
+def extract_coefficients_from_array(coefs, harmonic_flags):
+    harmonic_params, _ = parse_harmonic_params(harmonic_flags)
+
+    assert len(coefs) == len(
+        harmonic_params
+    ), "Coefficients and harmonic parameters must be the same length. Got {} and {}".format(
+        len(coefs), len(harmonic_params)
+    )
+    index = 0
+
+    args = {}
+
+    if harmonic_flags.get(Harmonic.INTERCEPT.value, False):
+        args[Harmonic.INTERCEPT.value] = float(coefs[index])
+        index += 1
+
+    if harmonic_flags.get(Harmonic.SLOPE.value, False):
+        args[Harmonic.SLOPE.value] = float(coefs[index])
+        index += 1
+
+    args[Harmonic.COS.value] = float(coefs[index])
+    index += 1
+
+    args[Harmonic.SIN.value] = float(coefs[index])
+    index += 1
+
+    if harmonic_flags.get(Harmonic.BIMODAL.value, False):
+        args[Harmonic.COS2.value] = float(coefs[index])
+        index += 1
+
+        args[Harmonic.SIN2.value] = float(coefs[index])
+        index += 1
+
+    if harmonic_flags.get(Harmonic.TRIMODAL.value, False):
+        args[Harmonic.COS3.value] = float(coefs[index])
+        index += 1
+
+        args[Harmonic.SIN3.value] = float(coefs[index])
+        index += 1
+
+    return args
+
+
 def harmonic_trend_coefficients(
     collection,
     point_coords,
@@ -170,7 +213,7 @@ def harmonic_trend_coefficients_for_points(
     return output_list
 
 
-def calculate_harmonic_estimate(coefficients, frac_of_year):
+def calculate_harmonic_fit(coefficients, frac_of_year):
     phi = np.pi * 2 * frac_of_year
 
     phi_cos = np.cos(phi)

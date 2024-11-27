@@ -6,13 +6,13 @@ from lib import constants
 from lib.utils import utils
 from lib.constants import (
     CCDC,
-    FRACTION_OF_YEAR,
+    FRACTION_OF_YEAR_LABEL,
     HARMONIC_TAGS,
     Harmonic,
     KalmanRecordingFlags,
     Kalman,
-    ESTIMATE,
-    TIMESTAMP,
+    ESTIMATE_LABEL,
+    TIMESTAMP_LABEL,
 )
 from lib.constants import NUM_MEASURES
 from lib.utils.harmonic import parse_harmonic_params
@@ -45,7 +45,7 @@ def parse_band_names(recording_flags, harmonic_flags):
 
     # estimate
     if recording_flags.get(KalmanRecordingFlags.ESTIMATE, False):
-        band_names.append(ESTIMATE)
+        band_names.append(ESTIMATE_LABEL)
 
     # measurement
     if recording_flags.get(KalmanRecordingFlags.MEASUREMENT, False):
@@ -59,10 +59,10 @@ def parse_band_names(recording_flags, harmonic_flags):
 
     # timestamp
     if recording_flags.get(KalmanRecordingFlags.TIMESTAMP, False):
-        band_names.append(TIMESTAMP)
+        band_names.append(TIMESTAMP_LABEL)
 
     if recording_flags.get(KalmanRecordingFlags.FRACTION_OF_YEAR, False):
-        band_names.append(FRACTION_OF_YEAR)
+        band_names.append(FRACTION_OF_YEAR_LABEL)
 
     return band_names
 
@@ -163,7 +163,11 @@ def unpack_kalman_results(
         bands.append(x)
 
     if recording_flags.get(KalmanRecordingFlags.ESTIMATE, False):
-        estimate = image.select(ESTIMATE).arrayProject([0]).arrayFlatten([[ESTIMATE]])
+        estimate = (
+            image.select(ESTIMATE_LABEL)
+            .arrayProject([0])
+            .arrayFlatten([[ESTIMATE_LABEL]])
+        )
         bands.append(estimate)
 
     if recording_flags.get(KalmanRecordingFlags.STATE_COV, False):

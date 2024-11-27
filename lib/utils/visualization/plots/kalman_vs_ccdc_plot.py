@@ -5,11 +5,37 @@ import matplotlib.dates as mdates
 
 from lib.utils.visualization.constant import FIXED_Y_AXIS_LIMIT
 from lib.constants import (
-    DATE,
-    ESTIMATE,
+    DATE_LABEL,
+    ESTIMATE_LABEL,
+    FRACTION_OF_YEAR_LABEL,
+    Harmonic,
     Kalman,
     CCDC,
 )
+from lib.utils.harmonic import calculate_harmonic_fit
+
+
+def calculate_ccdc_fit(data):
+    ccdc_coef = lambda coef: f"{CCDC.BAND_PREFIX.value}_{coef}"
+
+    data["CCDC"] = data.apply(
+        lambda row: calculate_harmonic_fit(
+            {
+                Harmonic.INTERCEPT.value: row[ccdc_coef(Harmonic.INTERCEPT.value)],
+                Harmonic.SLOPE.value: row[ccdc_coef(Harmonic.SLOPE.value)],
+                Harmonic.COS.value: row[ccdc_coef(Harmonic.COS.value)],
+                Harmonic.SIN.value: row[ccdc_coef(Harmonic.SIN.value)],
+                Harmonic.COS2.value: row[ccdc_coef(Harmonic.COS2.value)],
+                Harmonic.SIN2.value: row[ccdc_coef(Harmonic.SIN2.value)],
+                Harmonic.COS3.value: row[ccdc_coef(Harmonic.COS3.value)],
+                Harmonic.SIN3.value: row[ccdc_coef(Harmonic.SIN3.value)],
+            },
+            row[FRACTION_OF_YEAR_LABEL],
+        ),
+        axis=1,
+    )
+
+    return data
 
 
 def kalman_vs_ccdc_plot(
@@ -17,26 +43,40 @@ def kalman_vs_ccdc_plot(
     data,
     options,
 ):
-    data[DATE] = pd.to_datetime(data[DATE])
+    data[DATE_LABEL] = pd.to_datetime(data[DATE_LABEL])
+
+    # data = calculate_ccdc_fit(data)
+    ccdc_coef = lambda coef: f"{CCDC.BAND_PREFIX.value}_{coef}"
+
+    ccdc_filtered = data[
+        (data[ccdc_coef(Harmonic.INTERCEPT.value)] != 0)
+        | (data[ccdc_coef(Harmonic.SLOPE.value)] != 0)
+        | (data[ccdc_coef(Harmonic.COS.value)] != 0)
+        | (data[ccdc_coef(Harmonic.SIN.value)] != 0)
+        | (data[ccdc_coef(Harmonic.COS2.value)] != 0)
+        | (data[ccdc_coef(Harmonic.SIN2.value)] != 0)
+        | (data[ccdc_coef(Harmonic.COS3.value)] != 0)
+        | (data[ccdc_coef(Harmonic.SIN3.value)] != 0)
+    ]
 
     axs.plot(
-        data[DATE],
-        data[ESTIMATE],
+        data[DATE_LABEL],
+        data[ESTIMATE_LABEL],
         label="Kalman Estimate",
         linestyle="-",
         color="blue",
     )
 
     axs.plot(
-        data[DATE],
-        data[CCDC.FIT.value],
+        ccdc_filtered[DATE_LABEL],
+        ccdc_filtered[CCDC.FIT.value],
         label="CCDC",
         linestyle="--",
         color="green",
     )
 
     axs.scatter(
-        data[(data[Kalman.Z.value] != 0)][DATE],
+        data[(data[Kalman.Z.value] != 0)][DATE_LABEL],
         data[(data[Kalman.Z.value] != 0)][Kalman.Z.value],
         label="Observed",
         s=13,

@@ -145,8 +145,8 @@ def test_bulc_as_noise(
         [
             constants.STATE,
             constants.COV,
-            constants.RESIDUAL,
-            constants.CHANGE_PROB,
+            constants.RESIDUAL_LABEL,
+            constants.CHANGE_PROB_LABEL,
         ]
     )
     init["preprocess_fn"] = bulc.preprocess(0.1)
@@ -174,8 +174,8 @@ def test_scaled_bulc():
         [
             constants.STATE,
             constants.COV,
-            constants.RESIDUAL,
-            constants.CHANGE_PROB,
+            constants.RESIDUAL_LABEL,
+            constants.CHANGE_PROB_LABEL,
         ]
     )
     init["preprocess_fn"] = bulc.preprocess(0.1)
@@ -205,10 +205,8 @@ def test_ccdc_vs_sinusoidal():
     verify_success(result1 := kalman_filter(col, **init1))
     verify_success(result2 := kalman_filter(col, **init2))
 
-    result1 = result1.map(lambda im: utils.unpack_arrays(im,
-        ccdc_utils.HARMONIC_TAGS))
-    result2 = result2.map(lambda im: utils.unpack_arrays(im,
-        ccdc_utils.HARMONIC_TAGS))
+    result1 = result1.map(lambda im: utils.unpack_arrays(im, ccdc_utils.HARMONIC_TAGS))
+    result2 = result2.map(lambda im: utils.unpack_arrays(im, ccdc_utils.HARMONIC_TAGS))
 
     bands = result1.first().bandNames()
     bands = bands.remove("x").remove("z").remove("P")
@@ -216,18 +214,26 @@ def test_ccdc_vs_sinusoidal():
     result1 = result1.select(bands).toBands()
     result2 = result2.select(bands).toBands()
 
-    result1 = result1.sample(
-        region=POINT,
-        scale=10,
-        numPixels=1,
-    ).first().getInfo()["properties"]
+    result1 = (
+        result1.sample(
+            region=POINT,
+            scale=10,
+            numPixels=1,
+        )
+        .first()
+        .getInfo()["properties"]
+    )
     result1 = np.array(list(result1.values()))
 
-    result2 = result2.sample(
-        region=POINT,
-        scale=10,
-        numPixels=1,
-    ).first().getInfo()["properties"]
+    result2 = (
+        result2.sample(
+            region=POINT,
+            scale=10,
+            numPixels=1,
+        )
+        .first()
+        .getInfo()["properties"]
+    )
     result2 = np.array(list(result2.values()))
 
     assert np.allclose(result1, result2)
@@ -309,7 +315,6 @@ def test_sinusoidal():
     image = _make_image(params)
     compare_image = utils.sinusoidal(1, include_slope=False, include_intercept=True)(t)
     assert _make_comparison(image, compare_image)
-
 
     # compare against ccdc
     image = utils.ccdc(t)

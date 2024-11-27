@@ -7,8 +7,17 @@ import ee.geometry
 import numpy as np
 import pandas as pd
 from kalman.kalman_helper import parse_band_names
-from lib.constants import DATE, Index, Initialization, Kalman, Sensor
-from lib.study_areas import PNW
+from lib.constants import (
+    DATE_LABEL,
+    FORWARD_TREND_LABEL,
+    HARMONIC_FLAGS_LABEL,
+    HARMONIC_TREND_LABEL,
+    Index,
+    Initialization,
+    Kalman,
+    Sensor,
+)
+from lib.study_areas import PNW, RANDONIA
 from lib.study_packages import (
     get_tag,
     get_points,
@@ -22,7 +31,7 @@ from lib.utils import utils
 from lib.constants import (
     Harmonic,
     KalmanRecordingFlags,
-    TIMESTAMP,
+    TIMESTAMP_LABEL,
 )
 from lib.paths import (
     HARMONIC_TREND_SUBDIRECTORY,
@@ -51,9 +60,9 @@ RUN_ID = ""
 COLLECTION_PARAMETERS = {
     "index": Index.SWIR,
     "sensors": [Sensor.L7, Sensor.L8, Sensor.L9],
-    "years": [2014, 2015, 2016, 2017, 2018, 2019],
-    "point_group": "pnw_7",
-    "study_area": PNW,
+    "years": range(2017, 2022),
+    "point_group": "randonia_6",
+    "study_area": RANDONIA,
     "day_step_size": 4,
     "start_doy": 1,
     "end_doy": 365,
@@ -65,7 +74,7 @@ HARMONIC_FLAGS = {
     Harmonic.INTERCEPT.value: True,
     Harmonic.SLOPE.value: True,
     Harmonic.UNIMODAL.value: True,
-    # Harmonic.BIMODAL.value: True,
+    Harmonic.BIMODAL.value: True,
     # Harmonic.TRIMODAL.value: True,
 }
 
@@ -104,7 +113,7 @@ def create_points_file(points_filename, coefficients_by_point, years: list[int])
             file.write(f"{longitude},{latitude},{intercept},{cos},{sin}\n")
 
 
-def run_kalman(parameters, collection, point):
+def run_kalman(parameters, collection, point, year):
     global run_directory
 
     collection = collection.filterBounds(ee.Geometry.Point(point))
@@ -139,15 +148,12 @@ def run_kalman(parameters, collection, point):
     df = pd.DataFrame(data, columns=band_names)
 
     # add date column
-    df[DATE] = pd.to_datetime(df[TIMESTAMP], unit="ms").dt.strftime("%Y-%m-%d")
+    df[DATE_LABEL] = pd.to_datetime(df[TIMESTAMP_LABEL], unit="ms").dt.strftime(
+        "%Y-%m-%d"
+    )
 
     # drop rows outside of the collection years
-    df = df[
-        df[DATE]
-        .str.slice(0, 4)
-        .astype(int)
-        .between(COLLECTION_PARAMETERS["years"][0], COLLECTION_PARAMETERS["years"][-1])
-    ]
+    df = df[pd.to_datetime(df[DATE_LABEL]).dt.year == year]
 
     return df
 
@@ -173,7 +179,6 @@ def process_point(kalman_parameters, point):
 
     def update_kalman_parameters_with_last_run(data, year):
         harmonic_params, _ = parse_harmonic_params(HARMONIC_FLAGS)
-
         state = data.iloc[-1][harmonic_params].tolist()
         covariance = data.iloc[-1][
             [f"{Kalman.COV_PREFIX.value}_{x}" for x in harmonic_params]
@@ -209,7 +214,7 @@ def process_point(kalman_parameters, point):
         if INITIALIZATION == Initialization.POSTHOC and is_first_year:
             kalman_parameters[Kalman.X.value] = coefficients
 
-        data = run_kalman(kalman_parameters, collection, point)
+        data = run_kalman(kalman_parameters, collection, point, year)
 
         update_kalman_parameters_with_last_run(data, year)
 
@@ -249,10 +254,10 @@ def generate_all_plots():
             options={
                 PlotType.KALMAN_VS_HARMONIC: {
                     "title": f"Kalman vs Harmonic Trend",
-                    "harmonic_trend": build_harmonic_trend_path(
+                    HARMONIC_TREND_LABEL: build_harmonic_trend_path(
                         run_directory, point_index
                     ),
-                    "harmonic_flags": HARMONIC_FLAGS,
+                    HARMONIC_FLAGS_LABEL: HARMONIC_FLAGS,
                 },
                 PlotType.KALMAN_FIT: {
                     "title": "Kalman Fit",
@@ -262,7 +267,17 @@ def generate_all_plots():
                 },
                 PlotType.KALMAN_VS_CCDC_COEFS: {
                     "title": "Kalman vs CCDC Coefficients",
-                    "harmonic_flags": HARMONIC_FLAGS,
+                    HARMONIC_FLAGS_LABEL: HARMONIC_FLAGS,
+                },
+                PlotType.KALMAN_RETROFITTED: {
+                    HARMONIC_FLAGS_LABEL: HARMONIC_FLAGS,
+                    Kalman.EOY_STATE.value: build_end_of_year_kalman_state_path(
+                        run_directory, point_index
+                    ),
+                    FORWARD_TREND_LABEL: True,
+                    HARMONIC_TREND_LABEL: build_harmonic_trend_path(
+                        run_directory, point_index
+                    ),
                 },
             },
         )

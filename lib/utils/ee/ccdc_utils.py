@@ -226,7 +226,6 @@ def parse_ccdc_params(fname):
 
 
 def get_synthetic_for_year(image, date, date_format, band, segments):
-
     # Convert date to fractional year
     tfit = date
 
@@ -257,7 +256,7 @@ def get_synthetic_for_year(image, date, date_format, band, segments):
 
     # Get coefficients for the specified band
     newParams = get_multi_coefs(
-        image, tfit, [str(band)], HARMONIC_TAGS, False, segments, "before"
+        image, tfit, [str(band)], HARMONIC_TAGS, True, segments, "after"
     )
 
     # Calculate synthetic image

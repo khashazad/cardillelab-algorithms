@@ -1,3 +1,4 @@
+import math
 import ee
 
 from kalman import kalman_filter
@@ -22,6 +23,7 @@ from lib.utils.ee.ccdc_utils import (
     get_multi_synthetic,
 )
 from lib.utils.ee.dates import convert_date
+from lib.utils.utils import ccdc
 
 ee.Initialize(opt_url=ee.data.HIGH_VOLUME_API_BASE_URL)
 
@@ -55,11 +57,26 @@ def append_ccdc_coefficients(image):
         behavior="after",
     ).rename([*[f"{CCDC.BAND_PREFIX.value}_{x}" for x in HARMONIC_TAGS]])
 
-    fit = get_multi_synthetic(ccdc_image, formatted_date, 1, bands, segments).rename(
-        [CCDC.FIT.value]
-    )
+    t = ee.Number(image.date().getRelative("day", "year")).divide(365.25)
 
-    return image.addBands(coefs.addBands(fit), overwrite=True)
+    omega = ee.Number(6.283)
+
+    imageT = ee.Image.constant(
+        [
+            1,
+            t,
+            t.multiply(omega).cos(),
+            t.multiply(omega).sin(),
+            t.multiply(omega.multiply(2)).cos(),
+            t.multiply(omega.multiply(2)).sin(),
+            t.multiply(omega.multiply(3)).cos(),
+            t.multiply(omega.multiply(3)).sin(),
+        ]
+    ).float()
+
+    synthetic_image = imageT.multiply(coefs).reduce("sum").rename(CCDC.FIT.value)
+
+    return image.addBands(coefs.addBands(synthetic_image), overwrite=True)
 
 
 def main(
