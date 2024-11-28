@@ -15,7 +15,7 @@ def get_tag(
         if len(kwargs["years"]) == 1
         else f"{kwargs['years'][0]}-{kwargs['years'][-1]}"
     )
-    return f"{kwargs['study_area']['name']}_{'_'.join([s.value for s in kwargs['sensors']])}_{kwargs['index'].value}_{year_tag}_{kwargs['initialization'].value}"
+    return f"{kwargs['study_area']['name']}_{'_'.join([s.value for s in kwargs['sensors']])}_{kwargs['index'].value}_{year_tag}_{kwargs['point_group']}"
 
 
 def get_collection(**kwargs):

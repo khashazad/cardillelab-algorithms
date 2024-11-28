@@ -60,7 +60,7 @@ RUN_ID = ""
 COLLECTION_PARAMETERS = {
     "index": Index.SWIR,
     "sensors": [Sensor.L7, Sensor.L8, Sensor.L9],
-    "years": range(2017, 2022),
+    "years": range(2016, 2020),
     "point_group": "randonia_6",
     "study_area": RANDONIA,
     "day_step_size": 4,
@@ -72,9 +72,9 @@ COLLECTION_PARAMETERS = {
 
 HARMONIC_FLAGS = {
     Harmonic.INTERCEPT.value: True,
-    Harmonic.SLOPE.value: True,
+    # Harmonic.SLOPE.value: True,
     Harmonic.UNIMODAL.value: True,
-    Harmonic.BIMODAL.value: True,
+    # Harmonic.BIMODAL.value: True,
     # Harmonic.TRIMODAL.value: True,
 }
 
