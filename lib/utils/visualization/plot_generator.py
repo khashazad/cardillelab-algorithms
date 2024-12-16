@@ -1,6 +1,7 @@
 import pandas as pd
 import os
 import matplotlib.pyplot as plt
+from lib.constants import DATE_LABEL
 from lib.utils.visualization.constant import (
     ASPECT_RATIO,
     PLOT_TYPES,
@@ -15,6 +16,7 @@ from lib.utils.visualization.plots.kalman_vs_ccdc_coefs_plot import (
     kalman_vs_ccdc_coefs_plot,
 )
 from lib.utils.visualization.plots.kalman_retrofitted import kalman_retrofitted_plot
+from lib.utils.visualization.plots.kalman_yearly_fit import kalman_yearly_fit_plot
 
 
 def get_labels_and_handles(axs):
@@ -51,6 +53,37 @@ def save_chart(fig, name, output_directory, legend):
         bbox_extra_artists=(legend,),
     )
 
+def generate_yearly_kalman_fit_plots(data, output_path, options, display=False):
+    unique_years = (
+        pd.to_datetime(data[DATE_LABEL]).dt.year.unique().tolist()
+    )
+
+    for year in unique_years:
+        fig, axs = plt.subplots(figsize=ASPECT_RATIO)
+
+        kalman_yearly_fit_plot(
+            axs,
+            data.copy(),
+            options[PlotType.KALMAN_YEARLY_FIT],
+            year,
+        )
+
+        labels, handles = get_labels_and_handles(axs)
+
+        legend = fig.legend(
+            handles,
+            labels,
+            loc="upper center",
+            bbox_to_anchor=(0.5, -0.1),
+            ncol=6 if len(labels) > 6 else len(labels),
+        )
+
+        save_chart(
+            fig,
+            f"{year}",
+            f"{output_path}/{PlotType.KALMAN_YEARLY_FIT.value}",
+            legend=legend,
+        )
 
 def generate_plots(data, output_path, options, display=False):
     # create output directory
@@ -96,6 +129,9 @@ def generate_plots(data, output_path, options, display=False):
                 kalman_output.copy(),
                 options[plot_type],
             )
+
+    if options.get(PlotType.KALMAN_YEARLY_FIT, False):
+        generate_yearly_kalman_fit_plots(kalman_output, output_path, options, display)
 
     for fig, axs, plot_type in plots:
         labels, handles = get_labels_and_handles(axs)
