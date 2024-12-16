@@ -14,12 +14,14 @@ ANALYSIS_DIRECTORY = "analysis"
 HARMONIC_TREND_SUBDIRECTORY = "harmonic_trend"
 KALMAN_STATE_SUBDIRECTORY = "kalman_state"
 KALMAN_END_OF_YEAR_STATE_SUBDIRECTORY = "kalman_end_of_year_state"
+CCDC_SEGMENTS_SUBDIRECTORY = "ccdc_segments"
 
 # file prefixes
 POINTS_FILE_PREFIX = "points"
 KALMAN_OUTPUT_FILE_PREFIX = "state_point"
 END_OF_YEAR_KALMAN_STATE_FILE_PREFIX = "eoy_state_point"
 HARMONIC_TREND_COEFS_FILE_PREFIX = "harmonic_trend_point"
+CCDC_SEGMENTS_FILE_PREFIX = "ccdc_segments"
 
 
 def kalman_result_directory(run_directory: str) -> str:
@@ -55,6 +57,14 @@ def build_end_of_year_kalman_state_path(run_directory: str, index: int) -> str:
         kalman_result_directory(run_directory),
         KALMAN_END_OF_YEAR_STATE_SUBDIRECTORY,
         f"{END_OF_YEAR_KALMAN_STATE_FILE_PREFIX}_{index}.csv",
+    )
+
+
+def build_ccdc_segments_path(run_directory: str, index: int) -> str:
+    return os.path.join(
+        kalman_result_directory(run_directory),
+        CCDC_SEGMENTS_SUBDIRECTORY,
+        f"{CCDC_SEGMENTS_FILE_PREFIX}_{index}.json",
     )
 
 

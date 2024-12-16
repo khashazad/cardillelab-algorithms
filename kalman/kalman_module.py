@@ -1,4 +1,3 @@
-import math
 import ee
 
 from kalman import kalman_filter
@@ -23,7 +22,6 @@ from lib.utils.ee.ccdc_utils import (
     get_multi_synthetic,
 )
 from lib.utils.ee.dates import convert_date
-from lib.utils.utils import ccdc
 
 ee.Initialize(opt_url=ee.data.HIGH_VOLUME_API_BASE_URL)
 
@@ -39,7 +37,7 @@ def append_ccdc_coefficients(image):
 
     ccdc_image = build_ccd_image(ccdc_asset, segments_count, bands)
 
-    formatted_date = convert_date(
+    date = convert_date(
         {
             "input_format": 2,
             "input_date": image.date().millis(),
@@ -47,21 +45,11 @@ def append_ccdc_coefficients(image):
         }
     )
 
+    # date = ee.Date(image.date()).getFraction("year")
+
     coefs = get_multi_coefs(
         ccdc_image,
-        formatted_date,
-        bands,
-        coef_list=HARMONIC_TAGS,
-        cond=True,
-        segment_names=segments,
-        behavior="after",
-    ).rename([*[f"{CCDC.BAND_PREFIX.value}_{x}" for x in HARMONIC_TAGS]])
-
-    t = ee.Number(image.date().getRelative("day", "year")).divide(365.25)
-
-    before_coefs = get_multi_coefs(
-        ccdc_image,
-        formatted_date,
+        date,
         bands,
         coef_list=HARMONIC_TAGS,
         cond=True,
@@ -69,24 +57,13 @@ def append_ccdc_coefficients(image):
         behavior="before",
     ).rename([*[f"{CCDC.BAND_PREFIX.value}_{x}" for x in HARMONIC_TAGS]])
 
-    t = ee.Number(image.date().getRelative("day", "year")).divide(365.25)
-
-    omega = ee.Number(6.283)
-
-    imageT = ee.Image.constant(
-        [
-            1,
-            t,
-            t.multiply(omega).cos(),
-            t.multiply(omega).sin(),
-            t.multiply(omega.multiply(2)).cos(),
-            t.multiply(omega.multiply(2)).sin(),
-            t.multiply(omega.multiply(3)).cos(),
-            t.multiply(omega.multiply(3)).sin(),
-        ]
-    ).float()
-
-    synthetic_image = imageT.multiply(before_coefs).reduce("sum").rename(CCDC.FIT.value)
+    synthetic_image = get_multi_synthetic(
+        ccdc_image,
+        date,
+        date_format=1,
+        band_list=bands,
+        segments=segments,
+    ).rename(CCDC.FIT.value)
 
     return image.addBands(coefs.addBands(synthetic_image), overwrite=True)
 

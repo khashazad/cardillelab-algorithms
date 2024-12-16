@@ -34,9 +34,11 @@ from lib.constants import (
     TIMESTAMP_LABEL,
 )
 from lib.paths import (
+    CCDC_SEGMENTS_SUBDIRECTORY,
     HARMONIC_TREND_SUBDIRECTORY,
     KALMAN_END_OF_YEAR_STATE_SUBDIRECTORY,
     KALMAN_STATE_SUBDIRECTORY,
+    build_ccdc_segments_path,
     build_end_of_year_kalman_state_path,
     build_kalman_analysis_path,
     build_harmonic_trend_path,
@@ -52,6 +54,7 @@ from kalman.kalman_module import main as eeek
 from lib.utils.visualization.constant import PlotType
 from lib.utils.visualization.plot_generator import generate_plots
 import threading
+from lib.utils.ee.ccdc_utils import get_segments_for_coordinates
 
 # could be omitted
 RUN_ID = ""
@@ -60,8 +63,8 @@ RUN_ID = ""
 COLLECTION_PARAMETERS = {
     "index": Index.SWIR,
     "sensors": [Sensor.L7, Sensor.L8, Sensor.L9],
-    "years": range(2015, 2024),
-    "point_group": "randonia_2",
+    "years": range(2010, 2020),
+    "point_group": "randonia_1",
     "study_area": RANDONIA,
     "day_step_size": 4,
     "start_doy": 1,
@@ -228,6 +231,13 @@ def process_point(kalman_parameters, point):
     for year in COLLECTION_PARAMETERS["years"]:
         process_year(year)
 
+    if INCLUDE_CCDC_COEFFICIENTS:
+        segments_path = build_ccdc_segments_path(run_directory, index)
+
+        segments = get_segments_for_coordinates(point)
+
+        json.dump(segments, open(segments_path, "w"))
+
 
 def setup_subdirectories():
     result_dir = kalman_result_directory(run_directory)
@@ -242,6 +252,8 @@ def setup_subdirectories():
         os.path.join(result_dir, KALMAN_END_OF_YEAR_STATE_SUBDIRECTORY),
         exist_ok=True,
     )
+
+    os.makedirs(os.path.join(result_dir, CCDC_SEGMENTS_SUBDIRECTORY), exist_ok=True)
 
     os.makedirs(kalman_analysis_directory(run_directory), exist_ok=True)
 
@@ -276,6 +288,13 @@ def generate_all_plots():
                     ),
                     FORWARD_TREND_LABEL: True,
                     HARMONIC_TREND_LABEL: build_harmonic_trend_path(
+                        run_directory, point_index
+                    ),
+                },
+                PlotType.KALMAN_YEARLY_FIT: {
+                    HARMONIC_FLAGS_LABEL: HARMONIC_FLAGS,
+                    "title": "Kalman Yearly Fit",
+                    Kalman.EOY_STATE.value: build_end_of_year_kalman_state_path(
                         run_directory, point_index
                     ),
                 },

@@ -433,7 +433,7 @@ def get_utm_from_lonlat(lon, lat):
     return "EPSG:" + str(offset + (math.floor((lon + 180) / 6) % 60))
 
 
-def build_request(point, scale=10):
+def build_request(point, scale=2):
     """Create a 1x1 numpy ndarray computePixels request at the given point.
 
     Args:

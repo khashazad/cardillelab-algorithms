@@ -6,7 +6,8 @@ Earth Engine at "users/parevalo_bu/gee-ccdc-tools"
 
 import ee
 import math
-from lib.utils.ee.dates import convert_date
+from lib.image_collections import COLLECTIONS
+from lib.utils import utils
 
 
 ee.Initialize(opt_url=ee.data.HIGH_VOLUME_API_BASE_URL)
@@ -25,6 +26,18 @@ def filter_coefs(ccdc_results, date, band, coef, segment_names, behavior):
 
     sel_str = ".*" + band + "_.*" + coef
     coef_bands = ccdc_results.select(sel_str)
+
+    # if behavior == "normal":
+    #     start = start_bands.lte(date)
+    #     end = end_bands.gte(date)
+    #     segment_match = start.And(end)
+    #     return coef_bands.updateMask(segment_match).reduce(ee.Reducer.firstNonNull())
+    # elif behavior == "after":
+    #     segment_match = end_bands.gt(date)
+    #     return coef_bands.updateMask(segment_match).reduce(ee.Reducer.firstNonNull())
+    # elif behavior == "before":
+    #     segment_match = start_bands.selfMask().lt(date).selfMask()
+    #     return coef_bands.updateMask(segment_match).reduce(ee.Reducer.firstNonNull())
 
     normal_start = start_bands.lte(date)
     normal_end = end_bands.gte(date)
@@ -76,13 +89,13 @@ def get_multi_coefs(
     coef_list=None,
     cond=True,
     segment_names=None,
-    behavior="after",
+    behavior="before",
 ):
     if coef_list is None:
         coef_list = HARMONIC_TAGS
 
     if segment_names is None:
-        segment_names = build_segment_tag(10)  # default to 10 tags...?
+        segment_names = build_segment_tag(10)
 
     def inner(coef):
         return get_coef(ccdc_results, date, band_list, coef, segment_names, behavior)
@@ -227,6 +240,10 @@ def parse_ccdc_params(fname):
 
 def get_synthetic_for_year(image, date, date_format, band, segments):
     # Convert date to fractional year
+    # fyear = ee.Number(date)
+    # year = fyear.floor()
+    # tfit = fyear.subtract(year)
+
     tfit = date
 
     # Define constants
@@ -256,7 +273,7 @@ def get_synthetic_for_year(image, date, date_format, band, segments):
 
     # Get coefficients for the specified band
     newParams = get_multi_coefs(
-        image, tfit, [str(band)], HARMONIC_TAGS, True, segments, "after"
+        image, tfit, [str(band)], HARMONIC_TAGS, False, segments, "before"
     )
 
     # Calculate synthetic image
@@ -272,3 +289,19 @@ def get_multi_synthetic(image, date, date_format, band_list, segments):
     )
 
     return ee.Image.cat(list(map(retrieve_synthetic, band_list)))
+
+
+def get_segments_for_coordinates(coordinates):
+    ccdc_asset = COLLECTIONS["CCDC_Global"].mosaic()
+
+    ccdc_image = build_ccd_image(ccdc_asset, 10, ["SWIR1"])
+
+    segments_start = ccdc_image.select(".*_tStart")
+    segments_end = ccdc_image.select(".*_tEnd")
+
+    s_starts = utils.get_pixels(coordinates, segments_start)
+    s_ends = utils.get_pixels(coordinates, segments_end)
+
+    zipped = zip(s_starts.tolist(), s_ends.tolist())
+
+    return list(zipped)
