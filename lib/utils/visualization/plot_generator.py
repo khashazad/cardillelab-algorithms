@@ -53,10 +53,9 @@ def save_chart(fig, name, output_directory, legend):
         bbox_extra_artists=(legend,),
     )
 
+
 def generate_yearly_kalman_fit_plots(data, output_path, options, display=False):
-    unique_years = (
-        pd.to_datetime(data[DATE_LABEL]).dt.year.unique().tolist()
-    )
+    unique_years = pd.to_datetime(data[DATE_LABEL]).dt.year.unique().tolist()
 
     for year in unique_years:
         fig, axs = plt.subplots(figsize=ASPECT_RATIO)
@@ -84,6 +83,9 @@ def generate_yearly_kalman_fit_plots(data, output_path, options, display=False):
             f"{output_path}/{PlotType.KALMAN_YEARLY_FIT.value}",
             legend=legend,
         )
+
+        plt.close(fig)
+
 
 def generate_plots(data, output_path, options, display=False):
     # create output directory
@@ -136,8 +138,6 @@ def generate_plots(data, output_path, options, display=False):
     for fig, axs, plot_type in plots:
         labels, handles = get_labels_and_handles(axs)
 
-        print(labels)
-        print(handles)
         legend = fig.legend(
             handles,
             labels,

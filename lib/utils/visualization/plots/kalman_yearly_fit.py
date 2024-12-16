@@ -10,7 +10,7 @@ from lib.constants import (
     DATE_LABEL,
     FRACTION_OF_YEAR_LABEL,
     HARMONIC_FLAGS_LABEL,
-    RETROFITTED_TREND_LABEL,
+    HARMONIC_TAGS,
     Harmonic,
     Kalman,
 )
@@ -92,21 +92,9 @@ def kalman_yearly_fit_plot(
 
     ccdc_coef = lambda coef: f"{CCDC.BAND_PREFIX.value}_{coef}"
 
-    ccdc_filtered = data[
-        (data[ccdc_coef(Harmonic.INTERCEPT.value)] != 0)
-        | (data[ccdc_coef(Harmonic.SLOPE.value)] != 0)
-        | (data[ccdc_coef(Harmonic.COS.value)] != 0)
-        | (data[ccdc_coef(Harmonic.SIN.value)] != 0)
-        | (data[ccdc_coef(Harmonic.COS2.value)] != 0)
-        | (data[ccdc_coef(Harmonic.SIN2.value)] != 0)
-        | (data[ccdc_coef(Harmonic.COS3.value)] != 0)
-        | (data[ccdc_coef(Harmonic.SIN3.value)] != 0)
-    ]
+    ccdc_coefs_tags = [ccdc_coef(coef) for coef in HARMONIC_TAGS]
 
-    last_index = ccdc_filtered.last_valid_index()
-    last_valid_coefs = ccdc_filtered.iloc[last_index]
-
-    condition = (
+    missing_ccdc_coefs_condition = (
         (data[ccdc_coef(Harmonic.INTERCEPT.value)] == 0)
         & (data[ccdc_coef(Harmonic.SLOPE.value)] == 0)
         & (data[ccdc_coef(Harmonic.COS.value)] == 0)
@@ -117,18 +105,28 @@ def kalman_yearly_fit_plot(
         & (data[ccdc_coef(Harmonic.SIN3.value)] == 0)
     )
 
-    ccdc_coefs = [
-        ccdc_coef(Harmonic.INTERCEPT.value),
-        ccdc_coef(Harmonic.SLOPE.value),
-        ccdc_coef(Harmonic.COS.value),
-        ccdc_coef(Harmonic.SIN.value),
-        ccdc_coef(Harmonic.COS2.value),
-        ccdc_coef(Harmonic.SIN2.value),
-        ccdc_coef(Harmonic.COS3.value),
-        ccdc_coef(Harmonic.SIN3.value),
-    ]
+    def replace_missing_ccdc_coefs(row):
+        for tag in ccdc_coefs_tags:
+            if row[tag] != 0:
+                return row
 
-    data.loc[~condition, ccdc_coefs] = last_valid_coefs[ccdc_coefs]
+        data["frac"] = data.apply(
+            lambda x: str(x[FRACTION_OF_YEAR_LABEL]).split(".")[1], axis=1
+        )
+
+        valid_coefs = data[~missing_ccdc_coefs_condition]
+
+        last_valid_index = valid_coefs[
+            valid_coefs["frac"] == str(row[FRACTION_OF_YEAR_LABEL]).split(".")[1]
+        ].last_valid_index()
+
+        row[CCDC.FIT.value] = data.loc[last_valid_index][CCDC.FIT.value]
+        return row
+
+    data = data.apply(
+        replace_missing_ccdc_coefs,
+        axis=1,
+    )
 
     data = calculate_ccdc_fit(data)
 
@@ -136,7 +134,7 @@ def kalman_yearly_fit_plot(
 
     axs.plot(
         data[DATE_LABEL],
-        data["CCDC"],
+        data[CCDC.FIT.value],
         label="CCDC Fit",
         linestyle="--",
         color="green",
