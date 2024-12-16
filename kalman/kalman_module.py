@@ -45,8 +45,6 @@ def append_ccdc_coefficients(image):
         }
     )
 
-    # date = ee.Date(image.date()).getFraction("year")
-
     coefs = get_multi_coefs(
         ccdc_image,
         date,

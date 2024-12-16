@@ -16,47 +16,28 @@ HARMONIC_TAGS = ["INTP", "SLP", "COS", "SIN", "COS2", "SIN2", "COS3", "SIN3"]
 
 
 def filter_coefs(ccdc_results, date, band, coef, segment_names, behavior):
-    if behavior not in ["normal", "after", "before"]:
-        raise NotImplementedError(
-            f"behavior must be 'normal', 'after', or 'before'; got {behavior}"
-        )
-
     start_bands = ccdc_results.select(".*_tStart").rename(segment_names)
     end_bands = ccdc_results.select(".*_tEnd").rename(segment_names)
 
     sel_str = ".*" + band + "_.*" + coef
     coef_bands = ccdc_results.select(sel_str)
 
-    # if behavior == "normal":
-    #     start = start_bands.lte(date)
-    #     end = end_bands.gte(date)
-    #     segment_match = start.And(end)
-    #     return coef_bands.updateMask(segment_match).reduce(ee.Reducer.firstNonNull())
-    # elif behavior == "after":
-    #     segment_match = end_bands.gt(date)
-    #     return coef_bands.updateMask(segment_match).reduce(ee.Reducer.firstNonNull())
-    # elif behavior == "before":
-    #     segment_match = start_bands.selfMask().lt(date).selfMask()
-    #     return coef_bands.updateMask(segment_match).reduce(ee.Reducer.firstNonNull())
-
     normal_start = start_bands.lte(date)
     normal_end = end_bands.gte(date)
 
-    segment_match = ee.Algorithms.If(
-        behavior == "normal",
-        normal_start.And(normal_end),
-        ee.Algorithms.If(
-            behavior == "after",
-            end_bands.gt(date),
-            ee.Algorithms.If(
-                behavior == "before",
-                start_bands.selfMask().lt(date).selfMask(),
-                None,  # NotImplementedError should already have been thrown
-            ),
-        ),
-    )
-
-    return coef_bands.updateMask(segment_match).reduce(ee.Reducer.firstNonNull())
+    if behavior == "normal":
+        segment_match = normal_start.And(normal_end)
+        return coef_bands.updateMask(segment_match).reduce(ee.Reducer.firstNonNull())
+    elif behavior == "after":
+        segment_match = end_bands.gt(date)
+        return coef_bands.updateMask(segment_match).reduce(ee.Reducer.firstNonNull())
+    elif behavior == "before":
+        segment_match = start_bands.selfMask().lt(date).selfMask()
+        return coef_bands.updateMask(segment_match).reduce(ee.Reducer.lastNonNull())
+    else:
+        raise NotImplementedError(
+            f"behavior must be 'normal', 'after', or 'before'; got {behavior}"
+        )
 
 
 def get_coef(ccdc_results, date, band_list, coef, segment_names, behavior):
@@ -240,10 +221,6 @@ def parse_ccdc_params(fname):
 
 def get_synthetic_for_year(image, date, date_format, band, segments):
     # Convert date to fractional year
-    # fyear = ee.Number(date)
-    # year = fyear.floor()
-    # tfit = fyear.subtract(year)
-
     tfit = date
 
     # Define constants
