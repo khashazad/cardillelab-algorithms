@@ -103,10 +103,7 @@ def kalman_yearly_fit_plot(
         | (data[ccdc_coef(Harmonic.SIN3.value)] != 0)
     ]
 
-    print(ccdc_filtered.head())
-
     last_index = ccdc_filtered.last_valid_index()
-
     last_valid_coefs = ccdc_filtered.iloc[last_index]
 
     condition = (
@@ -132,8 +129,6 @@ def kalman_yearly_fit_plot(
     ]
 
     data.loc[~condition, ccdc_coefs] = last_valid_coefs[ccdc_coefs]
-
-    print(data.tail())
 
     data = calculate_ccdc_fit(data)
 

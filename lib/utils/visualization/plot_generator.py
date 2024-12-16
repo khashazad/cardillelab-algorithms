@@ -92,7 +92,7 @@ def generate_plots(data, output_path, options, display=False):
     plots = []
 
     for plot_type in PLOT_TYPES:
-        if options.get(plot_type, None):
+        if options.get(plot_type, None) and plot_type != PlotType.KALMAN_YEARLY_FIT:
             fig, ax = plt.subplots(figsize=ASPECT_RATIO)
             plots.append((fig, ax, plot_type))
 
@@ -135,6 +135,9 @@ def generate_plots(data, output_path, options, display=False):
 
     for fig, axs, plot_type in plots:
         labels, handles = get_labels_and_handles(axs)
+
+        print(labels)
+        print(handles)
         legend = fig.legend(
             handles,
             labels,
