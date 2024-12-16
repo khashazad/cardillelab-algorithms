@@ -60,8 +60,8 @@ RUN_ID = ""
 COLLECTION_PARAMETERS = {
     "index": Index.SWIR,
     "sensors": [Sensor.L7, Sensor.L8, Sensor.L9],
-    "years": range(2016, 2020),
-    "point_group": "randonia_6",
+    "years": range(2015, 2024),
+    "point_group": "randonia_4",
     "study_area": RANDONIA,
     "day_step_size": 4,
     "start_doy": 1,

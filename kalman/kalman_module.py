@@ -59,6 +59,18 @@ def append_ccdc_coefficients(image):
 
     t = ee.Number(image.date().getRelative("day", "year")).divide(365.25)
 
+    before_coefs = get_multi_coefs(
+        ccdc_image,
+        formatted_date,
+        bands,
+        coef_list=HARMONIC_TAGS,
+        cond=True,
+        segment_names=segments,
+        behavior="before",
+    ).rename([*[f"{CCDC.BAND_PREFIX.value}_{x}" for x in HARMONIC_TAGS]])
+
+    t = ee.Number(image.date().getRelative("day", "year")).divide(365.25)
+
     omega = ee.Number(6.283)
 
     imageT = ee.Image.constant(
@@ -74,7 +86,7 @@ def append_ccdc_coefficients(image):
         ]
     ).float()
 
-    synthetic_image = imageT.multiply(coefs).reduce("sum").rename(CCDC.FIT.value)
+    synthetic_image = imageT.multiply(before_coefs).reduce("sum").rename(CCDC.FIT.value)
 
     return image.addBands(coefs.addBands(synthetic_image), overwrite=True)
 
