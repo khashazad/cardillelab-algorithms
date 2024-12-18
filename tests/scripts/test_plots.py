@@ -6,10 +6,12 @@ from lib.constants import (
     HARMONIC_TREND_LABEL,
     Harmonic,
     Kalman,
+    CCDC,
 )
 from lib.utils.visualization.constant import PlotType
 from lib.utils.visualization.plot_generator import generate_plots
 from lib.paths import (
+    build_ccdc_segments_path,
     build_end_of_year_kalman_state_path,
     build_harmonic_trend_path,
     build_kalman_analysis_path,
@@ -17,7 +19,7 @@ from lib.paths import (
 )
 
 run_directory = (
-    "./tests/kalman/Randonia_L7_L8_L9_swir_2015-2023_randonia_2/12-15_20:45_unimodal"
+    "./tests/kalman/Randonia_L7_L8_L9_swir_2010-2019_randonia_1/12-16_16:51_unimodal"
 )
 
 points = int(run_directory.split("/")[-2].split("_")[-1])
@@ -48,10 +50,12 @@ for i in range(0, points):
         },
         PlotType.KALMAN_VS_CCDC: {
             "title": "Kalman vs CCDC",
+            CCDC.SEGMENTS.value: build_ccdc_segments_path(run_directory, i),
         },
         PlotType.KALMAN_VS_CCDC_COEFS: {
             "title": "Kalman vs CCDC Coefficients",
             HARMONIC_FLAGS_LABEL: harmonic_flags,
+            CCDC.SEGMENTS.value: build_ccdc_segments_path(run_directory, i),
         },
         PlotType.KALMAN_RETROFITTED: {
             HARMONIC_FLAGS_LABEL: harmonic_flags,
@@ -67,6 +71,7 @@ for i in range(0, points):
             Kalman.EOY_STATE.value: build_end_of_year_kalman_state_path(
                 run_directory, i
             ),
+            CCDC.SEGMENTS.value: build_ccdc_segments_path(run_directory, i),
         },
     }
 

@@ -115,6 +115,7 @@ class Harmonic(enum.Enum):
 class CCDC(enum.Enum):
     BAND_PREFIX = "ccdc"
     FIT = "ccdc_fit"
+    SEGMENTS = "segments"
 
 
 HARMONIC_TAGS = ["INTP", "SLP", "COS", "SIN", "COS2", "SIN2", "COS3", "SIN3"]

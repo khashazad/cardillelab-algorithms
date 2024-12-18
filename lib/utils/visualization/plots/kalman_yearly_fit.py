@@ -1,10 +1,12 @@
+import json
+import numpy as np
 import pandas as pd
 from pprint import pprint
 import matplotlib.dates as mdates
 import csv
 from lib.utils.harmonic import extract_coefficients_from_array
 from lib.utils.harmonic import calculate_harmonic_fit
-from lib.utils.visualization.constant import FIXED_Y_AXIS_LIMIT
+from lib.utils.visualization.constant import COLOR_PALETTE_10, FIXED_Y_AXIS_LIMIT
 from lib.constants import (
     CCDC,
     DATE_LABEL,
@@ -14,6 +16,7 @@ from lib.constants import (
     Harmonic,
     Kalman,
 )
+from lib.utils.visualization.vis_utils import plot_ccdc_segments
 
 
 def calculate_ccdc_fit(data):
@@ -78,9 +81,9 @@ def kalman_yearly_fit_plot(
 
     unique_years = pd.to_datetime(data[DATE_LABEL]).dt.year.unique().tolist()
 
-    for year in unique_years:
+    for y in unique_years:
         axs.axvline(
-            x=pd.Timestamp(year=year, month=1, day=1),
+            x=pd.Timestamp(year=y, month=1, day=1),
             color="gray",
             linestyle="-",
             alpha=0.1,
@@ -90,45 +93,45 @@ def kalman_yearly_fit_plot(
         lambda row: calculate_harmonic_fit(coefs, row[FRACTION_OF_YEAR_LABEL]), axis=1
     )
 
-    ccdc_coef = lambda coef: f"{CCDC.BAND_PREFIX.value}_{coef}"
+    # ccdc_coef = lambda coef: f"{CCDC.BAND_PREFIX.value}_{coef}"
 
-    ccdc_coefs_tags = [ccdc_coef(coef) for coef in HARMONIC_TAGS]
+    # ccdc_coefs_tags = [ccdc_coef(coef) for coef in HARMONIC_TAGS]
 
-    missing_ccdc_coefs_condition = (
-        (data[ccdc_coef(Harmonic.INTERCEPT.value)] == 0)
-        & (data[ccdc_coef(Harmonic.SLOPE.value)] == 0)
-        & (data[ccdc_coef(Harmonic.COS.value)] == 0)
-        & (data[ccdc_coef(Harmonic.SIN.value)] == 0)
-        & (data[ccdc_coef(Harmonic.COS2.value)] == 0)
-        & (data[ccdc_coef(Harmonic.SIN2.value)] == 0)
-        & (data[ccdc_coef(Harmonic.COS3.value)] == 0)
-        & (data[ccdc_coef(Harmonic.SIN3.value)] == 0)
-    )
+    # missing_ccdc_coefs_condition = (
+    #     (data[ccdc_coef(Harmonic.INTERCEPT.value)] == 0)
+    #     & (data[ccdc_coef(Harmonic.SLOPE.value)] == 0)
+    #     & (data[ccdc_coef(Harmonic.COS.value)] == 0)
+    #     & (data[ccdc_coef(Harmonic.SIN.value)] == 0)
+    #     & (data[ccdc_coef(Harmonic.COS2.value)] == 0)
+    #     & (data[ccdc_coef(Harmonic.SIN2.value)] == 0)
+    #     & (data[ccdc_coef(Harmonic.COS3.value)] == 0)
+    #     & (data[ccdc_coef(Harmonic.SIN3.value)] == 0)
+    # )
 
-    def replace_missing_ccdc_coefs(row):
-        for tag in ccdc_coefs_tags:
-            if row[tag] != 0:
-                return row
+    # def replace_missing_ccdc_coefs(row):
+    #     for tag in ccdc_coefs_tags:
+    #         if row[tag] != 0:
+    #             return row
 
-        data["frac"] = data.apply(
-            lambda x: str(x[FRACTION_OF_YEAR_LABEL]).split(".")[1], axis=1
-        )
+    #     data["frac"] = data.apply(
+    #         lambda x: str(x[FRACTION_OF_YEAR_LABEL]).split(".")[1], axis=1
+    #     )
 
-        valid_coefs = data[~missing_ccdc_coefs_condition]
+    #     valid_coefs = data[~missing_ccdc_coefs_condition]
 
-        last_valid_index = valid_coefs[
-            valid_coefs["frac"] == str(row[FRACTION_OF_YEAR_LABEL]).split(".")[1]
-        ].last_valid_index()
+    #     last_valid_index = valid_coefs[
+    #         valid_coefs["frac"] == str(row[FRACTION_OF_YEAR_LABEL]).split(".")[1]
+    #     ].last_valid_index()
 
-        row[CCDC.FIT.value] = data.loc[last_valid_index][CCDC.FIT.value]
-        return row
+    #     row[CCDC.FIT.value] = data.loc[last_valid_index][CCDC.FIT.value]
+    #     return row
 
-    data = data.apply(
-        replace_missing_ccdc_coefs,
-        axis=1,
-    )
+    # data = data.apply(
+    #     replace_missing_ccdc_coefs,
+    #     axis=1,
+    # )
 
-    data = calculate_ccdc_fit(data)
+    # data = calculate_ccdc_fit(data)
 
     data[DATE_LABEL] = pd.to_datetime(data[DATE_LABEL])
 
@@ -156,9 +159,19 @@ def kalman_yearly_fit_plot(
         color="red",
     )
 
+    if options.get(CCDC.SEGMENTS.value, False):
+        plot_ccdc_segments(axs, data, options[CCDC.SEGMENTS.value])
+
     axs.xaxis.set_major_locator(mdates.AutoDateLocator())
     axs.xaxis.set_major_formatter(mdates.DateFormatter("%b %Y"))
     axs.tick_params(axis="x", labelsize=8)
+
+    axs.axvline(
+        x=pd.Timestamp(year=2020, month=1, day=1),
+        color="red",
+        linestyle="dashdot",
+        label="ccdc",
+    )
 
     if options.get("fixed_y_axis", False):
         axs.set_ylim(0, options.get("fixed_y_axis_limit", FIXED_Y_AXIS_LIMIT))

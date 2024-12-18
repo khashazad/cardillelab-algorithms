@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 from kalman.kalman_helper import parse_band_names
 from lib.constants import (
+    CCDC,
     DATE_LABEL,
     FORWARD_TREND_LABEL,
     HARMONIC_FLAGS_LABEL,
@@ -63,12 +64,12 @@ RUN_ID = ""
 COLLECTION_PARAMETERS = {
     "index": Index.SWIR,
     "sensors": [Sensor.L7, Sensor.L8, Sensor.L9],
-    "years": range(2015, 2024),
-    "point_group": "randonia_2",
-    "study_area": RANDONIA,
+    "years": range(2016, 2024),
+    "point_group": "pnw_40",
+    "study_area": PNW,
     "day_step_size": 4,
-    "start_doy": 1,
-    "end_doy": 365,
+    "start_doy": 150,
+    "end_doy": 250,
     "cloud_cover_threshold": 20,
     "initialization": Initialization.POSTHOC,
 }
@@ -276,10 +277,16 @@ def generate_all_plots():
                 },
                 PlotType.KALMAN_VS_CCDC: {
                     "title": "Kalman vs CCDC",
+                    CCDC.SEGMENTS.value: build_ccdc_segments_path(
+                        run_directory, point_index
+                    ),
                 },
                 PlotType.KALMAN_VS_CCDC_COEFS: {
                     "title": "Kalman vs CCDC Coefficients",
                     HARMONIC_FLAGS_LABEL: HARMONIC_FLAGS,
+                    CCDC.SEGMENTS.value: build_ccdc_segments_path(
+                        run_directory, point_index
+                    ),
                 },
                 PlotType.KALMAN_RETROFITTED: {
                     HARMONIC_FLAGS_LABEL: HARMONIC_FLAGS,
@@ -295,6 +302,9 @@ def generate_all_plots():
                     HARMONIC_FLAGS_LABEL: HARMONIC_FLAGS,
                     "title": "Kalman Yearly Fit",
                     Kalman.EOY_STATE.value: build_end_of_year_kalman_state_path(
+                        run_directory, point_index
+                    ),
+                    CCDC.SEGMENTS.value: build_ccdc_segments_path(
                         run_directory, point_index
                     ),
                 },

@@ -29,4 +29,17 @@ PLOT_TYPES = [
     PlotType.BULC_PROBS,
 ]
 
+COLOR_PALETTE_10 = [
+    "#f2d5cf",  # Rosewater
+    "#eebebe",  # Flamingo
+    "#f4b8e4",  # Pink
+    "#ca9ee6",  # Mauve
+    "#e78284",  # Red
+    "#ea999c",  # Maroon
+    "#ef9f76",  # Peach
+    "#e5c890",  # Yellow
+    "#a6d189",  # Green
+    "#81c8be",  # Teal
+]
+
 FRAC_OF_YEAR = "fractional_year"

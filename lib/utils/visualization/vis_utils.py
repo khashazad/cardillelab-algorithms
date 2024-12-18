@@ -1,8 +1,13 @@
+import json
 import ee
 import ipywidgets
 import numpy as np
 import matplotlib.pyplot as plt
 from IPython.display import display
+import pandas as pd
+
+from lib.constants import DATE_LABEL
+from lib.utils.visualization.constant import COLOR_PALETTE_10
 
 ee.Initialize(opt_url=ee.data.HIGH_VOLUME_API_BASE_URL)
 
@@ -110,3 +115,47 @@ class CoefInspector(ipywidgets.VBox):
 
         self.plot(funcs, pixels, latlon)
         self._host_map.default_style = {"cursor": "crosshair"}
+
+
+def plot_ccdc_segments(axs, data, segments_file_path):
+
+    def year_fraction_to_datetime(year_fraction):
+        year = np.floor(year_fraction).astype(int)
+        fraction = year_fraction - year
+        days_in_year = (
+            366 if pd.Timestamp(year=year, month=1, day=1).is_leap_year else 365
+        )
+        day_of_year = fraction * days_in_year
+
+        return pd.to_datetime(f"{year}-01-01") + pd.to_timedelta(day_of_year, unit="D")
+
+    segments = json.load(open(segments_file_path))
+
+    first_date = pd.to_datetime(data[DATE_LABEL].min())
+    last_date = pd.to_datetime(data[DATE_LABEL].max())
+
+    for idx, (start, end) in enumerate(segments):
+        if start != 0 and end != 0:
+
+            start_date = year_fraction_to_datetime(start)
+            end_date = year_fraction_to_datetime(end)
+
+            if end_date < first_date:
+                continue
+
+            if start_date > last_date:
+                continue
+
+            if start_date < first_date:
+                start_date = first_date
+
+            if end_date > last_date:
+                end_date = last_date
+
+            axs.fill_betweenx(
+                axs.get_ylim(),
+                start_date,
+                end_date,
+                color=COLOR_PALETTE_10[idx],
+                alpha=0.3,
+            )
