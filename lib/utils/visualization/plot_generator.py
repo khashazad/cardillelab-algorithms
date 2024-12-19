@@ -1,6 +1,7 @@
 import pandas as pd
 import os
 import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
 from lib.constants import DATE_LABEL
 from lib.utils.visualization.constant import (
     ASPECT_RATIO,
@@ -54,8 +55,38 @@ def save_chart(fig, name, output_directory, legend):
     )
 
 
+def create_image_grids(image_directory, output_directory):
+    os.makedirs(output_directory, exist_ok=True)
+
+    image_files = [
+        f for f in os.listdir(image_directory) if f.endswith((".png", ".jpg", ".jpeg"))
+    ]
+
+    image_files.sort()
+
+    for i in range(0, len(image_files), 4):
+        fig, axs = plt.subplots(nrows=2, ncols=2, figsize=(12, 8))
+
+        axs = axs.flatten()
+
+        for ax, j in zip(axs, range(i, min(i + 4, len(image_files)))):
+            img_path = os.path.join(image_directory, image_files[j])
+            img = mpimg.imread(img_path)
+            img = img[:-100, :, :]
+            ax.imshow(img)
+            ax.axis("off")
+
+        output_path = os.path.join(output_directory, f"grid_{i // 4 + 1}.png")
+
+        plt.tight_layout(pad=0)
+        plt.savefig(output_path)
+        plt.close(fig)
+
+
 def generate_yearly_kalman_fit_plots(data, output_path, options, display=False):
     unique_years = pd.to_datetime(data[DATE_LABEL]).dt.year.unique().tolist()
+
+    figures = []
 
     for year in unique_years:
         fig, axs = plt.subplots(figsize=ASPECT_RATIO)
@@ -66,6 +97,8 @@ def generate_yearly_kalman_fit_plots(data, output_path, options, display=False):
             options[PlotType.KALMAN_YEARLY_FIT],
             year,
         )
+
+        figures.append((fig, axs))
 
         labels, handles = get_labels_and_handles(axs)
 
@@ -85,6 +118,11 @@ def generate_yearly_kalman_fit_plots(data, output_path, options, display=False):
         )
 
         plt.close(fig)
+
+    create_image_grids(
+        f"{output_path}/{PlotType.KALMAN_YEARLY_FIT.value}",
+        f"{output_path}/{PlotType.KALMAN_YEARLY_FIT.value}/4x4_grids",
+    )
 
 
 def generate_plots(data, output_path, options, display=False):

@@ -18,9 +18,7 @@ from lib.paths import (
     build_kalman_result_path,
 )
 
-run_directory = (
-    "./tests/kalman/Randonia_L7_L8_L9_swir_2010-2019_randonia_1/12-16_16:51_unimodal"
-)
+run_directory = "./tests/kalman/PNW_L7_L8_L9_swir_2016-2023_pnw_40/12-18_16:35_unimodal"
 
 points = int(run_directory.split("/")[-2].split("_")[-1])
 
