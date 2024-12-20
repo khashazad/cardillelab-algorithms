@@ -95,6 +95,7 @@ RETROFITTED_TREND_LABEL = "retrofitted_trend"
 class Initialization(enum.Enum):
     UNIFORM = "uniform"
     POSTHOC = "posthoc"
+    CCDC = "ccdc"
 
 
 class Harmonic(enum.Enum):

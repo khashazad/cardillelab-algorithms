@@ -68,8 +68,8 @@ COLLECTION_PARAMETERS = {
     "point_group": "pnw_40",
     "study_area": PNW,
     "day_step_size": 4,
-    "start_doy": 150,
-    "end_doy": 250,
+    "start_doy": 1,
+    "end_doy": 365,
     "cloud_cover_threshold": 20,
     "initialization": Initialization.POSTHOC,
 }
@@ -100,7 +100,6 @@ run_directory = build_kalman_run_directory(
 
 # Path to the parameters file containing the process noise, measurement noise, and initial state covariance
 parameters_file_path = get_kalman_parameters_path(script_directory, HARMONIC_FLAGS)
-
 
 def create_points_file(points_filename, coefficients_by_point, years: list[int]):
     with open(points_filename, "w", newline="") as file:
@@ -214,9 +213,12 @@ def process_point(kalman_parameters, point):
             harmonic_flags=HARMONIC_FLAGS,
             output_file=harmonic_trend_coefs_path,
         )
-
-        if INITIALIZATION == Initialization.POSTHOC and is_first_year:
-            kalman_parameters[Kalman.X.value] = coefficients
+        
+        if is_first_year:
+            if INITIALIZATION == Initialization.POSTHOC:
+                kalman_parameters[Kalman.X.value] = coefficients
+            elif INITIALIZATION == Initialization.CCDC:
+                pass
 
         data = run_kalman(kalman_parameters, collection, point, year)
 
