@@ -1,29 +1,23 @@
 import csv
 import json
 import os
-import shutil
 import ee
 import ee.geometry
 import numpy as np
 import pandas as pd
 from kalman.kalman_helper import parse_band_names
+from kalman.kalman_run_config import KalmanRunConfig
 from lib.constants import (
     CCDC,
     DATE_LABEL,
     FORWARD_TREND_LABEL,
-    HARMONIC_FLAGS_LABEL,
     HARMONIC_TREND_LABEL,
     Index,
     Initialization,
     Kalman,
     Sensor,
 )
-from lib.study_areas import PNW, RANDONIA
-from lib.study_packages import (
-    get_tag,
-    get_points,
-    get_collection,
-)
+from lib.study_areas import PNW
 from lib.utils.harmonic import (
     harmonic_trend_coefficients_for_year,
 )
@@ -46,7 +40,6 @@ from lib.paths import (
     build_kalman_result_path,
     build_kalman_run_directory,
     build_points_path,
-    get_kalman_parameters_path,
     kalman_analysis_directory,
     kalman_result_directory,
 )
@@ -60,61 +53,43 @@ from lib.utils.ee.ccdc_utils import get_segments_for_coordinates
 # could be omitted
 RUN_ID = ""
 
-# Parameters
-COLLECTION_PARAMETERS = {
-    "index": Index.SWIR,
-    "sensors": [Sensor.L7, Sensor.L8, Sensor.L9],
-    "years": range(2016, 2024),
-    "point_group": "pnw_40",
-    "study_area": PNW,
-    "day_step_size": 4,
-    "start_doy": 1,
-    "end_doy": 365,
-    "cloud_cover_threshold": 20,
-    "initialization": Initialization.POSTHOC,
-}
-
-HARMONIC_FLAGS = {
-    Harmonic.INTERCEPT.value: True,
-    # Harmonic.SLOPE.value: True,
-    Harmonic.UNIMODAL.value: True,
-    # Harmonic.BIMODAL.value: True,
-    # Harmonic.TRIMODAL.value: True,
-}
-
-TAG = get_tag(**COLLECTION_PARAMETERS)
-POINTS = get_points(COLLECTION_PARAMETERS["point_group"])
-INDEX = COLLECTION_PARAMETERS["index"]
-INITIALIZATION = Initialization.POSTHOC
-
-# whether to include the ccdc coefficients in the output
-INCLUDE_CCDC_COEFFICIENTS = True
-
 # Get the directory of the current script
 script_directory = os.path.dirname(os.path.realpath(__file__))
 
-# Define the run directory based on the current timestamp
-run_directory = build_kalman_run_directory(
-    script_directory, TAG, HARMONIC_FLAGS, RUN_ID
+config = KalmanRunConfig(
+    index=Index.SWIR,
+    sensors=[Sensor.L7, Sensor.L8, Sensor.L9],
+    years=range(2016, 2024),
+    point_group="pnw_40",
+    study_area=PNW,
+    day_step_size=4,
+    start_doy=1,
+    end_doy=365,
+    cloud_cover_threshold=20,
+    initialization=Initialization.POSTHOC,
+    harmonic_flags= {
+        Harmonic.INTERCEPT.value: True,
+        # Harmonic.SLOPE.value: True,
+        Harmonic.UNIMODAL.value: True,
+        # Harmonic.BIMODAL.value: True,
+        # Harmonic.TRIMODAL.value: True,
+    },
+    recording_flags= {
+        KalmanRecordingFlags.MEASUREMENT: True,
+        KalmanRecordingFlags.TIMESTAMP: True,
+        KalmanRecordingFlags.FRACTION_OF_YEAR: True,
+        KalmanRecordingFlags.ESTIMATE: True,
+        KalmanRecordingFlags.AMPLITUDE: False,
+        KalmanRecordingFlags.STATE: True,
+        KalmanRecordingFlags.STATE_COV: True,
+        KalmanRecordingFlags.CCDC_COEFFICIENTS: True,
+    }
 )
 
-# Path to the parameters file containing the process noise, measurement noise, and initial state covariance
-parameters_file_path = get_kalman_parameters_path(script_directory, HARMONIC_FLAGS)
-
-def create_points_file(points_filename, coefficients_by_point, years: list[int]):
-    with open(points_filename, "w", newline="") as file:
-        for _, coefs in enumerate(coefficients_by_point):
-            longitude = coefs["coordinates"][0]
-            latitude = coefs["coordinates"][1]
-
-            year = years[0]
-
-            intercept = coefs[year][Harmonic.INTERCEPT.value]
-            cos = coefs[year][Harmonic.COS.value]
-            sin = coefs[year][Harmonic.SIN.value]
-
-            file.write(f"{longitude},{latitude},{intercept},{cos},{sin}\n")
-
+# Define the run directory based on the current timestamp
+run_directory = build_kalman_run_directory(
+    script_directory, config.get_tag(), config.harmonic_flags, RUN_ID
+)
 
 def run_kalman(parameters, collection, point, year):
     global run_directory
@@ -125,17 +100,8 @@ def run_kalman(parameters, collection, point, year):
     args = {
         "kalman_parameters": parameters,
         "value_collection": collection,
-        "harmonic_flags": HARMONIC_FLAGS,
-        "recording_flags": {
-            KalmanRecordingFlags.MEASUREMENT: True,
-            KalmanRecordingFlags.TIMESTAMP: True,
-            KalmanRecordingFlags.FRACTION_OF_YEAR: True,
-            KalmanRecordingFlags.ESTIMATE: True,
-            KalmanRecordingFlags.AMPLITUDE: False,
-            KalmanRecordingFlags.STATE: True,
-            KalmanRecordingFlags.STATE_COV: True,
-            KalmanRecordingFlags.CCDC_COEFFICIENTS: INCLUDE_CCDC_COEFFICIENTS,
-        },
+        "harmonic_flags": config.harmonic_flags,
+        "recording_flags": config.recording_flags,
     }
 
     band_names = parse_band_names(args["recording_flags"], args["harmonic_flags"])
@@ -160,7 +126,6 @@ def run_kalman(parameters, collection, point, year):
 
     return df
 
-
 def process_point(kalman_parameters, point):
     global run_directory
 
@@ -175,13 +140,13 @@ def process_point(kalman_parameters, point):
     )
 
     with open(end_of_year_kalman_state_path, "w") as file:
-        state_labels, _ = parse_harmonic_params(HARMONIC_FLAGS)
+        state_labels, _ = parse_harmonic_params(config.harmonic_flags)
         covariance_labels = [f"{Kalman.COV_PREFIX.value}_{x}" for x in state_labels]
 
         csv.writer(file).writerow(["year", *state_labels, *covariance_labels])
 
     def update_kalman_parameters_with_last_run(data, year):
-        harmonic_params, _ = parse_harmonic_params(HARMONIC_FLAGS)
+        harmonic_params, _ = parse_harmonic_params(config.harmonic_flags)
         state = data.iloc[-1][harmonic_params].tolist()
         covariance = data.iloc[-1][
             [f"{Kalman.COV_PREFIX.value}_{x}" for x in harmonic_params]
@@ -196,28 +161,23 @@ def process_point(kalman_parameters, point):
 
     def process_year(year):
 
-        is_first_year = year == COLLECTION_PARAMETERS["years"][0]
+        is_first_year = year == config.years[0]
 
-        collection = get_collection(
-            **{
-                **COLLECTION_PARAMETERS,
-                "years": [year],
-            }
-        )
+        collection = config.get_collection()
 
         coefficients = harmonic_trend_coefficients_for_year(
             collection,
             point,
             year,
-            INDEX,
-            harmonic_flags=HARMONIC_FLAGS,
+            config.index,
+            harmonic_flags=config.harmonic_flags,
             output_file=harmonic_trend_coefs_path,
         )
         
         if is_first_year:
-            if INITIALIZATION == Initialization.POSTHOC:
+            if config.initialization == Initialization.POSTHOC:
                 kalman_parameters[Kalman.X.value] = coefficients
-            elif INITIALIZATION == Initialization.CCDC:
+            elif config.initialization == Initialization.CCDC:
                 pass
 
         data = run_kalman(kalman_parameters, collection, point, year)
@@ -231,16 +191,15 @@ def process_point(kalman_parameters, point):
             index=False,
         )
 
-    for year in COLLECTION_PARAMETERS["years"]:
+    for year in config.years:
         process_year(year)
 
-    if INCLUDE_CCDC_COEFFICIENTS:
+    if config.recording_flags[KalmanRecordingFlags.CCDC_COEFFICIENTS]:
         segments_path = build_ccdc_segments_path(run_directory, index)
 
         segments = get_segments_for_coordinates(point)
 
         json.dump(segments, open(segments_path, "w"))
-
 
 def setup_subdirectories():
     result_dir = kalman_result_directory(run_directory)
@@ -260,55 +219,36 @@ def setup_subdirectories():
 
     os.makedirs(kalman_analysis_directory(run_directory), exist_ok=True)
 
-
 def generate_all_plots():
-    for point_index in range(len(POINTS)):
+    for point_index in range(len(config.get_points())):
         generate_plots(
             data=build_kalman_result_path(run_directory, point_index),
             output_path=build_kalman_analysis_path(run_directory, point_index),
-            options={
+            additional_data={
+                HARMONIC_TREND_LABEL: build_harmonic_trend_path(run_directory, point_index),
+                Kalman.EOY_STATE.value: build_end_of_year_kalman_state_path(run_directory, point_index),
+                CCDC.SEGMENTS.value: build_ccdc_segments_path(run_directory, point_index),
+                "harmonic_trend": build_harmonic_trend_path(run_directory, point_index),
+            },
+            plots={
                 PlotType.KALMAN_VS_HARMONIC: {
                     "title": f"Kalman vs Harmonic Trend",
-                    HARMONIC_TREND_LABEL: build_harmonic_trend_path(
-                        run_directory, point_index
-                    ),
-                    HARMONIC_FLAGS_LABEL: HARMONIC_FLAGS,
                 },
                 PlotType.KALMAN_FIT: {
                     "title": "Kalman Fit",
                 },
                 PlotType.KALMAN_VS_CCDC: {
                     "title": "Kalman vs CCDC",
-                    CCDC.SEGMENTS.value: build_ccdc_segments_path(
-                        run_directory, point_index
-                    ),
                 },
                 PlotType.KALMAN_VS_CCDC_COEFS: {
                     "title": "Kalman vs CCDC Coefficients",
-                    HARMONIC_FLAGS_LABEL: HARMONIC_FLAGS,
-                    CCDC.SEGMENTS.value: build_ccdc_segments_path(
-                        run_directory, point_index
-                    ),
                 },
                 PlotType.KALMAN_RETROFITTED: {
-                    HARMONIC_FLAGS_LABEL: HARMONIC_FLAGS,
-                    Kalman.EOY_STATE.value: build_end_of_year_kalman_state_path(
-                        run_directory, point_index
-                    ),
+                    "title": "Kalman Retrofitted",
                     FORWARD_TREND_LABEL: True,
-                    HARMONIC_TREND_LABEL: build_harmonic_trend_path(
-                        run_directory, point_index
-                    ),
                 },
                 PlotType.KALMAN_YEARLY_FIT: {
-                    HARMONIC_FLAGS_LABEL: HARMONIC_FLAGS,
                     "title": "Kalman Yearly Fit",
-                    Kalman.EOY_STATE.value: build_end_of_year_kalman_state_path(
-                        run_directory, point_index
-                    ),
-                    CCDC.SEGMENTS.value: build_ccdc_segments_path(
-                        run_directory, point_index
-                    ),
                 },
             },
         )
@@ -321,15 +261,12 @@ def run_continuous_kalman():
     setup_subdirectories()
 
     # save point coordinates to file
-    json.dump(POINTS, open(build_points_path(run_directory), "w"))
-
-    # load kalman parameters Q, R, P, X
-    kalman_parameters = json.load(open(parameters_file_path))
+    json.dump(config.get_points(), open(build_points_path(run_directory), "w"))
 
     threads = []
-    for index, point in enumerate(POINTS):
+    for index, point in enumerate(config.get_points()):
         thread = threading.Thread(
-            target=process_point, args=(kalman_parameters.copy(), (index, point))
+            target=process_point, args=(config.get_kalman_parameters(), (index, point))
         )
         threads.append(thread)
         thread.start()
@@ -345,10 +282,7 @@ if __name__ == "__main__":
     # Ensure the run directory exists
     os.makedirs(run_directory, exist_ok=True)
 
-    # Copy the parameters file to the run directory
-    shutil.copy(
-        parameters_file_path,
-        os.path.join(run_directory, os.path.basename(parameters_file_path)),
-    )
+    # write the config to a file
+    config.write_to_file(os.path.join(run_directory, "config.json"))
 
     run_continuous_kalman()

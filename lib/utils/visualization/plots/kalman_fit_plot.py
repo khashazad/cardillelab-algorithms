@@ -13,6 +13,7 @@ def kalman_fit_plot(
     axs,
     data,
     options,
+    additional_data,
 ):
     data[DATE_LABEL] = pd.to_datetime(data[DATE_LABEL])
 

@@ -71,11 +71,12 @@ def kalman_yearly_fit_plot(
     axs,
     data,
     options,
+    additional_data,
     year,
 ):
-    coefs_array = get_end_of_year_coefficients(options)[str(year)]
+    coefs_array = get_end_of_year_coefficients(additional_data)[str(year)]
 
-    harmonic_flags = options.get(HARMONIC_FLAGS_LABEL, {})
+    harmonic_flags = additional_data.get(HARMONIC_FLAGS_LABEL, {})
 
     coefs = extract_coefficients_from_array(coefs_array, harmonic_flags)
 

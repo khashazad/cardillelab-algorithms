@@ -21,21 +21,9 @@ def kalman_vs_ccdc_plot(
     axs,
     data,
     options,
+    additional_data,
 ):
     data[DATE_LABEL] = pd.to_datetime(data[DATE_LABEL])
-
-    # ccdc_coef = lambda coef: f"{CCDC.BAND_PREFIX.value}_{coef}"
-
-    # ccdc_filtered = data[
-    #     (data[ccdc_coef(Harmonic.INTERCEPT.value)] != 0)
-    #     | (data[ccdc_coef(Harmonic.SLOPE.value)] != 0)
-    #     | (data[ccdc_coef(Harmonic.COS.value)] != 0)
-    #     | (data[ccdc_coef(Harmonic.SIN.value)] != 0)
-    #     | (data[ccdc_coef(Harmonic.COS2.value)] != 0)
-    #     | (data[ccdc_coef(Harmonic.SIN2.value)] != 0)
-    #     | (data[ccdc_coef(Harmonic.COS3.value)] != 0)
-    #     | (data[ccdc_coef(Harmonic.SIN3.value)] != 0)
-    # ]
 
     axs.plot(
         data[DATE_LABEL],
@@ -61,8 +49,8 @@ def kalman_vs_ccdc_plot(
         color="red",
     )
 
-    if options.get(CCDC.SEGMENTS.value, False):
-        plot_ccdc_segments(axs, data, options[CCDC.SEGMENTS.value])
+    if additional_data.get(CCDC.SEGMENTS.value, False):
+        plot_ccdc_segments(axs, data, additional_data[CCDC.SEGMENTS.value])
 
     axs.axvline(
         x=pd.Timestamp(year=2020, month=1, day=1),

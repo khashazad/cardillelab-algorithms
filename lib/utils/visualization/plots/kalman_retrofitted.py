@@ -130,10 +130,11 @@ def kalman_retrofitted_plot(
     axs,
     data,
     options,
+    additional_data,
 ):
-    harmonic_flags = options.get(HARMONIC_FLAGS_LABEL, {})
+    harmonic_flags = additional_data.get(HARMONIC_FLAGS_LABEL, {})
 
-    eoy_state_coefs = get_end_of_year_coefficients(options)
+    eoy_state_coefs = get_end_of_year_coefficients(additional_data)
     eoy_state_df = get_retrofitted_trend(
         eoy_state_coefs,
         data[FRACTION_OF_YEAR_LABEL],
@@ -144,7 +145,7 @@ def kalman_retrofitted_plot(
 
     if options.get(FORWARD_TREND_LABEL, False):
         forward_trend_df = get_forward_trend(
-            data, options, eoy_state_coefs, data[FRACTION_OF_YEAR_LABEL]
+            data, additional_data, eoy_state_coefs, data[FRACTION_OF_YEAR_LABEL]
         )
 
         data = data.merge(forward_trend_df, on=FRACTION_OF_YEAR_LABEL, how="inner")

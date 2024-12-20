@@ -19,19 +19,14 @@ from lib.utils.visualization.plots.kalman_vs_ccdc_coefs_plot import (
 from lib.utils.visualization.plots.kalman_retrofitted import kalman_retrofitted_plot
 from lib.utils.visualization.plots.kalman_yearly_fit import kalman_yearly_fit_plot
 
-
-def get_labels_and_handles(axs):
-    handles, labels = axs.get_legend_handles_labels()
-    unique_labels = []
-    unique_handles = []
-
-    for handle, label in zip(handles, labels):
-        if label not in unique_labels:
-            unique_handles.append(handle)
-            unique_labels.append(label)
-
-    return unique_labels, unique_handles
-
+PLOT_GENERATORS = {
+    PlotType.KALMAN_VS_HARMONIC: kalman_estimate_vs_harmonic_trend_plot,
+    PlotType.KALMAN_FIT: kalman_fit_plot,
+    PlotType.KALMAN_VS_CCDC: kalman_vs_ccdc_plot,
+    PlotType.KALMAN_VS_CCDC_COEFS: kalman_vs_ccdc_coefs_plot,
+    PlotType.KALMAN_RETROFITTED: kalman_retrofitted_plot,
+    PlotType.KALMAN_YEARLY_FIT: kalman_yearly_fit_plot,
+}
 
 def get_labels_and_handles(axs):
     handles, labels = axs.get_legend_handles_labels()
@@ -83,39 +78,43 @@ def create_image_grids(image_directory, output_directory):
         plt.close(fig)
 
 
-def generate_yearly_kalman_fit_plots(data, output_path, options, display=False):
+def generate_yearly_kalman_fit_plots(data, output_path, options, additional_data, display=False):
     unique_years = pd.to_datetime(data[DATE_LABEL]).dt.year.unique().tolist()
 
     figures = []
 
     for year in unique_years:
-        fig, axs = plt.subplots(figsize=ASPECT_RATIO)
+        try:
+            fig, axs = plt.subplots(figsize=ASPECT_RATIO)
 
-        kalman_yearly_fit_plot(
-            axs,
-            data.copy(),
-            options[PlotType.KALMAN_YEARLY_FIT],
-            year,
-        )
+            kalman_yearly_fit_plot(
+                axs,
+                data.copy(),
+                options[PlotType.KALMAN_YEARLY_FIT],
+                additional_data,
+                year,
+            )
 
-        figures.append((fig, axs))
+            figures.append((fig, axs))
 
-        labels, handles = get_labels_and_handles(axs)
+            labels, handles = get_labels_and_handles(axs)
 
-        legend = fig.legend(
-            handles,
-            labels,
-            loc="upper center",
-            bbox_to_anchor=(0.5, -0.1),
-            ncol=6 if len(labels) > 6 else len(labels),
-        )
+            legend = fig.legend(
+                handles,
+                labels,
+                loc="upper center",
+                bbox_to_anchor=(0.5, -0.1),
+                ncol=6 if len(labels) > 6 else len(labels),
+            )
 
-        save_chart(
-            fig,
-            f"{year}",
-            f"{output_path}/{PlotType.KALMAN_YEARLY_FIT.value}",
-            legend=legend,
-        )
+            save_chart(
+                fig,
+                f"{year}",
+                f"{output_path}/{PlotType.KALMAN_YEARLY_FIT.value}",
+                    legend=legend,
+            )
+        except Exception as e:
+            print(f"Error generating plot {PlotType.KALMAN_YEARLY_FIT}: {e}")
 
         plt.close(fig)
 
@@ -125,67 +124,44 @@ def generate_yearly_kalman_fit_plots(data, output_path, options, display=False):
     )
 
 
-def generate_plots(data, output_path, options, display=False):
+def generate_plots(data, output_path, additional_data, plots, display=False):
     # create output directory
     os.makedirs(output_path, exist_ok=True)
 
-    plots = []
+    figures = []
 
     for plot_type in PLOT_TYPES:
-        if options.get(plot_type, None) and plot_type != PlotType.KALMAN_YEARLY_FIT:
+        if plots.get(plot_type, None) and plot_type != PlotType.KALMAN_YEARLY_FIT:
             fig, ax = plt.subplots(figsize=ASPECT_RATIO)
-            plots.append((fig, ax, plot_type))
+            figures.append((fig, ax, plot_type))
 
     kalman_output = pd.read_csv(data)
 
-    for fig, axes, plot_type in plots:
-        if plot_type == PlotType.KALMAN_VS_HARMONIC:
-            kalman_estimate_vs_harmonic_trend_plot(
-                axes,
-                kalman_output.copy(),
-                options[plot_type],
-            )
-        elif plot_type == PlotType.KALMAN_FIT:
-            kalman_fit_plot(
-                axes,
-                kalman_output.copy(),
-                options[plot_type],
-            )
-        elif plot_type == PlotType.KALMAN_VS_CCDC:
-            kalman_vs_ccdc_plot(
-                axes,
-                kalman_output.copy(),
-                options[plot_type],
-            )
-        elif plot_type == PlotType.KALMAN_VS_CCDC_COEFS:
-            kalman_vs_ccdc_coefs_plot(
-                axes,
-                kalman_output.copy(),
-                options[plot_type],
-            )
-        elif plot_type == PlotType.KALMAN_RETROFITTED:
-            kalman_retrofitted_plot(
-                axes,
-                kalman_output.copy(),
-                options[plot_type],
+    for fig, axes, plot_type in figures:
+        try:
+            PLOT_GENERATORS[plot_type](axes, kalman_output, plots[plot_type], additional_data)
+        except Exception as e:
+            print(f"Error generating plot {plot_type}: {e}")
+
+    if plots.get(PlotType.KALMAN_YEARLY_FIT, False):
+        generate_yearly_kalman_fit_plots(kalman_output, output_path, plots, additional_data, display)
+
+    for fig, axs, plot_type in figures:
+        try:
+            labels, handles = get_labels_and_handles(axs)
+
+            legend = fig.legend(
+                handles,
+                labels,
+                loc="upper center",
+                bbox_to_anchor=(0.5, -0.1),
+                ncol=6 if len(labels) > 6 else len(labels),
             )
 
-    if options.get(PlotType.KALMAN_YEARLY_FIT, False):
-        generate_yearly_kalman_fit_plots(kalman_output, output_path, options, display)
-
-    for fig, axs, plot_type in plots:
-        labels, handles = get_labels_and_handles(axs)
-
-        legend = fig.legend(
-            handles,
-            labels,
-            loc="upper center",
-            bbox_to_anchor=(0.5, -0.1),
-            ncol=6 if len(labels) > 6 else len(labels),
-        )
-
-        plt.tight_layout()
-        save_chart(fig, plot_type.value, output_path, legend=legend)
+            plt.tight_layout()
+            save_chart(fig, plot_type.value, output_path, legend=legend)
+        except Exception as e:
+            print(f"Error generating plot {plot_type}: {e}")
 
         if display:
             plt.show()

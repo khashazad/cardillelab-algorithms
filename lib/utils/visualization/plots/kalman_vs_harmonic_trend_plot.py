@@ -34,8 +34,6 @@ def get_harmonic_trend_coefficients(options):
 
 
 def get_harmonic_trend_estimates(harmonic_trend_coefs, frac_of_year, harmonic_flags):
-    harmonic_params, _ = parse_harmonic_params(harmonic_flags)
-
     harmonic_trend_coefs_by_year = []
 
     for frac_year in list(frac_of_year):
@@ -61,12 +59,13 @@ def kalman_estimate_vs_harmonic_trend_plot(
     axs,
     data,
     options,
+    additional_data,
 ):
-    harmonic_trend_coefs = get_harmonic_trend_coefficients(options)
+    harmonic_trend_coefs = get_harmonic_trend_coefficients(additional_data)
     harmonic_fit_df = get_harmonic_trend_estimates(
         harmonic_trend_coefs,
         data[FRACTION_OF_YEAR_LABEL],
-        options.get("harmonic_flags", {}),
+        additional_data.get("harmonic_flags", {}),
     )
 
     data = data.merge(harmonic_fit_df, on=FRACTION_OF_YEAR_LABEL, how="inner")
