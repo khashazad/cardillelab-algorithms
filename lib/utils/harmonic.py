@@ -34,13 +34,13 @@ def parse_harmonic_params(harmonic_flags):
     if harmonic_flags.get(Harmonic.SLOPE.value):
         param_names.append(Harmonic.SLOPE.value)
 
-    if harmonic_flags.get(Harmonic.UNIMODAL.value):
+    if NUM_SINUSOID_PAIRS >= 1:
         param_names.extend([Harmonic.COS.value, Harmonic.SIN.value])
 
-    if harmonic_flags.get(Harmonic.BIMODAL.value):
+    if NUM_SINUSOID_PAIRS >= 2:
         param_names.extend([Harmonic.COS2.value, Harmonic.SIN2.value])
 
-    if harmonic_flags.get(Harmonic.TRIMODAL.value):
+    if NUM_SINUSOID_PAIRS >= 3:
         param_names.extend([Harmonic.COS3.value, Harmonic.SIN3.value])
 
     return param_names, NUM_SINUSOID_PAIRS

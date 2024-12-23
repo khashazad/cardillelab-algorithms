@@ -6,8 +6,10 @@ Earth Engine at "users/parevalo_bu/gee-ccdc-tools"
 
 import ee
 import math
+from lib.constants import CCDC
 from lib.image_collections import COLLECTIONS
 from lib.utils import utils
+from lib.utils.ee.dates import convert_date
 
 
 ee.Initialize(opt_url=ee.data.HIGH_VOLUME_API_BASE_URL)
@@ -282,3 +284,34 @@ def get_segments_for_coordinates(coordinates):
     zipped = zip(s_starts.tolist(), s_ends.tolist())
 
     return list(zipped)
+
+
+def get_ccdc_coefs_for_date(date):
+    ccdc_asset = COLLECTIONS["CCDC_Global"].mosaic()
+
+    bands = ["SWIR1"]
+
+    segments_count = 10
+    segments = build_segment_tag(segments_count)
+
+    ccdc_image = build_ccd_image(ccdc_asset, segments_count, bands)
+
+    date = convert_date(
+        {
+            "input_format": 2,
+            "input_date": date,
+            "output_format": 1,
+        }
+    )
+
+    coefs = get_multi_coefs(
+        ccdc_image,
+        date,
+        bands,
+        coef_list=HARMONIC_TAGS,
+        cond=True,
+        segment_names=segments,
+        behavior="before",
+    ).rename([*[f"{CCDC.BAND_PREFIX.value}_{x}" for x in HARMONIC_TAGS]])
+
+    return coefs

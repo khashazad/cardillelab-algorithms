@@ -55,7 +55,10 @@ from kalman.kalman_module import main as eeek
 from lib.utils.visualization.constant import PlotType
 from lib.utils.visualization.plot_generator import generate_plots
 import threading
-from lib.utils.ee.ccdc_utils import get_segments_for_coordinates
+from lib.utils.ee.ccdc_utils import (
+    get_ccdc_coefs_for_date,
+    get_segments_for_coordinates,
+)
 
 # could be omitted
 RUN_ID = ""
@@ -71,7 +74,7 @@ COLLECTION_PARAMETERS = {
     "start_doy": 1,
     "end_doy": 365,
     "cloud_cover_threshold": 20,
-    "initialization": Initialization.POSTHOC,
+    "initialization": Initialization.CCDC,
 }
 
 HARMONIC_FLAGS = {
@@ -85,7 +88,7 @@ HARMONIC_FLAGS = {
 TAG = get_tag(**COLLECTION_PARAMETERS)
 POINTS = get_points(COLLECTION_PARAMETERS["point_group"])
 INDEX = COLLECTION_PARAMETERS["index"]
-INITIALIZATION = Initialization.POSTHOC
+INITIALIZATION = Initialization.CCDC
 
 # whether to include the ccdc coefficients in the output
 INCLUDE_CCDC_COEFFICIENTS = True
@@ -100,6 +103,7 @@ run_directory = build_kalman_run_directory(
 
 # Path to the parameters file containing the process noise, measurement noise, and initial state covariance
 parameters_file_path = get_kalman_parameters_path(script_directory, HARMONIC_FLAGS)
+
 
 def create_points_file(points_filename, coefficients_by_point, years: list[int]):
     with open(points_filename, "w", newline="") as file:
@@ -174,14 +178,14 @@ def process_point(kalman_parameters, point):
         run_directory, index
     )
 
-    with open(end_of_year_kalman_state_path, "w") as file:
-        state_labels, _ = parse_harmonic_params(HARMONIC_FLAGS)
-        covariance_labels = [f"{Kalman.COV_PREFIX.value}_{x}" for x in state_labels]
+    harmonic_params, num_sinusoid_pairs = parse_harmonic_params(HARMONIC_FLAGS)
 
-        csv.writer(file).writerow(["year", *state_labels, *covariance_labels])
+    with open(end_of_year_kalman_state_path, "w") as file:
+        covariance_labels = [f"{Kalman.COV_PREFIX.value}_{x}" for x in harmonic_params]
+
+        csv.writer(file).writerow(["year", *harmonic_params, *covariance_labels])
 
     def update_kalman_parameters_with_last_run(data, year):
-        harmonic_params, _ = parse_harmonic_params(HARMONIC_FLAGS)
         state = data.iloc[-1][harmonic_params].tolist()
         covariance = data.iloc[-1][
             [f"{Kalman.COV_PREFIX.value}_{x}" for x in harmonic_params]
@@ -213,12 +217,33 @@ def process_point(kalman_parameters, point):
             harmonic_flags=HARMONIC_FLAGS,
             output_file=harmonic_trend_coefs_path,
         )
-        
+
         if is_first_year:
             if INITIALIZATION == Initialization.POSTHOC:
                 kalman_parameters[Kalman.X.value] = coefficients
             elif INITIALIZATION == Initialization.CCDC:
-                pass
+                ccdc_coefs = get_ccdc_coefs_for_date(collection.first().date().millis())
+
+                coefs = utils.get_pixels(point, ccdc_coefs)
+
+                state = []
+
+                if HARMONIC_FLAGS.get(Harmonic.INTERCEPT.value, False):
+                    state.append(coefs[0])
+
+                if HARMONIC_FLAGS.get(Harmonic.SLOPE.value, False):
+                    state.append(coefs[1])
+
+                if num_sinusoid_pairs >= 1:
+                    state.extend([coefs[2], coefs[3]])
+
+                if num_sinusoid_pairs >= 2:
+                    state.extend([coefs[4], coefs[5]])
+
+                if num_sinusoid_pairs >= 3:
+                    state.extend([coefs[6], coefs[7]])
+
+                kalman_parameters[Kalman.X.value] = state
 
         data = run_kalman(kalman_parameters, collection, point, year)
 
