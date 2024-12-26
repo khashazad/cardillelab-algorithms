@@ -18,7 +18,6 @@ from lib.constants import (
     Kalman,
     Sensor,
 )
-from lib.study_areas import PNW, RANDONIA, TEST_AREA
 from lib.study_packages import (
     get_tag,
     get_points,
