@@ -95,6 +95,7 @@ RETROFITTED_TREND_LABEL = "retrofitted_trend"
 class Initialization(enum.Enum):
     UNIFORM = "uniform"
     POSTHOC = "posthoc"
+    CCDC = "ccdc"
 
 
 class Harmonic(enum.Enum):
@@ -115,6 +116,7 @@ class Harmonic(enum.Enum):
 class CCDC(enum.Enum):
     BAND_PREFIX = "ccdc"
     FIT = "ccdc_fit"
+    SEGMENTS = "segments"
 
 
 HARMONIC_TAGS = ["INTP", "SLP", "COS", "SIN", "COS2", "SIN2", "COS3", "SIN3"]

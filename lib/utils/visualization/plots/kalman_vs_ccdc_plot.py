@@ -1,5 +1,7 @@
+import json
 from pprint import pprint
 from matplotlib import pyplot as plt
+import numpy as np
 import pandas as pd
 import matplotlib.dates as mdates
 
@@ -7,35 +9,12 @@ from lib.utils.visualization.constant import FIXED_Y_AXIS_LIMIT
 from lib.constants import (
     DATE_LABEL,
     ESTIMATE_LABEL,
-    FRACTION_OF_YEAR_LABEL,
     Harmonic,
     Kalman,
     CCDC,
 )
-from lib.utils.harmonic import calculate_harmonic_fit
-
-
-def calculate_ccdc_fit(data):
-    ccdc_coef = lambda coef: f"{CCDC.BAND_PREFIX.value}_{coef}"
-
-    data["CCDC"] = data.apply(
-        lambda row: calculate_harmonic_fit(
-            {
-                Harmonic.INTERCEPT.value: row[ccdc_coef(Harmonic.INTERCEPT.value)],
-                Harmonic.SLOPE.value: row[ccdc_coef(Harmonic.SLOPE.value)],
-                Harmonic.COS.value: row[ccdc_coef(Harmonic.COS.value)],
-                Harmonic.SIN.value: row[ccdc_coef(Harmonic.SIN.value)],
-                Harmonic.COS2.value: row[ccdc_coef(Harmonic.COS2.value)],
-                Harmonic.SIN2.value: row[ccdc_coef(Harmonic.SIN2.value)],
-                Harmonic.COS3.value: row[ccdc_coef(Harmonic.COS3.value)],
-                Harmonic.SIN3.value: row[ccdc_coef(Harmonic.SIN3.value)],
-            },
-            row[FRACTION_OF_YEAR_LABEL],
-        ),
-        axis=1,
-    )
-
-    return data
+from lib.utils.visualization.constant import COLOR_PALETTE_10
+from lib.utils.visualization.vis_utils import plot_ccdc_segments
 
 
 def kalman_vs_ccdc_plot(
@@ -44,20 +23,6 @@ def kalman_vs_ccdc_plot(
     options,
 ):
     data[DATE_LABEL] = pd.to_datetime(data[DATE_LABEL])
-
-    # data = calculate_ccdc_fit(data)
-    ccdc_coef = lambda coef: f"{CCDC.BAND_PREFIX.value}_{coef}"
-
-    ccdc_filtered = data[
-        (data[ccdc_coef(Harmonic.INTERCEPT.value)] != 0)
-        | (data[ccdc_coef(Harmonic.SLOPE.value)] != 0)
-        | (data[ccdc_coef(Harmonic.COS.value)] != 0)
-        | (data[ccdc_coef(Harmonic.SIN.value)] != 0)
-        | (data[ccdc_coef(Harmonic.COS2.value)] != 0)
-        | (data[ccdc_coef(Harmonic.SIN2.value)] != 0)
-        | (data[ccdc_coef(Harmonic.COS3.value)] != 0)
-        | (data[ccdc_coef(Harmonic.SIN3.value)] != 0)
-    ]
 
     axs.plot(
         data[DATE_LABEL],
@@ -68,8 +33,8 @@ def kalman_vs_ccdc_plot(
     )
 
     axs.plot(
-        ccdc_filtered[DATE_LABEL],
-        ccdc_filtered[CCDC.FIT.value],
+        data[DATE_LABEL],
+        data[CCDC.FIT.value],
         label="CCDC",
         linestyle="--",
         color="green",
@@ -82,6 +47,19 @@ def kalman_vs_ccdc_plot(
         s=13,
         color="red",
     )
+
+    if options.get(CCDC.SEGMENTS.value, False):
+        plot_ccdc_segments(axs, data, options[CCDC.SEGMENTS.value])
+
+    if pd.to_datetime(data.iloc[-1][DATE_LABEL]) >= pd.Timestamp(
+        year=2020, month=1, day=1
+    ):
+        axs.axvline(
+            x=pd.Timestamp(year=2020, month=1, day=1),
+            color="red",
+            linestyle="dashdot",
+            label="ccdc",
+        )
 
     axs.xaxis.set_major_locator(mdates.AutoDateLocator())
     axs.xaxis.set_major_formatter(mdates.DateFormatter("%b %Y"))

@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 from kalman.kalman_helper import parse_band_names
 from lib.constants import (
+    CCDC,
     DATE_LABEL,
     FORWARD_TREND_LABEL,
     HARMONIC_FLAGS_LABEL,
@@ -17,7 +18,7 @@ from lib.constants import (
     Kalman,
     Sensor,
 )
-from lib.study_areas import PNW, RANDONIA
+from lib.study_areas import PNW, RANDONIA, TEST_AREA
 from lib.study_packages import (
     get_tag,
     get_points,
@@ -34,9 +35,11 @@ from lib.constants import (
     TIMESTAMP_LABEL,
 )
 from lib.paths import (
+    CCDC_SEGMENTS_SUBDIRECTORY,
     HARMONIC_TREND_SUBDIRECTORY,
     KALMAN_END_OF_YEAR_STATE_SUBDIRECTORY,
     KALMAN_STATE_SUBDIRECTORY,
+    build_ccdc_segments_path,
     build_end_of_year_kalman_state_path,
     build_kalman_analysis_path,
     build_harmonic_trend_path,
@@ -52,6 +55,10 @@ from kalman.kalman_module import main as eeek
 from lib.utils.visualization.constant import PlotType
 from lib.utils.visualization.plot_generator import generate_plots
 import threading
+from lib.utils.ee.ccdc_utils import (
+    get_ccdc_coefs_for_date,
+    get_segments_for_coordinates,
+)
 
 # could be omitted
 RUN_ID = ""
@@ -59,11 +66,10 @@ RUN_ID = ""
 # Parameters
 COLLECTION_PARAMETERS = {
     "index": Index.SWIR,
-    "sensors": [Sensor.L7, Sensor.L8, Sensor.L9],
-    "years": range(2017, 2022),
-    "point_group": "randonia_6",
-    "study_area": RANDONIA,
-    "day_step_size": 4,
+    "sensors": [Sensor.L8],
+    "years": [2017],
+    "point_group": "test_1",
+    "day_step_size": 6,
     "start_doy": 1,
     "end_doy": 365,
     "cloud_cover_threshold": 20,
@@ -72,16 +78,16 @@ COLLECTION_PARAMETERS = {
 
 HARMONIC_FLAGS = {
     Harmonic.INTERCEPT.value: True,
-    Harmonic.SLOPE.value: True,
+    # Harmonic.SLOPE.value: True,
     Harmonic.UNIMODAL.value: True,
-    Harmonic.BIMODAL.value: True,
+    # Harmonic.BIMODAL.value: True,
     # Harmonic.TRIMODAL.value: True,
 }
 
 TAG = get_tag(**COLLECTION_PARAMETERS)
 POINTS = get_points(COLLECTION_PARAMETERS["point_group"])
 INDEX = COLLECTION_PARAMETERS["index"]
-INITIALIZATION = Initialization.POSTHOC
+INITIALIZATION = Initialization.CCDC
 
 # whether to include the ccdc coefficients in the output
 INCLUDE_CCDC_COEFFICIENTS = True
@@ -171,14 +177,14 @@ def process_point(kalman_parameters, point):
         run_directory, index
     )
 
-    with open(end_of_year_kalman_state_path, "w") as file:
-        state_labels, _ = parse_harmonic_params(HARMONIC_FLAGS)
-        covariance_labels = [f"{Kalman.COV_PREFIX.value}_{x}" for x in state_labels]
+    harmonic_params, num_sinusoid_pairs = parse_harmonic_params(HARMONIC_FLAGS)
 
-        csv.writer(file).writerow(["year", *state_labels, *covariance_labels])
+    with open(end_of_year_kalman_state_path, "w") as file:
+        covariance_labels = [f"{Kalman.COV_PREFIX.value}_{x}" for x in harmonic_params]
+
+        csv.writer(file).writerow(["year", *harmonic_params, *covariance_labels])
 
     def update_kalman_parameters_with_last_run(data, year):
-        harmonic_params, _ = parse_harmonic_params(HARMONIC_FLAGS)
         state = data.iloc[-1][harmonic_params].tolist()
         covariance = data.iloc[-1][
             [f"{Kalman.COV_PREFIX.value}_{x}" for x in harmonic_params]
@@ -199,6 +205,7 @@ def process_point(kalman_parameters, point):
             **{
                 **COLLECTION_PARAMETERS,
                 "years": [year],
+                "study_area": ee.Geometry.Point(point),
             }
         )
 
@@ -211,8 +218,32 @@ def process_point(kalman_parameters, point):
             output_file=harmonic_trend_coefs_path,
         )
 
-        if INITIALIZATION == Initialization.POSTHOC and is_first_year:
-            kalman_parameters[Kalman.X.value] = coefficients
+        if is_first_year:
+            if INITIALIZATION == Initialization.POSTHOC:
+                kalman_parameters[Kalman.X.value] = coefficients
+            elif INITIALIZATION == Initialization.CCDC:
+                ccdc_coefs = get_ccdc_coefs_for_date(collection.first().date().millis())
+
+                coefs = utils.get_pixels(point, ccdc_coefs)
+
+                state = []
+
+                if HARMONIC_FLAGS.get(Harmonic.INTERCEPT.value, False):
+                    state.append(coefs[0])
+
+                if HARMONIC_FLAGS.get(Harmonic.SLOPE.value, False):
+                    state.append(coefs[1])
+
+                if num_sinusoid_pairs >= 1:
+                    state.extend([coefs[2], coefs[3]])
+
+                if num_sinusoid_pairs >= 2:
+                    state.extend([coefs[4], coefs[5]])
+
+                if num_sinusoid_pairs >= 3:
+                    state.extend([coefs[6], coefs[7]])
+
+                kalman_parameters[Kalman.X.value] = state
 
         data = run_kalman(kalman_parameters, collection, point, year)
 
@@ -228,6 +259,13 @@ def process_point(kalman_parameters, point):
     for year in COLLECTION_PARAMETERS["years"]:
         process_year(year)
 
+    if INCLUDE_CCDC_COEFFICIENTS:
+        segments_path = build_ccdc_segments_path(run_directory, index)
+
+        segments = get_segments_for_coordinates(point)
+
+        json.dump(segments, open(segments_path, "w"))
+
 
 def setup_subdirectories():
     result_dir = kalman_result_directory(run_directory)
@@ -242,6 +280,8 @@ def setup_subdirectories():
         os.path.join(result_dir, KALMAN_END_OF_YEAR_STATE_SUBDIRECTORY),
         exist_ok=True,
     )
+
+    os.makedirs(os.path.join(result_dir, CCDC_SEGMENTS_SUBDIRECTORY), exist_ok=True)
 
     os.makedirs(kalman_analysis_directory(run_directory), exist_ok=True)
 
@@ -264,10 +304,16 @@ def generate_all_plots():
                 },
                 PlotType.KALMAN_VS_CCDC: {
                     "title": "Kalman vs CCDC",
+                    CCDC.SEGMENTS.value: build_ccdc_segments_path(
+                        run_directory, point_index
+                    ),
                 },
                 PlotType.KALMAN_VS_CCDC_COEFS: {
                     "title": "Kalman vs CCDC Coefficients",
                     HARMONIC_FLAGS_LABEL: HARMONIC_FLAGS,
+                    CCDC.SEGMENTS.value: build_ccdc_segments_path(
+                        run_directory, point_index
+                    ),
                 },
                 PlotType.KALMAN_RETROFITTED: {
                     HARMONIC_FLAGS_LABEL: HARMONIC_FLAGS,
@@ -276,6 +322,16 @@ def generate_all_plots():
                     ),
                     FORWARD_TREND_LABEL: True,
                     HARMONIC_TREND_LABEL: build_harmonic_trend_path(
+                        run_directory, point_index
+                    ),
+                },
+                PlotType.KALMAN_YEARLY_FIT: {
+                    HARMONIC_FLAGS_LABEL: HARMONIC_FLAGS,
+                    "title": "Kalman Yearly Fit",
+                    Kalman.EOY_STATE.value: build_end_of_year_kalman_state_path(
+                        run_directory, point_index
+                    ),
+                    CCDC.SEGMENTS.value: build_ccdc_segments_path(
                         run_directory, point_index
                     ),
                 },

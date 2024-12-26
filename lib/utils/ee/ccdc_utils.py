@@ -6,6 +6,9 @@ Earth Engine at "users/parevalo_bu/gee-ccdc-tools"
 
 import ee
 import math
+from lib.constants import CCDC
+from lib.image_collections import COLLECTIONS
+from lib.utils import utils
 from lib.utils.ee.dates import convert_date
 
 
@@ -15,11 +18,6 @@ HARMONIC_TAGS = ["INTP", "SLP", "COS", "SIN", "COS2", "SIN2", "COS3", "SIN3"]
 
 
 def filter_coefs(ccdc_results, date, band, coef, segment_names, behavior):
-    if behavior not in ["normal", "after", "before"]:
-        raise NotImplementedError(
-            f"behavior must be 'normal', 'after', or 'before'; got {behavior}"
-        )
-
     start_bands = ccdc_results.select(".*_tStart").rename(segment_names)
     end_bands = ccdc_results.select(".*_tEnd").rename(segment_names)
 
@@ -29,21 +27,19 @@ def filter_coefs(ccdc_results, date, band, coef, segment_names, behavior):
     normal_start = start_bands.lte(date)
     normal_end = end_bands.gte(date)
 
-    segment_match = ee.Algorithms.If(
-        behavior == "normal",
-        normal_start.And(normal_end),
-        ee.Algorithms.If(
-            behavior == "after",
-            end_bands.gt(date),
-            ee.Algorithms.If(
-                behavior == "before",
-                start_bands.selfMask().lt(date).selfMask(),
-                None,  # NotImplementedError should already have been thrown
-            ),
-        ),
-    )
-
-    return coef_bands.updateMask(segment_match).reduce(ee.Reducer.firstNonNull())
+    if behavior == "normal":
+        segment_match = normal_start.And(normal_end)
+        return coef_bands.updateMask(segment_match).reduce(ee.Reducer.firstNonNull())
+    elif behavior == "after":
+        segment_match = end_bands.gt(date)
+        return coef_bands.updateMask(segment_match).reduce(ee.Reducer.firstNonNull())
+    elif behavior == "before":
+        segment_match = start_bands.selfMask().lt(date).selfMask()
+        return coef_bands.updateMask(segment_match).reduce(ee.Reducer.lastNonNull())
+    else:
+        raise NotImplementedError(
+            f"behavior must be 'normal', 'after', or 'before'; got {behavior}"
+        )
 
 
 def get_coef(ccdc_results, date, band_list, coef, segment_names, behavior):
@@ -76,13 +72,13 @@ def get_multi_coefs(
     coef_list=None,
     cond=True,
     segment_names=None,
-    behavior="after",
+    behavior="before",
 ):
     if coef_list is None:
         coef_list = HARMONIC_TAGS
 
     if segment_names is None:
-        segment_names = build_segment_tag(10)  # default to 10 tags...?
+        segment_names = build_segment_tag(10)
 
     def inner(coef):
         return get_coef(ccdc_results, date, band_list, coef, segment_names, behavior)
@@ -256,7 +252,7 @@ def get_synthetic_for_year(image, date, date_format, band, segments):
 
     # Get coefficients for the specified band
     newParams = get_multi_coefs(
-        image, tfit, [str(band)], HARMONIC_TAGS, True, segments, "after"
+        image, tfit, [str(band)], HARMONIC_TAGS, False, segments, "before"
     )
 
     # Calculate synthetic image
@@ -272,3 +268,50 @@ def get_multi_synthetic(image, date, date_format, band_list, segments):
     )
 
     return ee.Image.cat(list(map(retrieve_synthetic, band_list)))
+
+
+def get_segments_for_coordinates(coordinates):
+    ccdc_asset = COLLECTIONS["CCDC_Global"].mosaic()
+
+    ccdc_image = build_ccd_image(ccdc_asset, 10, ["SWIR1"])
+
+    segments_start = ccdc_image.select(".*_tStart")
+    segments_end = ccdc_image.select(".*_tEnd")
+
+    s_starts = utils.get_pixels(coordinates, segments_start)
+    s_ends = utils.get_pixels(coordinates, segments_end)
+
+    zipped = zip(s_starts.tolist(), s_ends.tolist())
+
+    return list(zipped)
+
+
+def get_ccdc_coefs_for_date(date):
+    ccdc_asset = COLLECTIONS["CCDC_Global"].mosaic()
+
+    bands = ["SWIR1"]
+
+    segments_count = 10
+    segments = build_segment_tag(segments_count)
+
+    ccdc_image = build_ccd_image(ccdc_asset, segments_count, bands)
+
+    date = convert_date(
+        {
+            "input_format": 2,
+            "input_date": date,
+            "output_format": 1,
+        }
+    )
+
+    coefs = get_multi_coefs(
+        ccdc_image,
+        date,
+        bands,
+        coef_list=HARMONIC_TAGS,
+        cond=True,
+        segment_names=segments,
+        behavior="before",
+    ).rename([*[f"{CCDC.BAND_PREFIX.value}_{x}" for x in HARMONIC_TAGS]])
+
+    return coefs
