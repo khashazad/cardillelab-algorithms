@@ -18,18 +18,6 @@ from lib.constants import NUM_MEASURES
 from lib.utils.harmonic import parse_harmonic_params
 
 
-def read_parameters_from_file(parameters_file_path):
-    with open(parameters_file_path, "r") as file:
-        parameters = json.load(file)
-
-        return {
-            Kalman.Q: parameters.get(Kalman.Q.value, []),
-            Kalman.R: parameters.get(Kalman.R.value, []),
-            Kalman.P: parameters.get(Kalman.P.value, []),
-            Kalman.X: parameters.get(Kalman.X.value, []),
-        }
-
-
 def parse_band_names(recording_flags, harmonic_flags):
     band_names = []
 

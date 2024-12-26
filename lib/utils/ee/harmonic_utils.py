@@ -65,11 +65,11 @@ def apply_harmonic_to_collection(
 def add_harmonic_bands_via_modality_dictionary(image_collection, modality_dictionary):
     vm = modality_dictionary  # for convenience of typing
     if (
-        vm["bimodal"]
-        or vm["constant"]
-        or vm["linear"]
-        or vm["trimodal"]
-        or vm["unimodal"]
+        vm.get("bimodal", False)
+        or vm.get("constant", False)
+        or vm.get("linear", False)
+        or vm.get("trimodal", False)
+        or vm.get("unimodal", False)
     ):
         args = {}
         args["date_property"] = "frac_doy"
@@ -77,11 +77,19 @@ def add_harmonic_bands_via_modality_dictionary(image_collection, modality_dictio
         reduced_collection_with_harmonic = add_time_band_using_property_name_to_ic(
             image_collection, args
         )
-        if vm["constant"]:
+        if vm.get("constant", False):
             reduced_collection_with_harmonic = add_linear_constant_to_ic(
                 reduced_collection_with_harmonic, 1, "constant"
             )
-        if vm["unimodal"]:
+        if vm.get("linear", False):
+            reduced_collection_with_harmonic = add_linear_constant_to_ic(
+                reduced_collection_with_harmonic, 1, "slope"
+            )
+        if (
+            vm.get("unimodal", False)
+            or vm.get("bimodal", False)
+            or vm.get("trimodal", False)
+        ):
             var_args_harmonic_bands = {}
             var_args_harmonic_bands["time_band_name"] = args["time_band_name"]
             var_args_harmonic_bands["non_standard_period_boolean"] = False
@@ -91,7 +99,7 @@ def add_harmonic_bands_via_modality_dictionary(image_collection, modality_dictio
             reduced_collection_with_harmonic = add_cos_and_sin_bands_to_collection(
                 reduced_collection_with_harmonic, var_args_harmonic_bands
             )
-        if vm["bimodal"]:
+        if vm.get("bimodal", False) or vm.get("trimodal", False):
             var_args_harmonic_bands = {}
             var_args_harmonic_bands["time_band_name"] = args["time_band_name"]
             var_args_harmonic_bands["non_standard_period_boolean"] = True
@@ -102,7 +110,7 @@ def add_harmonic_bands_via_modality_dictionary(image_collection, modality_dictio
             reduced_collection_with_harmonic = add_cos_and_sin_bands_to_collection(
                 reduced_collection_with_harmonic, var_args_harmonic_bands
             )
-        if vm["trimodal"]:
+        if vm.get("trimodal", False):
             var_args_harmonic_bands = {}
             var_args_harmonic_bands["time_band_name"] = args["time_band_name"]
             var_args_harmonic_bands["non_standard_period_boolean"] = True
@@ -113,25 +121,31 @@ def add_harmonic_bands_via_modality_dictionary(image_collection, modality_dictio
             reduced_collection_with_harmonic = add_cos_and_sin_bands_to_collection(
                 reduced_collection_with_harmonic, var_args_harmonic_bands
             )
+
     return reduced_collection_with_harmonic
 
 
 def determine_harmonic_independents_via_modality_dictionary(modality_dictionary):
     vm = modality_dictionary
     harmonic_list = []
-    if vm["constant"]:
+    if vm.get("constant", False):
         harmonic_list.append("constant")
-    if vm["linear"]:
-        harmonic_list.append("t")
-    if vm["unimodal"]:
+    if vm.get("linear", False):
+        harmonic_list.append("slope")
+    if (
+        vm.get("unimodal", False)
+        or vm.get("bimodal", False)
+        or vm.get("trimodal", False)
+    ):
         harmonic_list.append("cos")
         harmonic_list.append("sin")
-    if vm["bimodal"]:
+    if vm.get("bimodal", False) or vm.get("trimodal", False):
         harmonic_list.append("cos2")
         harmonic_list.append("sin2")
-    if vm["trimodal"]:
+    if vm.get("trimodal", False):
         harmonic_list.append("cos3")
         harmonic_list.append("sin3")
+
     return harmonic_list
 
 

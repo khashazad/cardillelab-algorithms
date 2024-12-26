@@ -28,34 +28,6 @@ def kalman_vs_ccdc_coefs_plot(
 
     ccdc_coef = lambda coef: f"{CCDC.BAND_PREFIX.value}_{coef}"
 
-    # ccdc_coefs_tags = [ccdc_coef(coef) for coef in HARMONIC_TAGS]
-
-    # missing_ccdc_coefs_condition = (
-    #     (data[ccdc_coef(Harmonic.INTERCEPT.value)] == 0)
-    #     & (data[ccdc_coef(Harmonic.SLOPE.value)] == 0)
-    #     & (data[ccdc_coef(Harmonic.COS.value)] == 0)
-    #     & (data[ccdc_coef(Harmonic.SIN.value)] == 0)
-    #     & (data[ccdc_coef(Harmonic.COS2.value)] == 0)
-    #     & (data[ccdc_coef(Harmonic.SIN2.value)] == 0)
-    #     & (data[ccdc_coef(Harmonic.COS3.value)] == 0)
-    #     & (data[ccdc_coef(Harmonic.SIN3.value)] == 0)
-    # )
-
-    # last_valid_coefs = data.iloc[data[~missing_ccdc_coefs_condition].last_valid_index()]
-
-    # def replace_missing_ccdc_coefs(row):
-    #     for tag in ccdc_coefs_tags:
-    #         if row[tag] != 0:
-    #             return row
-
-    #     row[ccdc_coefs_tags] = last_valid_coefs[ccdc_coefs_tags]
-    #     return row
-
-    # data = data.apply(
-    #     replace_missing_ccdc_coefs,
-    #     axis=1,
-    # )
-
     for year in unique_years:
         axs.axvline(
             x=pd.Timestamp(year=year, month=1, day=1),
@@ -102,7 +74,11 @@ def kalman_vs_ccdc_coefs_plot(
                 color="#808080",
             )
 
-    if harmonic_flags.get(Harmonic.UNIMODAL.value, False):
+    if (
+        harmonic_flags.get(Harmonic.UNIMODAL.value, False)
+        or harmonic_flags.get(Harmonic.BIMODAL.value, False)
+        or harmonic_flags.get(Harmonic.TRIMODAL.value, False)
+    ):
         if Harmonic.COS.value in columns and Harmonic.SIN.value in columns:
             axs.plot(
                 data[DATE_LABEL],
@@ -140,7 +116,10 @@ def kalman_vs_ccdc_coefs_plot(
                 color="#FF4500",
             )
 
-    if harmonic_flags.get(Harmonic.BIMODAL.value, False):
+    if (
+        harmonic_flags.get(Harmonic.BIMODAL.value, False)
+        or harmonic_flags.get(Harmonic.TRIMODAL.value, False)
+    ):
         if Harmonic.COS2.value in columns and Harmonic.SIN2.value in columns:
             axs.plot(
                 data[DATE_LABEL],

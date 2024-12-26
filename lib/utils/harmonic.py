@@ -66,13 +66,21 @@ def extract_coefficients_from_array(coefs, harmonic_flags):
         args[Harmonic.SLOPE.value] = float(coefs[index])
         index += 1
 
-    args[Harmonic.COS.value] = float(coefs[index])
-    index += 1
+    if (
+        harmonic_flags.get(Harmonic.UNIMODAL.value, False)
+        or harmonic_flags.get(Harmonic.BIMODAL.value, False)
+        or harmonic_flags.get(Harmonic.TRIMODAL.value, False)
+    ):
+        args[Harmonic.COS.value] = float(coefs[index])
+        index += 1
 
-    args[Harmonic.SIN.value] = float(coefs[index])
-    index += 1
+        args[Harmonic.SIN.value] = float(coefs[index])
+        index += 1
 
-    if harmonic_flags.get(Harmonic.BIMODAL.value, False):
+    if (
+        harmonic_flags.get(Harmonic.BIMODAL.value, False)
+        or harmonic_flags.get(Harmonic.TRIMODAL.value, False)
+    ):
         args[Harmonic.COS2.value] = float(coefs[index])
         index += 1
 
@@ -94,7 +102,7 @@ def harmonic_trend_coefficients(
     point_coords,
     years: list[int],
     index: Index,
-    harmonic_flags={Harmonic.INTERCEPT: True, Harmonic.UNIMODAL: True},
+    harmonic_flags={Harmonic.INTERCEPT: True},
 ):
     modality = {
         "constant": harmonic_flags.get(Harmonic.INTERCEPT.value, False),
@@ -124,6 +132,8 @@ def harmonic_trend_coefficients(
         harmonic_independent_variables,
     )
     fitted_coefficients = harmonic_one_time_regression["harmonic_trend_coefficients"]
+
+    # print(fitted_coefficients)
 
     return fitted_coefficients
 
