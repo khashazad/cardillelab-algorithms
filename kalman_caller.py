@@ -18,7 +18,7 @@ from lib.constants import (
     Kalman,
     Sensor,
 )
-from lib.study_areas import PNW, RANDONIA
+from lib.study_areas import PNW, RANDONIA, TEST_AREA
 from lib.study_packages import (
     get_tag,
     get_points,
@@ -66,15 +66,15 @@ RUN_ID = ""
 # Parameters
 COLLECTION_PARAMETERS = {
     "index": Index.SWIR,
-    "sensors": [Sensor.L7, Sensor.L8, Sensor.L9],
-    "years": range(2016, 2024),
-    "point_group": "pnw_40",
-    "study_area": PNW,
-    "day_step_size": 4,
+    "sensors": [Sensor.L8],
+    "years": range(2017, 2018),
+    "point_group": "test_1",
+    "study_area": TEST_AREA,
+    "day_step_size": 6,
     "start_doy": 1,
     "end_doy": 365,
     "cloud_cover_threshold": 20,
-    "initialization": Initialization.CCDC,
+    "initialization": Initialization.POSTHOC,
 }
 
 HARMONIC_FLAGS = {
