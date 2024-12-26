@@ -93,46 +93,6 @@ def kalman_yearly_fit_plot(
         lambda row: calculate_harmonic_fit(coefs, row[FRACTION_OF_YEAR_LABEL]), axis=1
     )
 
-    # ccdc_coef = lambda coef: f"{CCDC.BAND_PREFIX.value}_{coef}"
-
-    # ccdc_coefs_tags = [ccdc_coef(coef) for coef in HARMONIC_TAGS]
-
-    # missing_ccdc_coefs_condition = (
-    #     (data[ccdc_coef(Harmonic.INTERCEPT.value)] == 0)
-    #     & (data[ccdc_coef(Harmonic.SLOPE.value)] == 0)
-    #     & (data[ccdc_coef(Harmonic.COS.value)] == 0)
-    #     & (data[ccdc_coef(Harmonic.SIN.value)] == 0)
-    #     & (data[ccdc_coef(Harmonic.COS2.value)] == 0)
-    #     & (data[ccdc_coef(Harmonic.SIN2.value)] == 0)
-    #     & (data[ccdc_coef(Harmonic.COS3.value)] == 0)
-    #     & (data[ccdc_coef(Harmonic.SIN3.value)] == 0)
-    # )
-
-    # def replace_missing_ccdc_coefs(row):
-    #     for tag in ccdc_coefs_tags:
-    #         if row[tag] != 0:
-    #             return row
-
-    #     data["frac"] = data.apply(
-    #         lambda x: str(x[FRACTION_OF_YEAR_LABEL]).split(".")[1], axis=1
-    #     )
-
-    #     valid_coefs = data[~missing_ccdc_coefs_condition]
-
-    #     last_valid_index = valid_coefs[
-    #         valid_coefs["frac"] == str(row[FRACTION_OF_YEAR_LABEL]).split(".")[1]
-    #     ].last_valid_index()
-
-    #     row[CCDC.FIT.value] = data.loc[last_valid_index][CCDC.FIT.value]
-    #     return row
-
-    # data = data.apply(
-    #     replace_missing_ccdc_coefs,
-    #     axis=1,
-    # )
-
-    # data = calculate_ccdc_fit(data)
-
     data[DATE_LABEL] = pd.to_datetime(data[DATE_LABEL])
 
     axs.plot(
@@ -166,12 +126,15 @@ def kalman_yearly_fit_plot(
     axs.xaxis.set_major_formatter(mdates.DateFormatter("%b %Y"))
     axs.tick_params(axis="x", labelsize=8)
 
-    axs.axvline(
-        x=pd.Timestamp(year=2020, month=1, day=1),
-        color="red",
-        linestyle="dashdot",
-        label="ccdc",
-    )
+    if pd.to_datetime(data.iloc[-1][DATE_LABEL]) >= pd.Timestamp(
+        year=2020, month=1, day=1
+    ):
+        axs.axvline(
+            x=pd.Timestamp(year=2020, month=1, day=1),
+            color="red",
+            linestyle="dashdot",
+            label="ccdc",
+        )
 
     if options.get("fixed_y_axis", False):
         axs.set_ylim(0, options.get("fixed_y_axis_limit", FIXED_Y_AXIS_LIMIT))

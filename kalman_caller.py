@@ -69,7 +69,6 @@ COLLECTION_PARAMETERS = {
     "sensors": [Sensor.L8],
     "years": [2017],
     "point_group": "test_1",
-    "study_area": TEST_AREA,
     "day_step_size": 6,
     "start_doy": 1,
     "end_doy": 365,
