@@ -219,12 +219,15 @@ def kalman_vs_ccdc_coefs_plot(
     if options.get(CCDC.SEGMENTS.value, False):
         plot_ccdc_segments(axs, data, options[CCDC.SEGMENTS.value])
 
-    axs.axvline(
-        x=pd.Timestamp(year=2020, month=1, day=1),
-        color="red",
-        linestyle="dashdot",
-        label="ccdc",
-    )
+    if pd.to_datetime(data.iloc[-1][DATE_LABEL]) >= pd.Timestamp(
+        year=2020, month=1, day=1
+    ):
+        axs.axvline(
+            x=pd.Timestamp(year=2020, month=1, day=1),
+            color="red",
+            linestyle="dashdot",
+            label="ccdc",
+        )
 
     axs.xaxis.set_major_locator(mdates.AutoDateLocator())
     axs.xaxis.set_major_formatter(mdates.DateFormatter("%b %Y"))

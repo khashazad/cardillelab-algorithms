@@ -20,7 +20,7 @@ def get_tag(
 
 def get_collection(**kwargs):
     return build_collection(
-        kwargs["study_area"]["coords"],
+        kwargs["study_area"],
         kwargs["years"],
         kwargs["index"],
         kwargs["sensors"],

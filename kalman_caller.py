@@ -67,7 +67,7 @@ RUN_ID = ""
 COLLECTION_PARAMETERS = {
     "index": Index.SWIR,
     "sensors": [Sensor.L8],
-    "years": range(2017, 2018),
+    "years": [2017],
     "point_group": "test_1",
     "study_area": TEST_AREA,
     "day_step_size": 6,
@@ -206,6 +206,7 @@ def process_point(kalman_parameters, point):
             **{
                 **COLLECTION_PARAMETERS,
                 "years": [year],
+                "study_area": ee.Geometry.Point(point),
             }
         )
 

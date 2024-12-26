@@ -39,7 +39,7 @@ def build_collection(
     cloud_cover_threshold=20,
 ):
     args = {
-        "default_study_area": (ee.Geometry.Polygon(study_area)),
+        "default_study_area": study_area,
         "band_name_reduction": index.value,
         "which_reduction": index.value.upper(),
         "day_step_size": day_step_size,
