@@ -1,4 +1,0 @@
-title,q1_initial,q5_initial,q9_initial,r_initial,q1_optimized,q5_optimized,q9_optimized,r_optimized,initial_objective_function,final_objective_function
-observe ICSE - initial v1,0.00125,0.000125,0.000125,0.003,5.0,0.31015695227,1e-09,0.77355044118,14.604,10.76
-observe ICSE - initial v2,0.0005,0.0008,0.004,0.0015,0.00061682959,0.00028706492,0.00445482861,4.770617e-05,17.023,13.34
-observe ICSE - initial v3,0.0007,0.00027,0.0042,0.00125,0.0006209669,0.00028904344,0.00448251294,4.8032318e-05,13.557,13.34

@@ -1,4 +1,0 @@
-title,q1_initial,q5_initial,q9_initial,r_initial,q1_optimized,q5_optimized,q9_optimized,r_optimized,initial_objective_function,final_objective_function
-ICS - initial params v3,0.0007,0.00027,0.0042,0.00125,0.00098032187,1e-38,0.00225314669,0.01639998143,0.71984,0.6258
-ICS - initial params v2,0.0005,0.0008,0.004,0.0015,0.05678511012,0.00077184945,5.462701e-05,0.02011600834,1.1478,0.4599
-ICS - initial params v1,0.00125,0.000125,0.000125,0.003,0.05500513805,0.00071896082,1.489026e-23,0.01896490922,0.61288,0.46
