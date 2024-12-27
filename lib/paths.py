@@ -5,7 +5,6 @@ import os
 
 from lib.constants import Harmonic
 
-
 # directories
 RESULTS_DIRECTORY = "result"
 ANALYSIS_DIRECTORY = "analysis"
@@ -78,20 +77,22 @@ def build_points_path(run_directory: str) -> str:
 def build_kalman_run_directory(
     script_directory: str, tag: str, harmonic_flags: dict, run_id: str = None
 ) -> str:
-
-    include_slope = harmonic_flags.get(Harmonic.SLOPE.value, False)
-    bimodal = harmonic_flags.get(Harmonic.BIMODAL.value, False)
-    trimodal = harmonic_flags.get(Harmonic.TRIMODAL.value, False)
-
+    
     flags_prefix = ""
-    if include_slope:
-        flags_prefix += "_slope"
-    if trimodal:
-        flags_prefix += "_trimodal"
-    elif bimodal:
-        flags_prefix += "_bimodal"
-    else:
-        flags_prefix += "_unimodal"
+
+    if harmonic_flags is not None:
+        include_slope = harmonic_flags.get(Harmonic.SLOPE.value, False)
+        bimodal = harmonic_flags.get(Harmonic.BIMODAL.value, False)
+        trimodal = harmonic_flags.get(Harmonic.TRIMODAL.value, False)
+
+        if include_slope:
+            flags_prefix += "_slope"
+        if trimodal:
+            flags_prefix += "_trimodal"
+        elif bimodal:
+            flags_prefix += "_bimodal"
+        else:
+            flags_prefix += "_unimodal"
 
     run_id_prefix = f"{run_id}_" if run_id and run_id != "" else ""
     date_time_str = datetime.now().strftime("%m-%d_%H:%M")

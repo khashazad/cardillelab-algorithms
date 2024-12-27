@@ -128,3 +128,51 @@ NUM_MEASURES = 1  # eeek only supports one band at a time
 MASK_VALUE = -999
 
 POINT_INDEX_LABEL = "point_index"
+
+
+class KalmanModels(enum.Enum):
+    UNIMODAL = "unimodal"
+    UNIMODAL_WITH_SLOPE = "unimodal_with_slope"
+    BIMODAL = "bimodal"
+    BIMODAL_WITH_SLOPE = "bimodal_with_slope"
+    TRIMODAL = "trimodal"
+    TRIMODAL_WITH_SLOPE = "trimodal_with_slope"
+
+KALMAN_MODELS = [
+    KalmanModels.UNIMODAL,
+    KalmanModels.UNIMODAL_WITH_SLOPE,
+    KalmanModels.BIMODAL,
+    KalmanModels.BIMODAL_WITH_SLOPE,
+    KalmanModels.TRIMODAL,
+    KalmanModels.TRIMODAL_WITH_SLOPE,
+]
+
+KALMAN_MODEL_HARMONIC_FLAGS = {
+    KalmanModels.UNIMODAL.value: {
+        Harmonic.INTERCEPT.value: True,
+        Harmonic.UNIMODAL.value: True,
+    },
+    KalmanModels.UNIMODAL_WITH_SLOPE.value: {
+        Harmonic.INTERCEPT.value: True,
+        Harmonic.SLOPE.value: True,
+        Harmonic.UNIMODAL.value: True,
+    },
+    KalmanModels.BIMODAL.value: {
+        Harmonic.INTERCEPT.value: True,
+        Harmonic.BIMODAL.value: True,
+    },
+    KalmanModels.BIMODAL_WITH_SLOPE.value: {
+        Harmonic.INTERCEPT.value: True,
+        Harmonic.SLOPE.value: True,
+        Harmonic.BIMODAL.value: True,
+    },
+    KalmanModels.TRIMODAL.value: {
+        Harmonic.INTERCEPT.value: True,
+        Harmonic.TRIMODAL.value: True,
+    },
+    KalmanModels.TRIMODAL_WITH_SLOPE.value: {
+        Harmonic.INTERCEPT.value: True,
+        Harmonic.SLOPE.value: True,
+        Harmonic.TRIMODAL.value: True,
+    },
+}
