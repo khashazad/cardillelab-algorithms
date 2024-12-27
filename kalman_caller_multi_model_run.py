@@ -1,6 +1,7 @@
 import os
 import json
 from lib.constants import (
+    KALMAN_MODEL_HARMONIC_FLAGS,
     Index,
     Initialization,
     Sensor,
@@ -9,7 +10,6 @@ from lib.study_packages import (
     get_tag,
     get_points,
 )
-from lib.constants import Harmonic
 from lib.paths import (
     build_kalman_run_directory,
 )
@@ -28,7 +28,7 @@ INITIALIZATION = Initialization.POSTHOC
 # Parameters
 COLLECTION_PARAMETERS = {
     "index": Index.SWIR,
-    "sensors": [Sensor.L8, Sensor.L9],
+    "sensors": [Sensor.L7, Sensor.L8, Sensor.L9],
     "years": [2017, 2018, 2019],
     "point_group": "pnw_7",
     "day_step_size": 6,
@@ -115,43 +115,13 @@ model_parameters = {
     },
 }
 
-model_harmonic_flags = {
-    KalmanModels.UNIMODAL.value: {
-        Harmonic.INTERCEPT.value: True,
-        Harmonic.UNIMODAL.value: True,
-    },
-    KalmanModels.UNIMODAL_WITH_SLOPE.value: {
-        Harmonic.INTERCEPT.value: True,
-        Harmonic.SLOPE.value: True,
-        Harmonic.UNIMODAL.value: True,
-    },
-    KalmanModels.BIMODAL.value: {
-        Harmonic.INTERCEPT.value: True,
-        Harmonic.BIMODAL.value: True,
-    },
-    KalmanModels.BIMODAL_WITH_SLOPE.value: {
-        Harmonic.INTERCEPT.value: True,
-        Harmonic.SLOPE.value: True,
-        Harmonic.BIMODAL.value: True,
-    },
-    KalmanModels.TRIMODAL.value: {
-        Harmonic.INTERCEPT.value: True,
-        Harmonic.TRIMODAL.value: True,
-    },
-    KalmanModels.TRIMODAL_WITH_SLOPE.value: {
-        Harmonic.INTERCEPT.value: True,
-        Harmonic.SLOPE.value: True,
-        Harmonic.TRIMODAL.value: True,
-    },
-}
-
 models = [
     KalmanModels.UNIMODAL.value,
     # KalmanModels.UNIMODAL_WITH_SLOPE.value,
     # KalmanModels.BIMODAL.value,
     # KalmanModels.BIMODAL_WITH_SLOPE.value,
     # KalmanModels.TRIMODAL.value,
-    KalmanModels.TRIMODAL_WITH_SLOPE.value,
+    # KalmanModels.TRIMODAL_WITH_SLOPE.value,
 ]
 
 if __name__ == "__main__":
@@ -172,9 +142,9 @@ if __name__ == "__main__":
 
         run_continuous_kalman(
             sub_run_directory,
-            model_parameters.get(model, {}),
+            parameters,
             POINTS,
-            model_harmonic_flags.get(model, {}),
+            KALMAN_MODEL_HARMONIC_FLAGS.get(model, {}),
             COLLECTION_PARAMETERS,
             INITIALIZATION,
             INCLUDE_CCDC_COEFFICIENTS,

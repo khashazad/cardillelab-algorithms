@@ -146,3 +146,33 @@ KALMAN_MODELS = [
     KalmanModels.TRIMODAL,
     KalmanModels.TRIMODAL_WITH_SLOPE,
 ]
+
+KALMAN_MODEL_HARMONIC_FLAGS = {
+    KalmanModels.UNIMODAL.value: {
+        Harmonic.INTERCEPT.value: True,
+        Harmonic.UNIMODAL.value: True,
+    },
+    KalmanModels.UNIMODAL_WITH_SLOPE.value: {
+        Harmonic.INTERCEPT.value: True,
+        Harmonic.SLOPE.value: True,
+        Harmonic.UNIMODAL.value: True,
+    },
+    KalmanModels.BIMODAL.value: {
+        Harmonic.INTERCEPT.value: True,
+        Harmonic.BIMODAL.value: True,
+    },
+    KalmanModels.BIMODAL_WITH_SLOPE.value: {
+        Harmonic.INTERCEPT.value: True,
+        Harmonic.SLOPE.value: True,
+        Harmonic.BIMODAL.value: True,
+    },
+    KalmanModels.TRIMODAL.value: {
+        Harmonic.INTERCEPT.value: True,
+        Harmonic.TRIMODAL.value: True,
+    },
+    KalmanModels.TRIMODAL_WITH_SLOPE.value: {
+        Harmonic.INTERCEPT.value: True,
+        Harmonic.SLOPE.value: True,
+        Harmonic.TRIMODAL.value: True,
+    },
+}
