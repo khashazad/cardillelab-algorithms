@@ -64,6 +64,7 @@ def run_kalman(parameters, collection, point, year, harmonic_flags, include_ccdc
             KalmanRecordingFlags.TIMESTAMP: True,
             KalmanRecordingFlags.FRACTION_OF_YEAR: True,
             KalmanRecordingFlags.ESTIMATE: True,
+            KalmanRecordingFlags.ESTIMATE_PREDICTED: True,
             KalmanRecordingFlags.AMPLITUDE: False,
             KalmanRecordingFlags.STATE: True,
             KalmanRecordingFlags.STATE_COV: True,

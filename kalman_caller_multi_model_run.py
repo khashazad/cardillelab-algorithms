@@ -23,7 +23,7 @@ RUN_ID = ""
 INCLUDE_CCDC_COEFFICIENTS = True
 
 # initialization method
-INITIALIZATION = Initialization.POSTHOC
+INITIALIZATION = Initialization.CCDC
 
 # Parameters
 COLLECTION_PARAMETERS = {

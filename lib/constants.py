@@ -5,6 +5,7 @@ import enum
 RESIDUAL_LABEL = "residual"
 CHANGE_PROB_LABEL = "change_prob"
 ESTIMATE_LABEL = "estimate"
+ESTIMATE_PREDICTED_LABEL = "estimate_predicted"
 TIMESTAMP_LABEL = "timestamp"
 FRACTION_OF_YEAR_LABEL = "frac_of_year"
 DATE_LABEL = "date"
@@ -44,6 +45,7 @@ class KalmanRecordingFlags(enum.Enum):
     STATE = "state"
     STATE_COV = "state_covariance"
     ESTIMATE = ESTIMATE_LABEL
+    ESTIMATE_PREDICTED = ESTIMATE_PREDICTED_LABEL
     TIMESTAMP = TIMESTAMP_LABEL
     FRACTION_OF_YEAR = FRACTION_OF_YEAR_LABEL
     AMPLITUDE = AMPLITUDE_LABEL
@@ -137,6 +139,7 @@ class KalmanModels(enum.Enum):
     BIMODAL_WITH_SLOPE = "bimodal_with_slope"
     TRIMODAL = "trimodal"
     TRIMODAL_WITH_SLOPE = "trimodal_with_slope"
+
 
 KALMAN_MODELS = [
     KalmanModels.UNIMODAL,

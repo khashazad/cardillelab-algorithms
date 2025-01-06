@@ -6,6 +6,7 @@ from lib import constants
 from lib.utils import utils
 from lib.constants import (
     CCDC,
+    ESTIMATE_PREDICTED_LABEL,
     FRACTION_OF_YEAR_LABEL,
     HARMONIC_TAGS,
     Harmonic,
@@ -34,6 +35,9 @@ def parse_band_names(recording_flags, harmonic_flags):
     # estimate
     if recording_flags.get(KalmanRecordingFlags.ESTIMATE, False):
         band_names.append(ESTIMATE_LABEL)
+
+    if recording_flags.get(KalmanRecordingFlags.ESTIMATE_PREDICTED, False):
+        band_names.append(ESTIMATE_PREDICTED_LABEL)
 
     # measurement
     if recording_flags.get(KalmanRecordingFlags.MEASUREMENT, False):
@@ -157,6 +161,14 @@ def unpack_kalman_results(
             .arrayFlatten([[ESTIMATE_LABEL]])
         )
         bands.append(estimate)
+
+    if recording_flags.get(KalmanRecordingFlags.ESTIMATE_PREDICTED, False):
+        estimate_predicted = (
+            image.select(ESTIMATE_PREDICTED_LABEL)
+            .arrayProject([0])
+            .arrayFlatten([[ESTIMATE_PREDICTED_LABEL]])
+        )
+        bands.append(estimate_predicted)
 
     if recording_flags.get(KalmanRecordingFlags.STATE_COV, False):
         P = (

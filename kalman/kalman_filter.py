@@ -3,6 +3,7 @@ import ee.geometry
 from pprint import pprint
 from lib import constants
 from lib.constants import (
+    ESTIMATE_PREDICTED_LABEL,
     Kalman,
     ESTIMATE_LABEL,
     TIMESTAMP_LABEL,
@@ -155,7 +156,7 @@ def kalman_filter(
         P = P_prev.where(curr.select(measurement_band).gt(constants.MASK_VALUE), P)
 
         estimate = H(**locals()).matrixMultiply(x)
-
+        estimate_predicted = H(**locals()).matrixMultiply(x_bar)
         # amplitude = cos.pow(2).add(sin.pow(2)).sqrt()
 
         frac_of_year = convert_date(
@@ -167,6 +168,7 @@ def kalman_filter(
             x.rename(Kalman.X.value),
             P.rename(Kalman.P.value),
             estimate.rename(ESTIMATE_LABEL),
+            estimate_predicted.rename(ESTIMATE_PREDICTED_LABEL),
             # amplitude.rename(constants.AMPLITUDE),
             ee.Image(curr.date().millis()).rename(TIMESTAMP_LABEL),
             ee.Image(frac_of_year).rename(FRACTION_OF_YEAR_LABEL),

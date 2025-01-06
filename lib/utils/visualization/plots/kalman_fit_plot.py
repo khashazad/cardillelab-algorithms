@@ -5,6 +5,7 @@ from lib.utils.visualization.constant import FIXED_Y_AXIS_LIMIT
 from lib.constants import (
     DATE_LABEL,
     ESTIMATE_LABEL,
+    ESTIMATE_PREDICTED_LABEL,
     Kalman,
 )
 
@@ -22,6 +23,14 @@ def kalman_fit_plot(
         label="Kalman Estimate",
         linestyle="-",
         color="blue",
+    )
+
+    axs.plot(
+        data[DATE_LABEL],
+        data[ESTIMATE_PREDICTED_LABEL],
+        label="Kalman Predicted Estimate",
+        linestyle="-",
+        color="green",
     )
 
     axs.scatter(
