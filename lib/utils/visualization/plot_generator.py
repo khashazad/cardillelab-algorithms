@@ -18,6 +18,7 @@ from lib.utils.visualization.plots.kalman_vs_ccdc_coefs_plot import (
 )
 from lib.utils.visualization.plots.kalman_retrofitted import kalman_retrofitted_plot
 from lib.utils.visualization.plots.kalman_yearly_fit import kalman_yearly_fit_plot
+from lib.utils.visualization.plots.residuals_plot import residuals_plot
 
 
 def get_labels_and_handles(axs):
@@ -165,6 +166,12 @@ def generate_plots(data, output_path, options, display=False):
             )
         elif plot_type == PlotType.KALMAN_RETROFITTED:
             kalman_retrofitted_plot(
+                axes,
+                kalman_output.copy(),
+                options[plot_type],
+            )
+        elif plot_type == PlotType.RESIDUALS:
+            residuals_plot(
                 axes,
                 kalman_output.copy(),
                 options[plot_type],

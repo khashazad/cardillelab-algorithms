@@ -14,6 +14,7 @@ HARMONIC_TREND_SUBDIRECTORY = "harmonic_trend"
 KALMAN_STATE_SUBDIRECTORY = "kalman_state"
 KALMAN_END_OF_YEAR_STATE_SUBDIRECTORY = "kalman_end_of_year_state"
 CCDC_SEGMENTS_SUBDIRECTORY = "ccdc_segments"
+RESIDUALS_SUBDIRECTORY = "residuals"
 
 # file prefixes
 POINTS_FILE_PREFIX = "points"
@@ -21,7 +22,7 @@ KALMAN_OUTPUT_FILE_PREFIX = "state_point"
 END_OF_YEAR_KALMAN_STATE_FILE_PREFIX = "eoy_state_point"
 HARMONIC_TREND_COEFS_FILE_PREFIX = "harmonic_trend_point"
 CCDC_SEGMENTS_FILE_PREFIX = "ccdc_segments"
-
+RESIDUALS_FILE_PREFIX = "residuals"
 
 def kalman_result_directory(run_directory: str) -> str:
     return os.path.join(run_directory, RESULTS_DIRECTORY)
@@ -67,6 +68,14 @@ def build_ccdc_segments_path(run_directory: str, index: int) -> str:
     )
 
 
+def build_residuals_path(run_directory: str, index: int) -> str:
+    return os.path.join(
+        kalman_result_directory(run_directory),
+        RESIDUALS_SUBDIRECTORY,
+        f"{RESIDUALS_FILE_PREFIX}_{index}.csv",
+    )
+
+
 def build_points_path(run_directory: str) -> str:
     return os.path.join(
         run_directory,
@@ -77,7 +86,7 @@ def build_points_path(run_directory: str) -> str:
 def build_kalman_run_directory(
     script_directory: str, tag: str, harmonic_flags: dict, run_id: str = None
 ) -> str:
-    
+
     flags_prefix = ""
 
     if harmonic_flags is not None:

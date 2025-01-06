@@ -9,7 +9,9 @@ from kalman.kalman_helper import parse_band_names
 from lib.constants import (
     CCDC,
     DATE_LABEL,
+    ESTIMATE_PREDICTED_LABEL,
     FORWARD_TREND_LABEL,
+    FRACTION_OF_YEAR_LABEL,
     HARMONIC_FLAGS_LABEL,
     HARMONIC_TREND_LABEL,
     Initialization,
@@ -29,12 +31,14 @@ from lib.paths import (
     HARMONIC_TREND_SUBDIRECTORY,
     KALMAN_END_OF_YEAR_STATE_SUBDIRECTORY,
     KALMAN_STATE_SUBDIRECTORY,
+    RESIDUALS_SUBDIRECTORY,
     build_ccdc_segments_path,
     build_end_of_year_kalman_state_path,
     build_kalman_analysis_path,
     build_harmonic_trend_path,
     build_kalman_result_path,
     build_points_path,
+    build_residuals_path,
     kalman_analysis_directory,
     kalman_result_directory,
 )
@@ -93,6 +97,65 @@ def run_kalman(parameters, collection, point, year, harmonic_flags, include_ccdc
     df = df[pd.to_datetime(df[DATE_LABEL]).dt.year == year]
 
     return df
+
+
+def process_residuals(residuals_path, data, is_first_year):
+    data = data[data[Kalman.Z.value] != 0.0]
+
+    data = data[
+        [
+            ESTIMATE_PREDICTED_LABEL,
+            Kalman.Z.value,
+            CCDC.FIT.value,
+            TIMESTAMP_LABEL,
+            FRACTION_OF_YEAR_LABEL,
+            DATE_LABEL,
+        ]
+    ]
+
+    data["kalman_residual"] = data[ESTIMATE_PREDICTED_LABEL] - data[Kalman.Z.value]
+
+    data["kalman_residual_sq"] = data["kalman_residual"] ** 2
+
+    data["ccdc_residual"] = data[CCDC.FIT.value] - data[ESTIMATE_PREDICTED_LABEL]
+
+    data["ccdc_residual_sq"] = data["ccdc_residual"] ** 2
+
+    # Sort the dataframe columns in a specific order
+    sorted_columns = [
+        ESTIMATE_PREDICTED_LABEL,
+        Kalman.Z.value,
+        CCDC.FIT.value,
+        "kalman_residual",
+        "kalman_residual_sq",
+        "ccdc_residual",
+        "ccdc_residual_sq",
+        TIMESTAMP_LABEL,
+        DATE_LABEL,
+        FRACTION_OF_YEAR_LABEL,
+    ]
+
+    data = data[sorted_columns].rename(
+        columns={
+            "kalman_residual": "kalman_residual",
+            "kalman_residual_sq": "kalman_residual_sq",
+            "ccdc_residual": "ccdc_residual",
+            "ccdc_residual_sq": "ccdc_residual_sq",
+            TIMESTAMP_LABEL: "timestamp",
+            DATE_LABEL: "date",
+            FRACTION_OF_YEAR_LABEL: "frac_of_year",
+            ESTIMATE_PREDICTED_LABEL: "kalman_estimate",
+            Kalman.Z.value: "observation",
+            CCDC.FIT.value: "ccdc_estimate",
+        }
+    )
+
+    data.to_csv(
+        residuals_path,
+        mode="a" if not is_first_year else "w",
+        header=True if is_first_year else False,
+        index=False,
+    )
 
 
 def process_point(
@@ -154,7 +217,6 @@ def process_point(
             harmonic_flags=harmonic_flags,
             output_file=harmonic_trend_coefs_path,
         )
-        
 
         if is_first_year:
             if initialization == Initialization.POSTHOC:
@@ -194,6 +256,13 @@ def process_point(
 
         update_kalman_parameters_with_last_run(data, year)
 
+        if include_ccdc:
+            process_residuals(
+                build_residuals_path(run_directory, index),
+                data.copy(deep=True),
+                is_first_year,
+            )
+
         data.to_csv(
             result_path,
             mode="a" if not is_first_year else "w",
@@ -227,6 +296,8 @@ def setup_subdirectories(run_directory):
     )
 
     os.makedirs(os.path.join(result_dir, CCDC_SEGMENTS_SUBDIRECTORY), exist_ok=True)
+
+    os.makedirs(os.path.join(result_dir, RESIDUALS_SUBDIRECTORY), exist_ok=True)
 
     os.makedirs(kalman_analysis_directory(run_directory), exist_ok=True)
 
@@ -279,6 +350,10 @@ def generate_all_plots(run_directory, points, harmonic_flags):
                     CCDC.SEGMENTS.value: build_ccdc_segments_path(
                         run_directory, point_index
                     ),
+                },
+                PlotType.RESIDUALS: {
+                    "title": "Residuals",
+                    "residuals_path": build_residuals_path(run_directory, point_index),
                 },
             },
         )

@@ -12,7 +12,7 @@ class PlotType(enum.Enum):
     KALMAN_COEFS = "Kalman Coefficients"
     KALMAN_VS_CCDC = "Kalman vs CCDC"
     KALMAN_VS_CCDC_COEFS = "Kalman vs CCDC - Coefficients"
-    RESIDUALS_OVER_TIME = "Residuals Over Time"
+    RESIDUALS = "Residuals"
     KALMAN_AMPLITUDE = "Amplitude"
     BULC_PROBS = "Bulc Probs"
 
@@ -24,7 +24,7 @@ PLOT_TYPES = [
     PlotType.KALMAN_RETROFITTED,
     PlotType.KALMAN_VS_CCDC,
     PlotType.KALMAN_VS_CCDC_COEFS,
-    PlotType.RESIDUALS_OVER_TIME,
+    PlotType.RESIDUALS,
     PlotType.KALMAN_AMPLITUDE,
     PlotType.BULC_PROBS,
 ]
